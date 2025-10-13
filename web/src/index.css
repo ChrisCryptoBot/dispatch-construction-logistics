@@ -2,6 +2,7 @@
 @import './styles/enhanced-animations.css';
 @import './styles/mobile-optimizations.css';
 @import './styles/visual-hierarchy.css';
+@import './styles/advanced-glassmorphism.css';
 @import './styles/brand-colors.css';
 @import './styles/logo-backgrounds.css';
 @tailwind base;
