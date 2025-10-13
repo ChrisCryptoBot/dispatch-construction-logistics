@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext-fixed'
-import SuperiorOneLogo from '../components/ui/SuperiorOneLogo'
+import SuperiorOneLogo from '../components/SuperiorOneLogo'
 import { Truck, Mail, Lock, Eye, EyeOff, AlertCircle, Loader } from 'lucide-react'
 
 const LoginPage = () => {
@@ -39,16 +39,18 @@ const LoginPage = () => {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${theme.colors.background} 0%, ${theme.colors.backgroundSecondary} 100%)`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <div 
+      className="login-background"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
       {/* Background Pattern */}
       <div style={{
         position: 'absolute',
@@ -90,13 +92,7 @@ const LoginPage = () => {
           textAlign: 'center',
           marginBottom: '40px'
         }}>
-          <div style={{
-            display: 'inline-block',
-            padding: '20px',
-            background: theme.colors.backgroundCard,
-            borderRadius: '20px',
-            border: `1px solid ${theme.colors.border}`,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          <div className="login-logo-container" style={{
             marginBottom: '24px'
           }}>
             <SuperiorOneLogo 
@@ -124,14 +120,7 @@ const LoginPage = () => {
         </div>
 
         {/* Login Form Card */}
-        <div style={{
-          background: theme.colors.backgroundCard,
-          borderRadius: '20px',
-          border: `1px solid ${theme.colors.border}`,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          padding: '40px',
-          backdropFilter: 'blur(10px)'
-        }}>
+        <div className="login-card-glass">
           {/* Development Notice */}
           <div style={{
             background: `${theme.colors.info}15`,
@@ -173,25 +162,12 @@ const LoginPage = () => {
 
           {/* Error Message */}
             {error && (
-            <div style={{
-              background: `${theme.colors.error}15`,
-              border: `1px solid ${theme.colors.error}40`,
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <AlertCircle size={20} style={{ color: theme.colors.error, flexShrink: 0 }} />
-              <p style={{
-                fontSize: '14px',
-                color: theme.colors.error,
-                margin: 0
-              }}>
+            <div className="login-error-glass" style={{ marginBottom: '24px' }}>
+              <AlertCircle size={20} style={{ flexShrink: 0 }} />
+              <p style={{ margin: 0 }}>
                 {error}
               </p>
-              </div>
+            </div>
             )}
 
           {/* Login Form */}
@@ -222,25 +198,7 @@ const LoginPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email or username"
                   required
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px 14px 48px',
-                    background: theme.colors.inputBg,
-                    border: `2px solid ${theme.colors.border}`,
-                    borderRadius: '12px',
-                    fontSize: '15px',
-                    color: theme.colors.textPrimary,
-                    transition: 'all 0.2s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.primary
-                    e.currentTarget.style.boxShadow = `0 0 0 4px ${theme.colors.primary}20`
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.border
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
+                  className="login-input-glass"
                 />
               </div>
             </div>
@@ -271,25 +229,7 @@ const LoginPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  style={{
-                    width: '100%',
-                    padding: '14px 48px 14px 48px',
-                    background: theme.colors.inputBg,
-                    border: `2px solid ${theme.colors.border}`,
-                    borderRadius: '12px',
-                    fontSize: '15px',
-                    color: theme.colors.textPrimary,
-                    transition: 'all 0.2s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.primary
-                    e.currentTarget.style.boxShadow = `0 0 0 4px ${theme.colors.primary}20`
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.border
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
+                  className="login-input-glass"
                 />
                 <button
                   type="button"
@@ -321,42 +261,15 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
+              className="login-button-glass"
               style={{
-                width: '100%',
-                padding: '16px',
-                background: loading 
-                  ? theme.colors.backgroundTertiary 
-                  : `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '700',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: loading ? 'none' : `0 4px 16px ${theme.colors.primary}40`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                opacity: loading ? 0.7 : 1
-              }}
-              onMouseEnter={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = `0 6px 20px ${theme.colors.primary}60`
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = `0 4px 16px ${theme.colors.primary}40`
-                }
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
               {loading ? (
                 <>
-                  <Loader size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                  <Loader size={20} className="login-spinner" />
                   Signing in...
                 </>
               ) : (

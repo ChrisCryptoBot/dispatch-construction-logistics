@@ -1,0 +1,364 @@
+/* ============================================
+   PREMIUM LOGIN PAGE ENHANCEMENTS
+   Glassmorphism, Animations, Premium Feel
+   ============================================ */
+
+/* Animated Background Gradient */
+@keyframes gradient-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.login-background {
+  background: linear-gradient(
+    135deg,
+    #0A0E1A 0%,
+    #1A1F2E 25%,
+    #2D3748 50%,
+    #1A1F2E 75%,
+    #0A0E1A 100%
+  );
+  background-size: 400% 400%;
+  animation: gradient-flow 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Light mode variant */
+.light .login-background {
+  background: linear-gradient(
+    135deg,
+    #F8FAFC 0%,
+    #F1F5F9 25%,
+    #E2E8F0 50%,
+    #F1F5F9 75%,
+    #F8FAFC 100%
+  );
+  background-size: 400% 400%;
+}
+
+/* Floating orbs for depth */
+.login-background::before,
+.login-background::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: float-orb 20s ease-in-out infinite;
+}
+
+.login-background::before {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(197, 48, 48, 0.4) 0%, transparent 70%);
+  top: -200px;
+  right: -200px;
+  animation-delay: 0s;
+}
+
+.login-background::after {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+  bottom: -150px;
+  left: -150px;
+  animation-delay: 7s;
+}
+
+@keyframes float-orb {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 30px) scale(0.9);
+  }
+}
+
+/* Glass Morphism Login Card */
+.login-card-glass {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 24px !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  padding: 48px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Light mode glass card */
+.light .login-card-glass {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Subtle shimmer effect on card */
+.login-card-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer-login 3s infinite;
+}
+
+@keyframes shimmer-login {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Enhanced Input Fields */
+.login-input-glass {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  padding: 14px 16px 14px 48px !important;
+  font-size: 15px !important;
+  color: inherit !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  width: 100% !important;
+}
+
+.light .login-input-glass {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.login-input-glass:focus {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: #C53030 !important;
+  box-shadow: 
+    0 0 0 4px rgba(197, 48, 48, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-2px) !important;
+  outline: none !important;
+}
+
+.light .login-input-glass:focus {
+  background: #FFFFFF !important;
+  box-shadow: 
+    0 0 0 4px rgba(197, 48, 48, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Enhanced Login Button */
+.login-button-glass {
+  background: linear-gradient(135deg, #C53030 0%, #B91C1C 100%) !important;
+  background-size: 200% 200% !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 16px 24px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: white !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  box-shadow: 
+    0 4px 12px rgba(197, 48, 48, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  animation: gradient-shift 8s ease infinite !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-button-glass:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 
+    0 8px 24px rgba(197, 48, 48, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.login-button-glass:active:not(:disabled) {
+  transform: translateY(0) scale(0.98) !important;
+}
+
+.login-button-glass:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Ripple effect on button click */
+.login-button-glass::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.login-button-glass:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Logo Container Enhancement */
+.login-logo-container {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.light .login-logo-container {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.login-logo-container:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 12px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Error Message Enhancement */
+.login-error-glass {
+  background: rgba(239, 68, 68, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  color: #EF4444 !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  animation: shake 0.5s ease !important;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+/* Forgot Password Link Enhancement */
+.login-link-glass {
+  color: #C53030 !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.login-link-glass::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #C53030;
+  transition: width 0.3s ease;
+}
+
+.login-link-glass:hover::after {
+  width: 100%;
+}
+
+.login-link-glass:hover {
+  color: #B91C1C !important;
+  transform: translateX(2px) !important;
+}
+
+/* Divider Enhancement */
+.login-divider {
+  position: relative;
+  text-align: center;
+  margin: 24px 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+}
+
+.light .login-divider::before,
+.light .login-divider::after {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(0, 0, 0, 0.1),
+    transparent
+  );
+}
+
+.login-divider::before {
+  left: 0;
+}
+
+.login-divider::after {
+  right: 0;
+}
+
+/* Loading Spinner Enhancement */
+@keyframes spin-glow {
+  0% {
+    transform: rotate(0deg);
+    filter: drop-shadow(0 0 8px rgba(197, 48, 48, 0.5));
+  }
+  100% {
+    transform: rotate(360deg);
+    filter: drop-shadow(0 0 12px rgba(197, 48, 48, 0.7));
+  }
+}
+
+.login-spinner {
+  animation: spin-glow 1s linear infinite !important;
+}
+
