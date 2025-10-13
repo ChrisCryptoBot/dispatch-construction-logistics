@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext-fixed'
-import SuperiorOneLogo from '../components/SuperiorOneLogo'
+import SuperiorOneLogo from '../components/ui/SuperiorOneLogo'
 import { Truck, Mail, Lock, Eye, EyeOff, AlertCircle, Loader } from 'lucide-react'
 
 const LoginPage = () => {

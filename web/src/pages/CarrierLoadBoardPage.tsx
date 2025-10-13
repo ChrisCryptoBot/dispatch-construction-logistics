@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
-import PageContainer from '../components/PageContainer'
-import Card from '../components/Card'
+import PageContainer from '../components/shared/PageContainer'
+import Card from '../components/ui/Card'
 import { formatNumber, formatCurrency, formatCompactCurrency, formatPercentage } from '../utils/formatters';
 
 import { 

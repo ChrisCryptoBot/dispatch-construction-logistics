@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import { customerAPI } from '../../services/api'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
-import ReleaseConfirmationModal from '../../components/ReleaseConfirmationModal'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
+import ReleaseConfirmationModal from '../../components/shared/ReleaseConfirmationModal'
 import { formatNumber, formatCurrency, formatCompactCurrency, formatPercentage } from '../../utils/formatters';
 
 import {

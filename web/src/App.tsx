@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext-fixed'
 import { ThemeProvider } from './contexts/ThemeContext'
-import ProtectedRoute from './components/ProtectedRoute'
+import ProtectedRoute from './components/shared/ProtectedRoute'
 import S1Layout from './components/S1LayoutConstruction'
 import CustomerLayout from './components/CustomerLayout'
-import ErrorBoundary from './components/ErrorBoundary'
+import ErrorBoundary from './components/shared/ErrorBoundary'
 
 // Pages
 import LoginPage from './pages/LoginPage'

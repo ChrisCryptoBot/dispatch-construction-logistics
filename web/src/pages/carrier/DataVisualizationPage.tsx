@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 import AnimatedCounter from '../../components/enhanced/AnimatedCounter'
 import { 
   TrendingUp, 

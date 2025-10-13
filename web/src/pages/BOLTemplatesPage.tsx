@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
-import PageContainer from '../components/PageContainer'
-import Card from '../components/Card'
-import BOLTemplate from '../components/BOLTemplate'
+import PageContainer from '../components/shared/PageContainer'
+import Card from '../components/ui/Card'
+import BOLTemplate from '../components/documents/BOLTemplate'
 import { 
   FileText, Download, Upload, Printer, Smartphone, 
   Edit, Save, X, Eye, CheckCircle, Clock, AlertCircle,

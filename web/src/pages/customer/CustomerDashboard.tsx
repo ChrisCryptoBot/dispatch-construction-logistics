@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import { customerAPI } from '../../services/api'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 import {
   Package, TrendingUp, Clock, CheckCircle, AlertCircle, Truck, DollarSign, 
   MapPin, Plus, Eye, Loader, Calendar, ArrowRight, Users, Target, Award,

@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useQuery } from '@tanstack/react-query'
 import { fleetAPI } from '../../services/api'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 import { 
   Truck, Wrench, AlertTriangle, CheckCircle, Fuel, 
   MapPin, Calendar, DollarSign, TrendingUp, Eye, Plus, 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
-import PageContainer from '../components/PageContainer'
-import Card from '../components/Card'
+import PageContainer from '../components/shared/PageContainer'
+import Card from '../components/ui/Card'
 import { Users, UserCheck, Clock, AlertTriangle, TrendingUp, Phone, Mail, MapPin, Calendar, Eye, Edit, Plus, Search, Star } from 'lucide-react'
 
 interface Driver {

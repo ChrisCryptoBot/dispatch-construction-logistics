@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { FileText, Upload, Download, Eye, Trash2, Filter, Search, CheckCircle, Clock, AlertTriangle, File } from 'lucide-react'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 
 interface Document {
   id: string

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../contexts/AuthContext-fixed'
 import { carrierAPI } from '../../services/api'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 import {
   Building, DollarSign, CheckCircle, AlertCircle,
   Plus, Trash2, Lock, Info, Shield, Clock, Loader, FileText,

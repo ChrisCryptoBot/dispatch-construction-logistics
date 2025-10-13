@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { rateConService } from '../services/rateConService'
 import { smsService } from '../services/smsService'
-import PageContainer from '../components/PageContainer'
-import Card from '../components/Card'
+import PageContainer from '../components/shared/PageContainer'
+import Card from '../components/ui/Card'
 import { formatNumber, formatCurrency, formatCompactCurrency, formatPercentage } from '../utils/formatters';
 
 import { 

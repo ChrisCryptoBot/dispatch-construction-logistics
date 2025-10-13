@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
-import PageContainer from '../../components/PageContainer'
+import PageContainer from '../../components/shared/PageContainer'
 import DriverAssignmentModal from '../../components/DriverAssignmentModal'
 import PendingDriverAcceptance from '../../components/PendingDriverAcceptance'
 import DriverLoadAcceptance from '../../components/DriverLoadAcceptance'

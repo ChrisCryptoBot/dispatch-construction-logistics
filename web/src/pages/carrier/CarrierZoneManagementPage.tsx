@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 import { equipmentTypes } from '../../services/pricingEngine'
 import { 
   MapPin, Navigation, TrendingUp, DollarSign, Truck, 

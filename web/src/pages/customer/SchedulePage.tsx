@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Calendar, ChevronLeft, ChevronRight, Plus, MapPin, Package, Clock, User, AlertCircle } from 'lucide-react'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 
 interface ScheduledDelivery {
   id: string

@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { MapPin, Plus, Edit2, Trash2, AlertCircle, CheckCircle, Clock, Users, Package, TrendingUp, Search, Filter } from 'lucide-react'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 
 interface JobSite {
   id: string

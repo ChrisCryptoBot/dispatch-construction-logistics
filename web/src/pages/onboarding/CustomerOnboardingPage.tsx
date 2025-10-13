@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
-import SuperiorOneLogo from '../../components/SuperiorOneLogo'
+import SuperiorOneLogo from '../../components/ui/SuperiorOneLogo'
 import ServiceAgreement from '../../components/ServiceAgreement'
 import ACHPaymentSetup from '../../components/ACHPaymentSetup'
 import CreditAccountApplication from '../../components/CreditAccountApplication'

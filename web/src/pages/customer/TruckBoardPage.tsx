@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 import {
   Truck, MapPin, Phone, Mail, Clock, Navigation, Star, Filter, Search,
   Calendar, Package, Gauge, User, CheckCircle, TrendingUp, MessageSquare

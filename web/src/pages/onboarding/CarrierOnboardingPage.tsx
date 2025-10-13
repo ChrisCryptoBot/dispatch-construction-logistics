@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
-import SuperiorOneLogo from '../../components/SuperiorOneLogo'
+import SuperiorOneLogo from '../../components/ui/SuperiorOneLogo'
 import CarrierPacket from '../../components/CarrierPacket'
 import { 
   Truck, Building2, FileText, CheckCircle, ArrowRight, ArrowLeft,

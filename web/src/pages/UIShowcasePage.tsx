@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import PageContainer from '../components/PageContainer'
+import PageContainer from '../components/shared/PageContainer'
 import EnhancedCard from '../components/enhanced/EnhancedCard'
 import EnhancedButton from '../components/enhanced/EnhancedButton'
 import AnimatedCounter from '../components/enhanced/AnimatedCounter'

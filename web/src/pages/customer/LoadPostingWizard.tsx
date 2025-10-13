@@ -10,8 +10,8 @@ import {
   formatCurrency,
   getMarketRateContext 
 } from '../../services/pricingEngine'
-import PageContainer from '../../components/PageContainer'
-import Card from '../../components/Card'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
 import {
   Package, MapPin, Calendar, Truck, DollarSign, FileText,
   CheckCircle, AlertCircle, ArrowRight, ArrowLeft, Scale,

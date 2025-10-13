@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { messagingAPI } from '../services/api'
-import PageContainer from '../components/PageContainer'
-import Card from '../components/Card'
+import PageContainer from '../components/shared/PageContainer'
+import Card from '../components/ui/Card'
 import { 
   MessageCircle, Send, Phone, User, Search, Paperclip, Image, File,
   CheckCircle, Clock, Truck, Building, Package, MapPin, X, Download, MoreVertical, Loader
