@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useTheme } from '../../../contexts/ThemeContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { Truck, Building, Check } from 'lucide-react'
 import { colors, shadows, borders, spacing, gradients } from '../styles/design-system'
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useTheme } from '../../../contexts/ThemeContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { 
   Clock, User, MapPin, DollarSign, AlertCircle, X, RefreshCw,
   MessageSquare, CheckCircle, XCircle

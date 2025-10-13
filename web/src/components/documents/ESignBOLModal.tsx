@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import SignatureCanvas from 'react-signature-canvas'
 import { X, FileText, Check } from 'lucide-react'
-import { useTheme } from '../../../contexts/ThemeContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { api } from '../services/api'
 
 interface ESignBOLModalProps {

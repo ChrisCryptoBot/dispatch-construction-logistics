@@ -1,5 +1,5 @@
 import React from 'react'
-import { useTheme } from '../../../contexts/ThemeContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { 
   CheckCircle, Clock, AlertTriangle, XCircle, 
   MapPin, Calendar, Package, Shield 

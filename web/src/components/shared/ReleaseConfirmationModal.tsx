@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useTheme } from '../../../contexts/ThemeContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { customerAPI } from '../services/api'
 import { CheckCircle, AlertTriangle, X, Truck, MapPin, Calendar, Package } from 'lucide-react'
 
