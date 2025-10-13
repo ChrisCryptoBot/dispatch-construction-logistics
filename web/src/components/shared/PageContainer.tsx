@@ -1,5 +1,5 @@
 import React, { type ReactNode } from 'react'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../../../contexts/ThemeContext'
 
 interface PageContainerProps {
   title: string

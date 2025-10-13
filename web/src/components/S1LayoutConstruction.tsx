@@ -1,7 +1,7 @@
 import React, { type ReactNode } from 'react'
 import S1Header from './S1Header'
 import S1Sidebar from './S1Sidebar'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../../../contexts/ThemeContext'
 
 interface S1LayoutProps {
   children: ReactNode

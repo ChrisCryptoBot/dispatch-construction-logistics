@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { useTheme } from '../contexts/ThemeContext'
-import { useAuth } from '../contexts/AuthContext-fixed'
+import { useTheme } from '../../../contexts/ThemeContext'
+import { useAuth } from '../../../contexts/AuthContext-fixed'
 import { Bell, Settings, User, LogOut, Sun, Moon, ChevronDown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 

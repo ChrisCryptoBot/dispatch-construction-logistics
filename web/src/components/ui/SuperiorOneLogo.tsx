@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../../../contexts/ThemeContext'
 
 type Props = {
   variant?: 'auto' | 'dark' | 'light' // 'dark' = dark-on-light, 'light' = white-on-dark

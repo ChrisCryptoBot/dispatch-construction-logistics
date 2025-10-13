@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import SuperiorOneLogo from '../../components/ui/SuperiorOneLogo'
-import ServiceAgreement from '../../components/ServiceAgreement'
-import ACHPaymentSetup from '../../components/ACHPaymentSetup'
-import CreditAccountApplication from '../../components/CreditAccountApplication'
+import ServiceAgreement from '../../components/shared/ServiceAgreement'
+// TODO: Create billing components
+// import ACHPaymentSetup from '../../components/billing/ACHPaymentSetup'
+// import CreditAccountApplication from '../../components/billing/CreditAccountApplication'
 import { 
   Building2, User, Phone, Mail, MapPin, CreditCard, Shield, ArrowRight, ArrowLeft,
   CheckCircle, FileText, Truck, Package, Calendar, X, Eye

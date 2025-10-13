@@ -1,7 +1,7 @@
 import React, { useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
-import { useAuth } from '../contexts/AuthContext-fixed'
+import { useTheme } from '../../../contexts/ThemeContext'
+import { useAuth } from '../../../contexts/AuthContext-fixed'
 import { Logo } from './ui/Logo'
 import {
   LayoutDashboard,

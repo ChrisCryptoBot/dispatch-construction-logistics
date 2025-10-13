@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import PageContainer from '../../components/shared/PageContainer'
-import DriverAssignmentModal from '../../components/DriverAssignmentModal'
-import PendingDriverAcceptance from '../../components/PendingDriverAcceptance'
-import DriverLoadAcceptance from '../../components/DriverLoadAcceptance'
+import DriverAssignmentModal from '../../components/drivers/DriverAssignmentModal'
+import PendingDriverAcceptance from '../../components/drivers/PendingDriverAcceptance'
+import DriverLoadAcceptance from '../../components/drivers/DriverLoadAcceptance'
 import { 
   Truck, Package, MapPin, Clock, CheckCircle, AlertCircle,
   DollarSign, TrendingUp, Calendar, User, Search, Filter,

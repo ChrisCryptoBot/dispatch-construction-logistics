@@ -11,7 +11,7 @@ import {
   Users,
   Target
 } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { formatNumber, formatCurrency } from '../../utils/formatters';
 
 interface CarrierAnalyticsProps {

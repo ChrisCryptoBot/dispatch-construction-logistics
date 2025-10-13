@@ -5,7 +5,7 @@ import { carrierAPI } from '../../services/api'
 import PageContainer from '../../components/shared/PageContainer'
 import Card from '../../components/ui/Card'
 import ReleaseStatusCard from '../../components/shared/ReleaseStatusCard'
-import TonuFilingModal from '../../components/TonuFilingModal'
+import TonuFilingModal from '../../components/compliance/TonuFilingModal'
 import { formatNumber, formatCurrency, formatCompactCurrency, formatPercentage } from '../../utils/formatters';
 
 import {

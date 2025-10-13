@@ -9,7 +9,7 @@ import {
   Calendar,
   Package
 } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { formatNumber, formatCurrency } from '../../utils/formatters';
 
 interface CustomerAnalyticsProps {
