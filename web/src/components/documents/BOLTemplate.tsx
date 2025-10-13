@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
-import SuperiorOneLogo from './SuperiorOneLogo'
+import SuperiorOneLogo from '../ui/SuperiorOneLogo'
 
 interface BOLData {
   // Load Information
