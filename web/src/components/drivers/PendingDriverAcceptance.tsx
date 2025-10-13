@@ -4,7 +4,7 @@ import {
   Clock, User, MapPin, DollarSign, AlertCircle, X, RefreshCw,
   MessageSquare, CheckCircle, XCircle
 } from 'lucide-react'
-import type { Load } from '../types'
+import type { Load } from '../../types'
 
 interface PendingDriverAcceptanceProps {
   load: Load

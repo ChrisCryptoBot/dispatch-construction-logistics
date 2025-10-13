@@ -5,7 +5,7 @@ import {
   MessageSquare, Shield, TrendingUp, Calendar, MapPin, Package,
   DollarSign
 } from 'lucide-react'
-import type { Load } from '../types'
+import type { Load } from '../../types'
 
 interface Driver {
   id: string

@@ -4,7 +4,7 @@ import {
   Truck, MapPin, Calendar, DollarSign, Package, AlertCircle, 
   CheckCircle, X, Clock, Phone, MessageSquare 
 } from 'lucide-react'
-import type { Load } from '../types'
+import type { Load } from '../../types'
 
 interface DriverLoadAcceptanceProps {
   load: Load
