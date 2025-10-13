@@ -1,0 +1,60 @@
+:root {
+  /* Primary Brand Colors (from logo) */
+  --brand-red-primary: #C53030;
+  --brand-red-dark: #B91C1C;
+  --brand-red-light: #E53E3E;
+  
+  /* Logo Gradient */
+  --brand-gradient-red: linear-gradient(135deg, #C53030 0%, #B91C1C 100%);
+  
+  /* Gray/Metallic (from logo) */
+  --brand-gray-light: #CBD5E0;
+  --brand-gray-medium: #A0AEC0;
+  --brand-gray-dark: #718096;
+  
+  /* Semantic Colors */
+  --brand-success: #10B981;
+  --brand-warning: #F59E0B;
+  --brand-error: #EF4444;
+  --brand-info: #3B82F6;
+  
+  /* Surface Colors */
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #F8FAFC;
+  --surface-tertiary: #F1F5F9;
+  
+  /* Dark Mode */
+  --dark-surface-primary: #0A0E1A;
+  --dark-surface-secondary: #1A1F2E;
+  --dark-surface-tertiary: #2D3748;
+}
+
+/* Apply brand colors */
+.bg-brand-primary {
+  background: var(--brand-gradient-red);
+}
+
+.text-brand {
+  color: var(--brand-red-primary);
+}
+
+.border-brand {
+  border-color: var(--brand-red-primary);
+}
+
+/* Buttons */
+.btn-brand {
+  background: var(--brand-gradient-red);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-brand:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(197, 48, 48, 0.3);
+}
+

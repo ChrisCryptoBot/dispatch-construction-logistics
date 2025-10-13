@@ -1,0 +1,854 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE: Organizations & Users
+// ============================================================================
+
+enum OrgType {
+  CARRIER
+  SHIPPER
+  BOTH
+}
+
+enum AccountStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+model Organization {
+  id   String  @id @default(uuid())
+  name String
+  type OrgType
+
+  // Carrier-specific fields
+  mcNumber  String? @unique
+  dotNumber String? @unique
+  ein       String?
+
+  // Contact & metadata
+  email    String?
+  phone    String?
+  address  Json? // { street, city, state, zip, country }
+  metadata Json? // Flexible additional data
+
+  verified  Boolean  @default(false)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // FMCSA Verification (Feature 1)
+  fmcsaVerified       Boolean   @default(false) @map("fmcsa_verified")
+  fmcsaVerifiedAt     DateTime? @map("fmcsa_verified_at")
+  fmcsaStatus         String?   @map("fmcsa_status") // ACTIVE, INACTIVE, REVOKED, SUSPENDED
+  fmcsaSafetyRating   String?   @map("fmcsa_safety_rating") // SATISFACTORY, CONDITIONAL, UNSATISFACTORY, NOT_RATED
+  fmcsaLastChecked    DateTime? @map("fmcsa_last_checked")
+  fmcsaDataSnapshot   Json?     @map("fmcsa_data_snapshot") // Cache full API response
+
+  // Relations
+  users          User[]
+  loadsAsShipper Load[]      @relation("ShipperLoads")
+  loadsAsCarrier Load[]      @relation("CarrierLoads")
+  insurance      Insurance[]
+  interests      LoadInterest[]
+
+  @@map("organizations")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  orgId         String   @map("org_id")
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  phone         String?
+  role          String // 'admin', 'dispatcher', 'driver', 'accountant'
+  active        Boolean  @default(true)
+  emailVerified Boolean  @default(false) @map("email_verified")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  // Email Verification & Account Status
+  accountStatus           AccountStatus @default(PENDING_VERIFICATION) @map("account_status")
+  activatedAt             DateTime?     @map("activated_at")
+  verificationCodeHash    String?       @map("verification_code_hash")
+  verificationExpires     DateTime?     @map("verification_expires")
+  verificationAttempts    Int           @default(0) @map("verification_attempts")
+  lastVerificationSent    DateTime?     @map("last_verification_sent")
+
+  organization       Organization         @relation(fields: [orgId], references: [id])
+  auditEvents        AuditEvent[]
+  
+  // Phase 1 Relations
+  creditProfile      CreditProfile?       @relation("CustomerCreditProfile")
+  driverNotifications DriverNotification[] @relation("DriverNotifications")
+  auditLogs          AuditLog[]           @relation("UserAuditLogs")
+  geoEvents          GeoEvent[]           @relation("DriverGeoEvents")
+  exceptionsReported DeliveryException[]  @relation("ExceptionReporter")
+  documentsSigned    DocumentHash[]       @relation("DocumentSigner")
+
+  @@index([accountStatus])
+  @@index([emailVerified])
+  @@map("users")
+}
+
+model Insurance {
+  id             String   @id @default(uuid())
+  orgId          String   @map("org_id")
+  type           String // 'cargo', 'liability', 'workers_comp'
+  provider       String
+  policyNumber   String   @map("policy_number")
+  coverageAmount Decimal  @map("coverage_amount") @db.Decimal(12, 2)
+  effectiveDate  DateTime @map("effective_date")
+  expiryDate     DateTime @map("expiry_date")
+  documentUrl    String?  @map("document_url")
+  verified       Boolean  @default(false)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  // Auto-Verification (Feature 2)
+  lastVerifiedAt      DateTime? @map("last_verified_at")
+  verificationMethod  String?   @map("verification_method") // API, OCR, MANUAL
+  verificationSource  String?   @map("verification_source") // RMIS, Verisk, Manual
+  autoRenewAlert      Boolean   @default(true) @map("auto_renew_alert")
+  alertSentAt         DateTime? @map("alert_sent_at")
+  namedInsured        String?   @map("named_insured")
+  producerName        String?   @map("producer_name")
+  producerPhone       String?   @map("producer_phone")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@map("insurance")
+}
+
+// ============================================================================
+// LOADS: Core Load Management
+// ============================================================================
+
+enum LoadType {
+  FREIGHT
+  AGGREGATE
+  EQUIPMENT
+  MATERIAL
+  WASTE
+}
+
+enum RateMode {
+  PER_MILE
+  PER_TON
+  PER_YARD
+  PER_TRIP
+  PER_HOUR
+  PER_LOAD
+  DAILY
+}
+
+enum LoadStatus {
+  DRAFT
+  POSTED
+  ASSIGNED
+  ACCEPTED
+  RELEASE_REQUESTED
+  RELEASED
+  IN_TRANSIT
+  DELIVERED
+  PENDING_APPROVAL
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  TONU
+  EXPIRED_RELEASE
+}
+
+enum HaulType {
+  METRO
+  REGIONAL
+  OTR
+}
+
+model Load {
+  id        String  @id @default(uuid())
+  orgId     String  @map("org_id")
+  shipperId String  @map("shipper_id")
+  carrierId String? @map("carrier_id")
+
+  // Load type & mode
+  loadType LoadType @map("load_type")
+  rateMode RateMode @map("rate_mode")
+  haulType HaulType @map("haul_type")
+
+  // Commodity & equipment
+  commodity          String
+  equipmentType      String  @map("equipment_type")
+  equipmentMatchTier String? @map("equipment_match_tier") // 'optimal', 'acceptable', 'unusual'
+  overrideReason     String? @map("override_reason")
+
+  // Origin & destination
+  origin      Json // { address, city, state, zip, lat, lng, siteName, constraints }
+  destination Json // { address, city, state, zip, lat, lng, siteName, constraints }
+
+  // Pricing
+  rate          Decimal  @db.Decimal(10, 2)
+  units         Decimal? @db.Decimal(10, 2) // tons, yards, trips, etc.
+  miles         Int?
+  deadhead      Int?
+  hourlyMinimum Decimal? @map("hourly_minimum") @db.Decimal(5, 2)
+
+  // Fees & surcharges
+  dumpFee       Decimal? @map("dump_fee") @db.Decimal(10, 2)
+  fuelSurcharge Decimal? @map("fuel_surcharge") @db.Decimal(10, 2)
+  tolls         Decimal? @db.Decimal(10, 2)
+  accessorials  Json? // { detention: 50, tonu: 100, etc. }
+  grossRevenue  Decimal  @map("gross_revenue") @db.Decimal(10, 2)
+
+  // Dates & times
+  pickupDate   DateTime  @map("pickup_date")
+  pickupEta    DateTime? @map("pickup_eta")
+  deliveryDate DateTime  @map("delivery_date")
+  deliveryEta  DateTime? @map("delivery_eta")
+
+  // Job info
+  jobCode     String? @map("job_code")
+  poNumber    String? @map("po_number")
+  projectName String? @map("project_name")
+
+  // Compliance flags
+  overweightPermit Boolean @default(false) @map("overweight_permit")
+  prevailingWage   Boolean @default(false) @map("prevailing_wage")
+  publicProject    Boolean @default(false) @map("public_project")
+  requiresEscort   Boolean @default(false) @map("requires_escort")
+
+  // Status & tracking
+  status        LoadStatus
+  notes         String?
+  internalNotes String?    @map("internal_notes")
+
+  // Release tracking (TONU prevention)
+  releaseNumber            String?   @unique @map("release_number")
+  releaseRequestedAt       DateTime? @map("release_requested_at")
+  releaseRequestedBy       String?   @map("release_requested_by")
+  releasedAt               DateTime? @map("released_at")
+  releasedBy               String?   @map("released_by")
+  releaseExpiresAt         DateTime? @map("release_expires_at")
+  releaseNotes             String?   @map("release_notes")
+  shipperConfirmedReady    Boolean   @default(false) @map("shipper_confirmed_ready")
+  shipperConfirmedAt       DateTime? @map("shipper_confirmed_at")
+  shipperAcknowledgedTonu  Boolean   @default(false) @map("shipper_acknowledged_tonu")
+  quantityConfirmed        String?   @map("quantity_confirmed")
+  
+  // TONU tracking
+  tonuFiled                Boolean   @default(false) @map("tonu_filed")
+  tonuFiledAt              DateTime? @map("tonu_filed_at")
+  tonuAmount               Decimal?  @map("tonu_amount") @db.Decimal(10, 2)
+  tonuReason               String?   @map("tonu_reason")
+  tonuEvidence             Json?     @map("tonu_evidence")
+
+  // Cancellation tracking
+  cancellationFee          Decimal?  @map("cancellation_fee") @db.Decimal(10, 2)
+  cancelledBy              String?   @map("cancelled_by")
+  cancellationReason       String?   @map("cancellation_reason") @db.Text
+  cancelledAt              DateTime? @map("cancelled_at")
+  cancellationType         String?   @map("cancellation_type") // CUSTOMER, CARRIER, SYSTEM
+
+  // Dispute tracking
+  disputeReason            String?   @map("dispute_reason") @db.Text
+  disputeOpenedAt          DateTime? @map("dispute_opened_at")
+  disputeOpenedBy          String?   @map("dispute_opened_by")
+  disputeResolvedAt        DateTime? @map("dispute_resolved_at")
+  disputeResolvedBy        String?   @map("dispute_resolved_by")
+  disputeResolution        String?   @map("dispute_resolution") // CUSTOMER_WINS, CARRIER_WINS, SPLIT
+  disputeWinner            String?   @map("dispute_winner")
+
+  // POD approval tracking
+  podApprovedAt            DateTime? @map("pod_approved_at")
+  podApprovedBy            String?   @map("pod_approved_by")
+  autoApproved             Boolean   @default(false) @map("auto_approved")
+
+  // Metadata
+  cycleCount Int?    @map("cycle_count") // for shuttles
+  zoneId     String? @map("zone_id")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  // Relations
+  shipper            Organization         @relation("ShipperLoads", fields: [shipperId], references: [id])
+  carrier            Organization?        @relation("CarrierLoads", fields: [carrierId], references: [id])
+  documents          Document[]
+  scaleTickets       ScaleTicket[]
+  interests          LoadInterest[]
+  
+  // Phase 1 Relations
+  acceptLock         LoadAcceptLock?
+  driverNotifications DriverNotification[]
+  geoEvents          GeoEvent[]
+  commodities        LoadCommodity[]
+  deliveryExceptions DeliveryException[]
+  paymentAttempts    PaymentAttempt[]
+  disputeEvidence    DisputeEvidence[]
+
+  // Performance indexes for load board queries
+  @@index([status])
+  @@index([equipmentType])
+  @@index([haulType])
+  @@index([loadType])
+  @@index([pickupDate])
+  @@index([createdAt])
+  @@index([rate])
+  @@index([miles])
+  @@index([status, pickupDate])
+  @@index([status, equipmentType])
+  @@index([status, haulType])
+  @@index([status, rate])
+  @@index([carrierId])
+  @@index([shipperId])
+  @@map("loads")
+}
+
+// ============================================================================
+// DOCUMENTS: Document Management
+// ============================================================================
+
+enum DocumentType {
+  RATE_CON
+  BOL
+  POD
+  SCALE_TICKET
+  PERMIT
+  INSURANCE_COI
+  DRIVER_LICENSE
+}
+
+model Document {
+  id             String       @id @default(uuid())
+  loadId         String       @map("load_id")
+  type           DocumentType
+  fileName       String       @map("file_name")
+  fileUrl        String       @map("file_url")
+  checksumSha256 String       @map("checksum_sha256")
+  fileSize       Int          @map("file_size")
+  mimeType       String       @map("mime_type")
+  uploadedBy     String       @map("uploaded_by")
+  uploadedAt     DateTime     @default(now()) @map("uploaded_at")
+
+  load Load @relation(fields: [loadId], references: [id])
+
+  @@map("documents")
+}
+
+// ============================================================================
+// SCALE TICKETS: Construction-specific
+// ============================================================================
+
+model ScaleTicket {
+  id     String @id @default(uuid())
+  loadId String @map("load_id")
+
+  tareWeight  Decimal @map("tare_weight") @db.Decimal(10, 2)
+  grossWeight Decimal @map("gross_weight") @db.Decimal(10, 2)
+  netTonnage  Decimal @map("net_tonnage") @db.Decimal(10, 2)
+
+  ticketNumber  String  @map("ticket_number")
+  scaleName     String  @map("scale_name")
+  scaleLocation String? @map("scale_location")
+
+  weighedAt DateTime @map("weighed_at")
+  imageUrl  String?  @map("image_url")
+  ocrData   Json?    @map("ocr_data")
+  verified  Boolean  @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  load Load @relation(fields: [loadId], references: [id])
+
+  @@map("scale_tickets")
+}
+
+// ============================================================================
+// EQUIPMENT & RATES: Reference Data
+// ============================================================================
+
+model EquipmentType {
+  id             String  @id @default(uuid())
+  name           String  @unique
+  category       String // 'dump_truck', 'mixer', 'flatbed', 'lowboy', etc.
+  optimalFor     Json // Array of commodity types
+  acceptableFor  Json? // Array of acceptable alternatives
+  matchTierRules Json?   @map("match_tier_rules")
+  active         Boolean @default(true)
+
+  @@map("equipment_types")
+}
+
+model RateModeConfig {
+  id              String  @id @default(uuid())
+  code            String  @unique
+  name            String
+  unit            String // 'miles', 'tons', 'yards', 'trips', 'hours'
+  typicalUseCases Json    @map("typical_use_cases")
+  active          Boolean @default(true)
+
+  @@map("rate_mode_configs")
+}
+
+// ============================================================================
+// COMPLIANCE: Rules & Zones
+// ============================================================================
+
+model ComplianceRule {
+  id         String   @id @default(uuid())
+  ruleType   String   @map("rule_type") // 'overweight', 'hazmat', 'municipal_dump', etc.
+  scope      String // 'state:TX', 'zone:DFW', 'national'
+  conditions Json // Rule matching conditions
+  actions    Json // Required actions/fixes
+  priority   Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("compliance_rules")
+}
+
+model Zone {
+  id         String  @id @default(uuid())
+  name       String
+  type       String // 'metro', 'regional'
+  metroArea  String? @map("metro_area")
+  boundaries Json // GeoJSON polygon
+  active     Boolean @default(true)
+
+  @@map("zones")
+}
+
+// ============================================================================
+// AUDIT: Immutable Event Log
+// ============================================================================
+
+model LoadInterest {
+  id        String   @id @default(uuid())
+  loadId    String   @map("load_id")
+  carrierId String   @map("carrier_id")
+  bidAmount Decimal? @map("bid_amount") @db.Decimal(10, 2)
+  message   String?
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTER_OFFERED
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime? @map("expires_at")
+  
+  load       Load          @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  carrier    Organization  @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  
+  // Phase 1 Relations
+  acceptLock LoadAcceptLock?
+  
+  @@map("load_interests")
+}
+
+// ============================================================================
+// CUSTOMER: Job Sites & Carrier Preferences
+// ============================================================================
+
+model JobSite {
+  id             String   @id @default(uuid())
+  customerId     String   @map("customer_id")
+  siteName       String   @map("site_name")
+  address        Json // { street, city, state, zip, lat, lng }
+  contactInfo    Json? // { name, phone, email }
+  gateInstructions String? @map("gate_instructions")
+  accessHours    Json? // { start, end, days }
+  specialRequirements String? @map("special_requirements")
+  
+  // Metrics
+  totalLoads     Int      @default(0) @map("total_loads")
+  avgWaitTime    Int?     @map("avg_wait_time") // minutes
+  totalTonnage   Decimal? @map("total_tonnage") @db.Decimal(12, 2)
+  
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  @@map("job_sites")
+}
+
+model PreferredCarrier {
+  id             String   @id @default(uuid())
+  customerId     String   @map("customer_id")
+  carrierId      String   @map("carrier_id")
+  rating         Int? // 1-5
+  notes          String?
+  autoAssign     Boolean  @default(false) @map("auto_assign")
+  
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  @@unique([customerId, carrierId])
+  @@map("preferred_carriers")
+}
+
+// ============================================================================
+// CARRIER: Equipment & Availability
+// ============================================================================
+
+model CarrierEquipment {
+  id             String   @id @default(uuid())
+  carrierId      String   @map("carrier_id")
+  equipmentType  String   @map("equipment_type")
+  quantity       Int      @default(1)
+  capacity       Json? // { tons, yards, etc }
+  vin            String?  @unique
+  licensePlate   String?  @map("license_plate")
+  status         String   @default("AVAILABLE") // AVAILABLE, ASSIGNED, MAINTENANCE, INACTIVE
+  
+  // Double-Broker Prevention (Feature 3)
+  verified       Boolean  @default(false)
+  lastVerifiedAt DateTime? @map("last_verified_at")
+  
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  @@map("carrier_equipment")
+}
+
+model CarrierProfile {
+  id                String   @id @default(uuid())
+  organizationId    String   @unique @map("organization_id")
+  operatingRadius   Int?     @map("operating_radius") // miles
+  metroZones        Json? // ["DFW", "Houston Metro"]
+  otrLanes          Json? // ["I-35 Corridor"]
+  maxDistance       Int?     @map("max_distance")
+  rateMinimums      Json? // { per_ton: 40, per_mile: 2.5 }
+  
+  // Performance metrics
+  onTimeRate        Decimal? @map("on_time_rate") @db.Decimal(5, 2)
+  docAccuracyRate   Decimal? @map("doc_accuracy_rate") @db.Decimal(5, 2)
+  reputationScore   Int?     @map("reputation_score") // 0-100
+  tier              String?  @default("BRONZE") // BRONZE, SILVER, GOLD
+  cancellationCount Int      @default(0) @map("cancellation_count")
+  loadsCount        Int      @default(0) @map("loads_count")
+  
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  @@map("carrier_profiles")
+}
+
+model AuditEvent {
+  id            String   @id @default(uuid())
+  eventType     String   @map("event_type")
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id")
+  actorId       String   @map("actor_id")
+  payload       Json
+  signatureHash String   @map("signature_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@map("audit_events")
+}
+
+// ============================================================================
+// PHASE 1: Core Ledger, Geo, and Audit Tables
+// Feature Flags: All OFF (schema preparation only)
+// PR: #1 - Database Schema Phase 1
+// ============================================================================
+
+model CreditProfile {
+  id                    String    @id @default(cuid())
+  customerId            String    @unique @map("customer_id")
+  customer              User      @relation("CustomerCreditProfile", fields: [customerId], references: [id], onDelete: Cascade)
+  achStatus             String    @default("pending") @map("ach_status") // pending, verified, failed
+  riskLimitCents        BigInt    @default(0) @map("risk_limit_cents")
+  currentExposureCents  BigInt    @default(0) @map("current_exposure_cents")
+  lastVerifiedAt        DateTime? @map("last_verified_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("credit_profiles")
+}
+
+model LoadAcceptLock {
+  loadId        String       @id @map("load_id")
+  load          Load         @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  acceptedBidId String       @unique @map("accepted_bid_id")
+  acceptedBid   LoadInterest @relation(fields: [acceptedBidId], references: [id])
+  lockedBy      String       @map("locked_by")
+  lockedAt      DateTime     @default(now()) @map("locked_at")
+
+  @@map("load_accept_locks")
+}
+
+model IdempotencyKey {
+  key            String   @id
+  operation      String
+  resourceId     String   @map("resource_id")
+  responseBody   String?  @map("response_body") @db.Text
+  responseStatus Int?     @map("response_status")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([operation, resourceId])
+  @@map("idempotency_keys")
+}
+
+model DriverNotification {
+  id           String   @id @default(cuid())
+  loadId       String   @map("load_id")
+  load         Load     @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  driverId     String   @map("driver_id")
+  driver       User     @relation("DriverNotifications", fields: [driverId], references: [id], onDelete: Cascade)
+  channel      String   // sms, email, push, in_app
+  status       String   // sent, failed, pending
+  meta         String?  @db.Text // JSON
+  errorMessage String?  @map("error_message") @db.Text
+  retryCount   Int      @default(0) @map("retry_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([loadId])
+  @@index([driverId])
+  @@index([status])
+  @@map("driver_notifications")
+}
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  user              User     @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: Cascade)
+  action            String
+  resourceType      String   @map("resource_type")
+  resourceId        String   @map("resource_id")
+  ipAddress         String?  @map("ip_address") // Encrypted at application layer
+  userAgent         String?  @map("user_agent") @db.Text
+  deviceFingerprint String?  @map("device_fingerprint") // Encrypted at application layer
+  geoLocation       String?  @map("geo_location") @db.Text // Encrypted JSON
+  signatureSha256   String?  @map("signature_sha256")
+  metadata          String?  @db.Text // JSON
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model GeoEvent {
+  id             String   @id @default(cuid())
+  loadId         String   @map("load_id")
+  load           Load     @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  driverId       String   @map("driver_id")
+  driver         User     @relation("DriverGeoEvents", fields: [driverId], references: [id], onDelete: Cascade)
+  stage          String   // en_route_pickup, at_pickup, departed_pickup, en_route_delivery, at_delivery, departed_delivery
+  latitude       Float?
+  longitude      Float?
+  accuracyMeters Int?     @map("accuracy_meters")
+  source         String   // gps, manual, telematics
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([loadId])
+  @@index([driverId])
+  @@index([createdAt])
+  @@map("geo_events")
+}
+
+model LoadCommodity {
+  id         String   @id @default(cuid())
+  loadId     String   @map("load_id")
+  load       Load     @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  material   String
+  subtype    String?
+  quantity   Float
+  unit       String
+  pieceCount Int?     @map("piece_count")
+  position   Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([loadId])
+  @@index([loadId, position])
+  @@map("load_commodities")
+}
+
+model DeliveryException {
+  id         String   @id @default(cuid())
+  loadId     String   @map("load_id")
+  load       Load     @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  stage      String   // pickup, delivery
+  notes      String?  @db.Text
+  photos     String?  @db.Text // JSON array of storage keys
+  reportedBy String   @map("reported_by")
+  reporter   User     @relation("ExceptionReporter", fields: [reportedBy], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([loadId])
+  @@map("delivery_exceptions")
+}
+
+model PaymentAttempt {
+  id            String    @id @default(cuid())
+  loadId        String    @map("load_id")
+  load          Load      @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  attempt       Int       @default(1)
+  status        String    // queued, processing, succeeded, failed
+  failureReason String?   @map("failure_reason") @db.Text
+  nextRetryAt   DateTime? @map("next_retry_at")
+  processedAt   DateTime? @map("processed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([loadId])
+  @@index([status])
+  @@index([nextRetryAt])
+  @@map("payment_attempts")
+}
+
+model DisputeEvidence {
+  id            String   @id @default(uuid())
+  loadId        String   @map("load_id")
+  submittedBy   String   @map("submitted_by")
+  submitterRole String   @map("submitter_role") // CUSTOMER, CARRIER
+  evidenceType  String   @map("evidence_type") // PHOTO, DOCUMENT, TESTIMONY, GPS_TRAIL
+  fileUrls      String[] @map("file_urls")
+  description   String   @db.Text
+  timestamp     DateTime @default(now())
+  
+  load          Load     @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  
+  @@index([loadId])
+  @@index([submittedBy])
+  @@map("dispute_evidence")
+}
+
+model DocumentHash {
+  id           String    @id @default(cuid())
+  documentType String    @map("document_type") // bol, pod, rate_con, invoice
+  resourceId   String    @map("resource_id")
+  sha256Hash   String    @map("sha256_hash")
+  storageKey   String    @map("storage_key")
+  signedBy     String?   @map("signed_by")
+  signer       User?     @relation("DocumentSigner", fields: [signedBy], references: [id])
+  signedAt     DateTime? @map("signed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@unique([documentType, resourceId, sha256Hash])
+  @@index([resourceId])
+  @@index([documentType])
+  @@map("document_hashes")
+}
+
+// ============================================================================
+// FEATURE 3: Double-Brokering Prevention
+// ============================================================================
+
+model DriverIdentity {
+  id        String  @id @default(uuid())
+  orgId     String  @map("org_id")
+  name      String
+  licenseNo String? @map("license_no")
+  licenseState String? @map("license_state")
+  verified  Boolean @default(false)
+  active    Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([orgId])
+  @@map("driver_identities")
+}
+
+model LoadAttestation {
+  id        String   @id @default(uuid())
+  loadId    String   @map("load_id")
+  carrierId String   @map("carrier_id")
+  userId    String   @map("user_id")
+  attestationType String @map("attestation_type") // NO_DOUBLE_BROKER, EQUIPMENT_OWNERSHIP
+  attestationText String @map("attestation_text") @db.Text
+  signedAt  DateTime @default(now()) @map("signed_at")
+  ipAddress String?  @map("ip_address")
+  
+  @@index([loadId])
+  @@index([carrierId])
+  @@map("load_attestations")
+}
+
+// ============================================================================
+// FEATURE 4: Payment Automation
+// ============================================================================
+
+model Invoice {
+  id                    String   @id @default(uuid())
+  loadId                String   @unique @map("load_id")
+  customerId            String   @map("customer_id")
+  amountCents           Int      @map("amount_cents")
+  status                String   @default("DRAFTED") // DRAFTED, AUTHORIZED, SENT, PAID, FAILED, REFUNDED, DISPUTED, CANCELLED
+  issuedAt              DateTime? @map("issued_at")
+  paidAt                DateTime? @map("paid_at")
+  authorizedAt          DateTime? @map("authorized_at")
+  dueDate               DateTime? @map("due_date")
+  stripeInvoiceId       String?  @map("stripe_invoice_id")
+  stripePaymentIntentId String?  @map("stripe_payment_intent_id")
+  failureReason         String?  @map("failure_reason") @db.Text
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  
+  @@index([customerId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model Payout {
+  id                      String   @id @default(uuid())
+  loadId                  String   @unique @map("load_id")
+  carrierId               String   @map("carrier_id")
+  amountCents             Int      @map("amount_cents")
+  quickPay                Boolean  @default(false) @map("quick_pay")
+  quickPayFeeCents        Int?     @map("quick_pay_fee_cents")
+  platformFeeCents        Int      @map("platform_fee_cents")
+  status                  String   @default("QUEUED") // QUEUED, PROCESSING, SENT, FAILED, REFUNDED
+  sentAt                  DateTime? @map("sent_at")
+  stripeTransferId        String?  @map("stripe_transfer_id")
+  stripeConnectAccountId  String?  @map("stripe_connect_account_id")
+  failureReason           String?  @map("failure_reason")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+  
+  @@index([carrierId])
+  @@index([status])
+  @@map("payouts")
+}
+
+// ============================================================================
+// FEATURE 10: Recurring Loads & Templates
+// ============================================================================
+
+model LoadTemplate {
+  id         String  @id @default(uuid())
+  customerId String  @map("customer_id")
+  name       String
+  payload    Json    // Complete load data structure
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  @@index([customerId])
+  @@map("load_templates")
+}
+
+model RecurringSchedule {
+  id         String   @id @default(uuid())
+  templateId String   @map("template_id")
+  cronExpr   String   @map("cron_expr") // e.g., "0 6 * * 1-5"
+  nextRunAt  DateTime @map("next_run_at")
+  lastRunAt  DateTime? @map("last_run_at")
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  @@index([nextRunAt])
+  @@index([active])
+  @@map("recurring_schedules")
+}

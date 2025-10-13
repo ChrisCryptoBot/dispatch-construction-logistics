@@ -1,0 +1,56 @@
+{
+  "name": "Superior One Logistics - Construction Operations Command Center",
+  "short_name": "S1 Logistics",
+  "description": "Professional construction logistics management platform with real-time tracking, fleet management, and operational analytics.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#dc2626",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity", "transportation"],
+  "icons": [
+    {
+      "src": "/icons/icon-144x144.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View operational dashboard",
+      "url": "/carrier-dashboard",
+      "icons": [{ "src": "/icons/dashboard-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Load Board",
+      "short_name": "Loads",
+      "description": "View available loads",
+      "url": "/loads",
+      "icons": [{ "src": "/icons/loads-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Analytics",
+      "short_name": "Analytics",
+      "description": "View performance analytics",
+      "url": "/analytics",
+      "icons": [{ "src": "/icons/analytics-icon.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/mobile-dashboard.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}

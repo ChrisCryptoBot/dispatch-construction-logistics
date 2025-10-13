@@ -1,0 +1,204 @@
+/* Enhanced Visual Hierarchy for Light Mode */
+/* Based on Claude's recommendations for better depth and structure */
+
+/* Page Background - Softer than pure white */
+.app-container {
+  background: #F8FAFC !important;
+  min-height: 100vh;
+}
+
+/* Force enhanced card styles to override inline styles */
+.enhanced-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.2s ease !important;
+}
+
+.enhanced-card:hover {
+  border-color: #9CA3AF !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Metric Cards with Colored Accent Borders */
+
+/* Metric Cards with Colored Accent Borders */
+.metric-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+.metric-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Colored accent borders for different metric types */
+.metric-card.active {
+  border-left: 4px solid #3B82F6 !important; /* Blue for active */
+}
+
+.metric-card.revenue {
+  border-left: 4px solid #10B981 !important; /* Green for money */
+}
+
+.metric-card.alert {
+  border-left: 4px solid #F59E0B !important; /* Orange for alerts */
+}
+
+.metric-card.rating {
+  border-left: 4px solid #8B5CF6 !important; /* Purple for ratings */
+}
+
+.metric-card.available {
+  border-left: 4px solid #06B6D4 !important; /* Cyan for availability */
+}
+
+/* Section Containers for Better Visual Grouping */
+.dashboard-section {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Enhanced Top Bar */
+.top-navigation {
+  background: linear-gradient(to bottom, #FFFFFF 0%, #F9FAFB 100%);
+  border-bottom: 2px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Status Badges with Better Contrast */
+.status-badge {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Table/List Improvements */
+.table-row {
+  border-bottom: 1px solid #E5E7EB;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background: #F9FAFB;
+}
+
+/* Schedule & Calendar Section with Subtle Background */
+.schedule-section {
+  background: linear-gradient(135deg, #FEF3F2 0%, #FFFFFF 100%) !important;
+  border: 1px solid #FED7D7 !important;
+}
+
+/* Business Intelligence Section */
+.business-intelligence-section {
+  background: linear-gradient(135deg, #F0F9FF 0%, #FFFFFF 100%) !important;
+  border: 1px solid #BFDBFE !important;
+}
+
+/* Enhanced Sidebar Shadow */
+.enhanced-sidebar {
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Navigation Item Hover States */
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 4px solid white;
+  transition: all 0.2s ease;
+}
+
+/* Search Bar Enhancement */
+.enhanced-search {
+  background: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.enhanced-search:focus {
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+/* Time/Date Card Enhancement */
+.time-card {
+  background: var(--color-background-card, #1e293b);
+  border: 1px solid var(--color-border, #374151);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Notification Bell Enhancement */
+.notification-badge {
+  background: #DC2626;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+}
+
+/* Profile Dropdown Enhancement */
+.profile-dropdown {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .dashboard-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .metric-card {
+    padding: 16px;
+  }
+}
+
+/* Animation Enhancements */
+@keyframes subtle-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.animated-metric {
+  animation: subtle-pulse 2s ease-in-out infinite;
+}
+
+/* Loading State Enhancement */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+

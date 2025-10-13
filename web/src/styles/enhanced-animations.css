@@ -1,0 +1,537 @@
+/**
+ * Enhanced Animation System
+ * Apple-inspired spring animations and smooth transitions
+ */
+
+/* ============================================
+   SPRING ANIMATION EASING FUNCTIONS
+   ============================================ */
+
+:root {
+  /* Spring Physics - Apple-like timing functions */
+  --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --spring-snappy: cubic-bezier(0.4, 0, 0.2, 1);
+  --spring-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --spring-sharp: cubic-bezier(0.33, 1, 0.68, 1);
+  
+  /* Duration presets */
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slowest: 700ms;
+  
+  /* Glass effect layers */
+  --glass-blur-light: blur(8px);
+  --glass-blur-medium: blur(16px);
+  --glass-blur-heavy: blur(24px);
+  --glass-blur-ultra: blur(40px);
+}
+
+/* ============================================
+   GLASSMORPHISM ENHANCEMENTS
+   ============================================ */
+
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  backdrop-filter: var(--glass-blur-medium) saturate(180%);
+  -webkit-backdrop-filter: var(--glass-blur-medium) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  transition: all var(--duration-normal) var(--spring-smooth);
+}
+
+.glass-card:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 12px 48px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+}
+
+.glass-sidebar {
+  background: linear-gradient(
+    180deg,
+    rgba(22, 27, 38, 0.85) 0%,
+    rgba(15, 20, 25, 0.95) 100%
+  );
+  backdrop-filter: var(--glass-blur-heavy) saturate(150%);
+  -webkit-backdrop-filter: var(--glass-blur-heavy) saturate(150%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.6);
+}
+
+.glass-header {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 20, 25, 0.9) 0%,
+    rgba(10, 14, 26, 0.95) 100%
+  );
+  backdrop-filter: var(--glass-blur-heavy) saturate(180%);
+  -webkit-backdrop-filter: var(--glass-blur-heavy) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-modal {
+  background: linear-gradient(
+    135deg,
+    rgba(22, 27, 38, 0.95) 0%,
+    rgba(15, 20, 25, 0.98) 100%
+  );
+  backdrop-filter: var(--glass-blur-ultra) saturate(200%);
+  -webkit-backdrop-filter: var(--glass-blur-ultra) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 25px 80px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   BUTTON ENHANCEMENTS
+   ============================================ */
+
+.btn-primary-enhanced {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #C53030 0%, #9B2C2C 100%);
+  border: 1px solid rgba(197, 48, 48, 0.4);
+  box-shadow: 
+    0 4px 16px rgba(197, 48, 48, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  transition: all var(--duration-fast) var(--spring-smooth);
+}
+
+.btn-primary-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left var(--duration-slow) var(--spring-smooth);
+}
+
+.btn-primary-enhanced:hover::before {
+  left: 100%;
+}
+
+.btn-primary-enhanced:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 24px rgba(197, 48, 48, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary-enhanced:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 
+    0 2px 8px rgba(197, 48, 48, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all var(--duration-instant) var(--spring-snappy);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: var(--glass-blur-light);
+  -webkit-backdrop-filter: var(--glass-blur-light);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all var(--duration-fast) var(--spring-smooth);
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   INPUT ENHANCEMENTS
+   ============================================ */
+
+.input-enhanced {
+  background: rgba(22, 27, 38, 0.6);
+  backdrop-filter: var(--glass-blur-light);
+  -webkit-backdrop-filter: var(--glass-blur-light);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all var(--duration-fast) var(--spring-smooth);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.input-enhanced:focus {
+  background: rgba(22, 27, 38, 0.8);
+  border-color: rgba(197, 48, 48, 0.4);
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(197, 48, 48, 0.15),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.input-enhanced::placeholder {
+  color: rgba(203, 213, 224, 0.4);
+  transition: color var(--duration-fast) var(--spring-smooth);
+}
+
+.input-enhanced:focus::placeholder {
+  color: rgba(203, 213, 224, 0.6);
+}
+
+/* ============================================
+   MICRO-INTERACTIONS
+   ============================================ */
+
+.scale-on-hover {
+  transition: transform var(--duration-fast) var(--spring-smooth);
+}
+
+.scale-on-hover:hover {
+  transform: scale(1.05);
+}
+
+.scale-on-hover:active {
+  transform: scale(0.95);
+  transition: transform var(--duration-instant) var(--spring-snappy);
+}
+
+.lift-on-hover {
+  transition: all var(--duration-fast) var(--spring-smooth);
+}
+
+.lift-on-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.bounce-on-load {
+  animation: bounceIn var(--duration-slow) var(--spring-bounce);
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  50% {
+    transform: scale(1.02) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp var(--duration-normal) var(--spring-smooth);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   LOADING STATES - SHIMMER EFFECT
+   ============================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s var(--spring-smooth) infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(197, 48, 48, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(197, 48, 48, 0.4);
+  }
+}
+
+/* ============================================
+   DUO-TONE EFFECTS
+   ============================================ */
+
+.duotone-red {
+  position: relative;
+  overflow: hidden;
+}
+
+.duotone-red::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(197, 48, 48, 0.4) 0%,
+    rgba(155, 44, 44, 0.6) 100%
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--spring-smooth);
+}
+
+.duotone-red:hover::after {
+  opacity: 0.5;
+}
+
+.duotone-blue {
+  position: relative;
+  overflow: hidden;
+}
+
+.duotone-blue::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(44, 82, 130, 0.4) 0%,
+    rgba(96, 165, 250, 0.6) 100%
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ============================================
+   SCROLL-BASED ANIMATIONS
+   ============================================ */
+
+.scroll-fade {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all var(--duration-slow) var(--spring-smooth);
+}
+
+.scroll-fade.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger animations for multiple elements */
+.scroll-fade:nth-child(1) { transition-delay: 0ms; }
+.scroll-fade:nth-child(2) { transition-delay: 100ms; }
+.scroll-fade:nth-child(3) { transition-delay: 200ms; }
+.scroll-fade:nth-child(4) { transition-delay: 300ms; }
+.scroll-fade:nth-child(5) { transition-delay: 400ms; }
+.scroll-fade:nth-child(6) { transition-delay: 500ms; }
+
+/* ============================================
+   FOCUS STATES - ACCESSIBLE & BEAUTIFUL
+   ============================================ */
+
+.focus-ring {
+  outline: none;
+  position: relative;
+  transition: all var(--duration-fast) var(--spring-smooth);
+}
+
+.focus-ring:focus {
+  box-shadow: 
+    0 0 0 3px rgba(197, 48, 48, 0.15),
+    0 0 0 6px rgba(197, 48, 48, 0.05);
+}
+
+.focus-ring:focus::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid rgba(197, 48, 48, 0.4);
+  border-radius: inherit;
+  animation: focusRing 0.3s var(--spring-bounce);
+}
+
+@keyframes focusRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   NOTIFICATION ANIMATIONS
+   ============================================ */
+
+.notification-enter {
+  animation: slideInRight var(--duration-normal) var(--spring-smooth);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.notification-exit {
+  animation: slideOutRight var(--duration-fast) var(--spring-snappy);
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   BADGE PULSE ANIMATION
+   ============================================ */
+
+.badge-pulse {
+  position: relative;
+}
+
+.badge-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: inherit;
+  border-radius: inherit;
+  opacity: 0;
+  animation: badgePulse 2s var(--spring-smooth) infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.3;
+  }
+}
+
+/* ============================================
+   RIPPLE EFFECT
+   ============================================ */
+
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* ============================================
+   PREMIUM SHADOW LAYERS
+   ============================================ */
+
+.shadow-layered {
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 16px 32px rgba(0, 0, 0, 0.25);
+}
+
+.shadow-glow-red {
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(197, 48, 48, 0.2);
+}
+
+.shadow-inner-glow {
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+

@@ -1,0 +1,83 @@
+// Additional models for Features 3-6 (to be added to schema.prisma)
+
+// Feature 3: Double-Broker Prevention
+model DriverIdentity {
+  id        String  @id @default(uuid())
+  orgId     String  @map("org_id")
+  name      String
+  licenseNo String? @map("license_no")
+  verified  Boolean @default(false)
+  active    Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([orgId])
+  @@map("driver_identities")
+}
+
+// Feature 4: Payment Automation
+model Invoice {
+  id          String   @id @default(uuid())
+  loadId      String   @unique @map("load_id")
+  customerId  String   @map("customer_id")
+  amountCents Int      @map("amount_cents")
+  status      String   @default("DRAFTED") // DRAFTED, SENT, PAID, FAILED, REFUNDED, DISPUTED
+  issuedAt    DateTime? @map("issued_at")
+  paidAt      DateTime? @map("paid_at")
+  dueDate     DateTime? @map("due_date")
+  stripeInvoiceId String? @map("stripe_invoice_id")
+  stripePaymentIntentId String? @map("stripe_payment_intent_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  @@index([customerId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model Payout {
+  id          String   @id @default(uuid())
+  loadId      String   @unique @map("load_id")
+  carrierId   String   @map("carrier_id")
+  amountCents Int      @map("amount_cents")
+  quickPay    Boolean  @default(false) @map("quick_pay")
+  quickPayFeeCents Int? @map("quick_pay_fee_cents")
+  platformFeeCents Int  @map("platform_fee_cents")
+  status      String   @default("QUEUED") // QUEUED, PROCESSING, SENT, FAILED, REFUNDED
+  sentAt      DateTime? @map("sent_at")
+  stripeTransferId String? @map("stripe_transfer_id")
+  stripeConnectAccountId String? @map("stripe_connect_account_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  @@index([carrierId])
+  @@index([status])
+  @@map("payouts")
+}
+
+// Feature 10: Recurring Loads
+model LoadTemplate {
+  id         String  @id @default(uuid())
+  customerId String  @map("customer_id")
+  name       String
+  payload    Json    // Complete load data structure
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  @@index([customerId])
+  @@map("load_templates")
+}
+
+model RecurringSchedule {
+  id         String   @id @default(uuid())
+  templateId String   @map("template_id")
+  cronExpr   String   @map("cron_expr") // e.g., "0 6 * * 1-5"
+  nextRunAt  DateTime @map("next_run_at")
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  @@index([nextRunAt])
+  @@map("recurring_schedules")
+}
+
+

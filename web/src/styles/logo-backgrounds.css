@@ -1,0 +1,165 @@
+/* Subtle watermark for dashboard */
+.dashboard-watermark {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-watermark::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+  background-image: url('/assets/logos/LOGO_GRAY.PNG');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.03; /* Very subtle */
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure content is above watermark */
+.dashboard-watermark > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Dark mode version */
+.dark .dashboard-watermark::before {
+  opacity: 0.02; /* Even more subtle in dark mode */
+}
+
+/* Hero section with large logo */
+.hero-section {
+  position: relative;
+  background: linear-gradient(135deg, #0A0E1A 0%, #1A1F2E 100%);
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 60%;
+  height: 120%;
+  background-image: url('/assets/logos/LOGO_DARKMODE.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.08;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+/* Animated subtle float */
+@keyframes float {
+  0%, 100% { transform: rotate(-15deg) translateY(0); }
+  50% { transform: rotate(-15deg) translateY(-20px); }
+}
+
+.hero-section::before {
+  animation: float 8s ease-in-out infinite;
+}
+
+/* Repeating pattern for sections */
+.pattern-background {
+  background-image: 
+    url('/assets/logos/LOGO_GRAY.PNG'),
+    url('/assets/logos/LOGO_GRAY.PNG');
+  background-size: 200px 200px;
+  background-position: 0 0, 400px 400px;
+  background-repeat: repeat;
+  opacity: 0.02;
+}
+
+/* Alternative: Grid pattern */
+.logo-grid-pattern {
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 300px, rgba(0,0,0,0.02) 300px, rgba(0,0,0,0.02) 301px),
+    repeating-linear-gradient(90deg, transparent, transparent 300px, rgba(0,0,0,0.02) 300px, rgba(0,0,0,0.02) 301px),
+    url('/assets/logos/LOGO_GRAY.PNG');
+  background-size: 300px 300px;
+  background-position: center;
+}
+
+/* Full-screen branded background */
+.auth-background {
+  position: relative;
+  min-height: 100vh;
+  background: 
+    linear-gradient(135deg, 
+      rgba(197, 48, 48, 0.9) 0%, 
+      rgba(10, 14, 26, 0.95) 100%
+    ),
+    url('/assets/logos/LOGO_DARKMODE.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Overlay for better text readability */
+.auth-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(197, 48, 48, 0.2) 0%,
+    transparent 50%
+  );
+}
+
+/* Glassmorphism Card with Logo */
+.glass-card-branded {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.glass-card-branded::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url('/assets/logos/LOGO_GRAY.PNG');
+  background-size: 300px;
+  background-repeat: no-repeat;
+  opacity: 0.05;
+  transform: rotate(15deg);
+  pointer-events: none;
+}
+
+/* Animated Gradient Background with Logo */
+.hero-animated {
+  position: relative;
+  background: 
+    linear-gradient(135deg, #C53030, #B91C1C, #991B1B);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+.hero-animated::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/logos/LOGO_DARKMODE.png');
+  background-size: 50%;
+  background-position: 120% 50%;
+  background-repeat: no-repeat;
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+

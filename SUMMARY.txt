@@ -1,0 +1,860 @@
+# Carrier-First Construction Logistics Platform â€” Consolidated Master Plan
+
+**Build-Ready Edition for Cursor AI**
+
+---
+
+## Executive Summary
+
+Building a **carrier-empowering construction logistics OS** that handles aggregates, concrete, equipment transport, and site services. Eliminates opaque spreads through direct shipper-carrier contracting with:
+
+- **Construction-native workflows**: Scale tickets, per-ton/yard pricing, job costing exports, cycle counting
+- **Universal equipment flexibility**: Any trailer for any commodity with smart compliance guardrails
+- **Fast payments**: Escrow + QuickPay (36h median)
+- **Biometric-free verification**: Entity/insurance/banking checks only
+- **One-tap booking**: Silent compliance enforcement (overweight permits, municipal dump rules, prevailing wage)
+
+**Primary Focus (80% volume)**: Metro/zone-based construction work (quarryâ†’site shuttles, concrete delivery, dirt work)
+
+**Secondary Support (20% volume)**: OTR when needed (equipment from manufacturer, distant material sourcing, project mobilization)
+
+---
+
+## 1) Core Principles
+
+1. **Carrier First** â€” Maximize $/ton, $/yard, trips/day; minimize time-to-cash
+2. **Transparency Always** â€” Visible rates, FSC, dump fees, accessorials; no hidden spreads
+3. **Construction Workflow Native** â€” Scale tickets, batch coordination, job codes, prevailing wage tracking
+4. **Universal Equipment Flexibility** â€” Suggest optimal, allow overrides (construction is unpredictable)
+5. **Compliance-Grade, Biometric-Free** â€” Entity/insurance/banking verification; no facial recognition or device fingerprinting
+6. **Metro/Zone Focused + OTR Support** â€” Regional work primary; long-haul when construction demands it
+7. **Job Costing Integration** â€” Export to Procore, Foundation, Sage, HeavyJob
+8. **Data Ownership** â€” Both sides export on demand
+9. **Explainable AI** â€” Matching scores with rationales + appeals
+10. **Security by Default** â€” RBAC/RLS, encryption, immutable audit
+
+---
+
+## 2) Construction Commodities (Comprehensive)
+
+### 2.1 Core Aggregates & Earthwork
+- Crushed stone (all sizes), gravel, sand, pea gravel, drainage rock
+- Fill & topsoil, compost, mulch, engineered fill
+- Rip-rap, gabion stone, railroad ballast, landscape boulders
+- Dirt work: cut/fill balancing, site-to-site transfer, spoil removal
+
+### 2.2 Concrete & Masonry
+- Ready-mix concrete (all PSI, slump, admixtures)
+- Specialty: flowable fill, shotcrete, colored/stamped
+- Masonry: block, brick, CMU
+
+### 2.3 Paving & Asphalt
+- Hot-mix asphalt, tack coat, sealcoat, cold patch
+- Milling/grinding: RAP removal & recycling
+
+### 2.4 Demolition & Debris
+- C&D debris, recyclables (concrete rubble, asphalt millings, wood, metal)
+- Hazmat: asbestos, contaminated soil (special permits/manifests)
+
+### 2.5 Structural Materials
+- Steel: rebar, structural steel, beams, trusses, decking
+- Lumber: dimensional, engineered lumber, trusses, plywood, OSB
+- Precast concrete: walls, beams, columns, barriers, culverts
+
+### 2.6 Pipe, Utilities & Underground
+- All pipe types: concrete, PVC, HDPE, steel, ductile iron, corrugated metal
+- Bedding materials: pea gravel, sand, flowable fill
+- Trench spoils removal
+
+### 2.7 Heavy Equipment (Transport)
+- Earthmoving: dozers, excavators, loaders, graders, compactors, scrapers
+- Aerial/lifts: scissor lifts, boom lifts, telehandlers, man lifts
+- Specialty: cranes, pile drivers, concrete pumps, pavers, milling machines
+- Support: generators, light towers, trailers, compressors
+
+### 2.8 Site Services & Safety
+- Portable facilities: toilets, office trailers, storage containers
+- Safety barriers: Jersey barriers, K-rail, water-filled barriers, fencing
+- Erosion control: silt fence, straw bales, geotextiles, blankets
+
+### 2.9 Specialty Materials
+- Glass & glazing, HVAC equipment, roofing, mechanical systems, electrical gear, insulation, drywall, doors, windows, landscaping materials
+- **ANY material a construction project requires**
+
+---
+
+## 3) Equipment Types (Universal)
+
+### 3.1 Dump Trucks (Most Common)
+- End dump (10-wheel, tri-axle, quad-axle)
+- Transfer dump (higher capacity, pup trailer)
+- Belly dump (faster unload)
+- Side dump (walls, trenches, tight spaces)
+
+### 3.2 Concrete Mixers
+- Front discharge, rear discharge, volumetric mixers
+
+### 3.3 Flatbed & Specialized Haulers
+- Standard flatbed (48', 53')
+- Stepdeck/drop-deck (taller loads)
+- Lowboy/RGN (heavy equipment, under 10' clearance)
+- Extendable/stretch (long pipe, beams, trusses)
+- Multi-axle heavy haul (cranes, transformers)
+
+### 3.4 Enclosed & Protected Trailers
+- Dry van (weather-sensitive: drywall, insulation, finishes)
+- Curtainside/Conestoga (side-load access)
+- Reefer (temperature-controlled: certain adhesives, coatings)
+
+### 3.5 Bulk & Pneumatic
+- Pneumatic tanker (cement, fly ash, lime)
+- Walking floor (wood chips, mulch, lightweight aggregates)
+- Liquid tanker (asphalt emulsion, sealants, water)
+
+### 3.6 Specialty Equipment
+- Hotshot (pickup + gooseneck for urgent small loads)
+- Tilt-bed/rollback (non-running equipment)
+- Landoll (low-angle loading for track equipment)
+- Schnabel (extreme heavy haul: transformers, pressure vessels)
+
+### 3.7 Support Vehicles
+- Water truck, fuel/lube truck, vacuum truck, boom truck
+
+---
+
+## 4) Universal Equipment Matching (Smart Flexibility)
+
+### 4.1 Philosophy: Suggest, Don't Block
+
+**Problem**: Rigid matching prevents valid edge cases (bagged aggregates on flatbed, equipment on stepdeck instead of lowboy)
+
+**Solution**: Smart suggestions + override capability
+
+### 4.2 Matching Logic
+
+**Tier 1: Optimal Match (Green Badge)**
+- Aggregates/dirt â†’ End dump, transfer dump
+- Concrete â†’ Mixer truck
+- Steel beams â†’ Flatbed, stepdeck
+- Heavy equipment â†’ Lowboy, RGN
+- "This is the standard choice for this material"
+
+**Tier 2: Acceptable Alternative (Yellow Badge)**
+- Bagged aggregates â†’ Flatbed (instead of dump)
+- Small excavator â†’ Stepdeck (instead of lowboy)
+- "This works but isn't typical. Proceed if you know your needs."
+
+**Tier 3: Unusual Choice (Orange Badge - Requires Confirmation)**
+- Loose aggregates â†’ Flatbed (spillage risk)
+- Oversized equipment â†’ Standard flatbed (won't fit)
+- System prompts: "Are you sure? This combination is uncommon. Reason: [free text field]"
+- Logs reason for audit/learning
+
+**Hard Block: Safety/Compliance Only**
+- Overweight â†’ "Must add permit or reduce load"
+- Unlicensed dump facility â†’ "Choose approved landfill"
+- Hazmat without manifest â†’ "Required documentation missing"
+
+### 4.3 Example Booking Flows
+
+**Standard**: "3/4" Crushed Stone" â†’ System suggests End dump â†’ Book Now
+
+**Edge Case**: "Bagged Concrete Mix (80lb bags, 500 bags)" â†’ System suggests Flatbed (yellow) â†’ Customer selects â†’ Books instantly
+
+**Unusual**: "Crushed Stone" + Dry van selected (orange) â†’ "Loose aggregates in enclosed trailer is uncommon. Continue?" â†’ Customer: "These are 1-ton super sacks for rooftop ballast" â†’ System: "Got it. Booking now."
+
+---
+
+## 5) Metro/Zone + OTR Hybrid Model
+
+### 5.1 Primary: Metro/Zone (80% of volume)
+
+**Construction is regional:**
+- Dump truck operators work 30-50 mile radius
+- Concrete plants serve metro area (2-hour maximum haul)
+- Carriers loyal to specific quarries/plants
+
+**Zone-based matching:**
+- "DFW - North Dallas" â†’ broadcast to carriers in that zone
+- Zone history shows carriers who've worked similar jobs locally
+- Most competitive pricing (carriers return home daily)
+
+### 5.2 Secondary: OTR/Long-Haul (20% of volume)
+
+**When construction requires distance:**
+
+**Use Case 1**: Specialized Equipment Sourcing
+- Example: "Caterpillar D11 dozer from Illinois plant â†’ Texas job site (950 miles)"
+- Equipment: Lowboy, multi-axle
+- Rate mode: PerMile + permits + escort
+
+**Use Case 2**: Material Shortage/Distant Sourcing
+- Example: "Shortage of local rebar; sourcing from Arkansas mill â†’ Oklahoma site (220 miles)"
+- Equipment: Flatbed
+- Rate mode: PerMile or PerLoad
+
+**Use Case 3**: Regional Supplier Networks
+- Example: "Texas quarry serves Louisiana project (180 miles)"
+- Equipment: End dump
+- Rate mode: PerMile or PerTon (depending on contract)
+
+**Use Case 4**: Project Mobilization
+- Example: "Contractor moving all equipment from completed Denver project â†’ new Phoenix project (600 miles)"
+- Equipment: Multiple lowboys, flatbeds
+- Rate mode: PerLoad or PerTrip
+
+### 5.3 System Intelligence: Auto-Detect Haul Type
+
+**Distance-based detection:**
+- <50 miles â†’ Zone/Metro (suggest per-ton, per-yard, per-trip)
+- 50-150 miles â†’ Regional (offer per-ton OR per-mile)
+- 150+ miles â†’ OTR (suggest per-mile)
+
+**Customer override:** Can always switch rate modes
+
+---
+
+## 6) Rate Modes (Construction + OTR Hybrid)
+
+### 6.1 Primary Construction Modes (Metro/Regional)
+
+- **Per Ton** â€” Aggregates, asphalt, concrete rubble, dirt
+- **Per Yard** â€” Concrete, topsoil, mulch
+- **Per Trip** â€” Dump runs, debris removal
+- **Per Hour (with minimum)** â€” Equipment transport, wait time
+- **Daily/Weekly Rate** â€” Equipment rental with operator
+
+### 6.2 OTR Modes (Long-Haul)
+
+- **Per Mile** â€” Standard for 150+ mile hauls
+- **Per Load** â€” Flat rate for specific origin â†’ destination
+- **Minimum + Per Mile** â€” Common for equipment moves (e.g., $500 min + $3/mile after 100 miles)
+
+### 6.3 Hybrid/Flexible Pricing
+
+**Customer chooses best fit:**
+- 180-mile aggregates haul: Could price per-ton OR per-mile (both work)
+- System calculates both, shows comparison
+- Customer picks based on their contract structure with end client
+
+---
+
+## 7) Scale Ticket Workflow
+
+1. **Tare weight** (empty truck at quarry/plant)
+2. **Gross weight** (loaded truck)
+3. **Net tonnage** = Gross - Tare
+4. **Auto-calculation**:
+   - Per-ton: `GROSS REV = Net Tonnage Ã— Rate Per Ton + Dump Fees + Fuel Surcharge`
+   - Per-mile: `GROSS REV = Miles Ã— Rate Per Mile + Tolls + Fuel Surcharge`
+5. **OCR capture**: Photo of scale ticket â†’ parsed fields â†’ ledger entry
+6. **Mismatch alerts**: If BOL tonnage â‰  scale ticket tonnage
+
+---
+
+## 8) Compliance Guardrails (Universal)
+
+### 8.1 Overweight/Oversize Rules
+- Axle limits by state (applies regardless of commodity or equipment choice)
+- Permit requirements flagged
+- Escort requirements for oversize
+- Route restrictions (bridge postings, seasonal limits)
+
+### 8.2 Municipal Dump/Transfer Rules
+- Approved facilities only
+- Waste manifests for hazmat
+- Tipping fee pre-population
+
+### 8.3 Prevailing Wage (Public Projects)
+- Job flag; certified payroll export
+- Applies to any haul on public project
+
+### 8.4 Equipment-Specific Rules
+- Hazmat placarding (if hazmat commodity)
+- Temperature-sensitive loads (reefer required for certain materials)
+- Secured load requirements (chains, straps, tarps)
+
+### 8.5 Distance-Based Rules
+- HOS compliance kicks in for 150+ mile hauls
+- Short-haul exemptions for <100 mile radius construction work
+- ELD required for interstate commerce (FMCSA rules)
+
+### 8.6 Food-Grade & Other Specialty
+- Food-grade tankers (where applicable)
+- PACA trust flags (perishables)
+- Temp-control ranges
+
+---
+
+## 9) Spreadsheet Ledger (Universal Fields)
+
+### Core Columns:
+`CNTRCT.DATE`, `LOAD ID`, `CUSTOMER`, `CARRIER`, `DRIVER`, `RATE CON`, `BOL`, `POD`, `PERMIT`, `JOB_CODE`, `PO_NUMBER`, `SITE_NAME`, `SITE_ADDRESS`, `MATERIAL`, `COMMODITY`, `ORIGIN`, `DESTINATION`
+
+### Tonnage & Distance:
+`TARE_WEIGHT`, `GROSS_WEIGHT`, `NET_TONNAGE` (for scale ticket jobs)
+`MILES`, `DEADHEAD` (for OTR jobs)
+`UNITS` (tons, yards, pieces, tripsâ€”flexible)
+
+### Rate Mode & Pricing:
+`RATE_MODE` (PerTon/PerYard/PerMile/PerTrip/PerHour/PerLoad/Daily)
+`RATE` ($/unit)
+`DUMP_FEE`, `FUEL_SURCHARGE`, `TOLLS`, `ACCESSORIALS`
+`GROSS_REV` (auto-calculated based on rate mode)
+
+### Equipment:
+`EQUIPMENT_TYPE` (End Dump, Flatbed, Lowboy, Mixer, Dry Van, etc.)
+`EQUIPMENT_MATCH_TIER` (Optimal/Acceptable/Unusualâ€”logged for learning)
+`OVERRIDE_REASON` (if customer chose non-standard equipment)
+
+### Compliance:
+`OVERWEIGHT_PERMIT`, `PREVAILING_WAGE` (Y/N), `PUBLIC_PROJECT` (Y/N)
+`HAUL_TYPE` (Metro/Regional/OTRâ€”auto-detected)
+
+### Financing:
+`FACT.TYPE` (QuickPay/BYOF/Marketplace/None)
+`ADV.PCT`, `RES.PCT`, `DISCOUNT.FEE`, `FACTOR.NAME`, `NOA.REF`, `PAID.DATE`, `ESCROW.ID`
+
+### Formulas (Mode-Dependent):
+```
+IF RATE_MODE = PerTon THEN
+  GROSS_REV = (NET_TONNAGE Ã— RATE) + DUMP_FEE + FUEL_SURCHARGE
+
+IF RATE_MODE = PerMile THEN
+  GROSS_REV = (MILES Ã— RATE) + TOLLS + FUEL_SURCHARGE
+
+IF RATE_MODE = PerLoad THEN
+  GROSS_REV = RATE + ACCESSORIALS
+
+TRUE RATE/PM = (GROSS_REV - TOLLS - DUMP_FEE) Ã· (MILES + DEADHEAD)
+```
+
+**S1 NET removed** â€” Display as: `Carrier Payout (Net) = GROSS_REV - (DISCOUNT.FEE + TOLLS + other disclosed costs)`
+
+---
+
+## 10) Anti-Double-Brokering & Verification (Biometric-Free)
+
+### 10.1 Verification Controls
+- **Entity**: EIN/SoS; FMCSA MC/DOT status & revocations
+- **Banking/Treasury**: Settlement account confirmation
+- **Insurance**: COI ingestion; insurer API/RMIS validation; expiry holds with reminder cycles
+- **Contact Hygiene**: Corporate email verification, phone OTP, address validation; domain reputation
+
+### 10.2 Fraud Risk Scoring (non-biometric)
+Signals: posting cadence vs baseline, escrow pre-fund reliability, payment timeliness, dispute/chargeback rate, authority/insurance continuity, tenure, route/document coherence
+
+### 10.3 Posting & Escrow Safeguards
+Pre-funded escrow or approved credit tier; digital signatures; authority re-check at acceptance; duplicate posting/ID mismatches â†’ auto-suspension to audit queue
+
+### 10.4 Carrier Trust Layer
+- ELD VINâ†”equipment binding (OTR)
+- Document-based driver ID (license+issuing state hashed); **no liveness/face**
+- Geo-tag/time-stamped BOL/POD/scale-ticket photos (**no facial analytics**)
+- Sequence checks: pickup â†’ loaded â†’ drop
+
+### 10.5 Penalties & Due Process
+Confirmed double-brokering â†’ account freeze, escrow reversal to rightful carrier, FMCSA reporting. Human-in-the-loop appeals; first response â‰¤24h; full decision/change logs
+
+---
+
+## 11) Reputation & Trust Scoring (Symmetric, Explainable)
+
+### 11.1 Carrier Composite (0â€“100)
+- **On-Time** 30% (ELD ETA variance/window hits)
+- **Docs Accuracy** 20% (OCR completeness, checksum integrity, signatory checks)
+- **Communication** 15% (response time/completeness)
+- **Compliance & Safety** 20% (FMCSA, insurance continuity, inspections)
+- **Shipper Feedback** 15% (structured surveys)
+
+### 11.2 Shipper Scoring
+Payment timeliness, facility dwell/throughput, appointment accuracy, documentation accuracy, carrier feedback
+
+### 11.3 Incentives
+Bronze â‰¥60 / Silver â‰¥75 / Gold â‰¥90 â†’ matching priority, lower fees, faster QuickPay
+
+### 11.4 Explainability & Disputes
+Score rationales visible; evidence upload; human review; model/version history; appeal outcomes fully logged
+
+---
+
+## 12) Universal Booking (One-Tap) with Silent Compliance Guardrails
+
+### 12.1 UX Intent
+Make booking universal & effortless. UI allows **Any Equipment**, but guardrails quietly check commodity â†’ capability â†’ endorsements â†’ permits/escorts â†’ site constraints and either pass or auto-apply a single minimal fix
+
+### 12.2 One-Screen "Quick Book"
+
+**Inputs:**
+- Origin/destination (or job site & quarry/landfill)
+- Date/time windows
+- Commodity/equipment (defaults to Any)
+- Rate mode (per-mile, per-hour, per-ton/yard, per-trip)
+
+**CTAs:**
+- **Book Now** â€” If all checks pass
+- **Fix & Book** â€” e.g., "Over-axleâ€”adding state overweight permit & escort"
+- **Hard stop** â€” With explicit reason & rule link
+
+### 12.3 Guardrail Coverage (OTR + Construction/Local)
+- Temp-control ranges; food-grade; hazmat classes/placards; tanker/liquids; hopper/bulk
+- **Oversize/Overweight**: Axle limits, dimensions, escorts (per state); municipal dump/transfer rules; scale tickets
+- **Short-haul exemptions (HOS)**: Jurisdiction-aware; driver attestation + audit
+
+### 12.4 Safety & Accessibility
+Large tap targets, high-contrast, haptics; voice prompts for drivers; offline capture & sync
+
+### 12.5 Auditability
+Log inputs, rule citations, "fix" applied, user confirmations, and outcomes **immutably**
+
+---
+
+## 13) Dedicated Histories & Profiles (Carrier & Customer)
+
+- **Current Profile** â€” Capabilities, endorsements, preferences, factoring mode, contacts
+- **Event Timeline (immutable)** â€” KYB verified, insurance renewals, tenders, disputes, NOAs, payouts, broadcasts
+- **History Snapshots (SCD2)** â€” Point-in-time reconstruction
+- **Metric Rollups** â€” OTIF, dwell, acceptance rate, RPM/true RPM, tons/hour, trips/day, QuickPay adoption, disputes, reserves, DSO
+- **Relationship Graph (shipperâ†”carrier)** â€” Active/on-hold/blocked; first/last haul; claims; lane/zone repetition; NPS
+- **Access & Privacy** â€” Strict RLS; shared views only for counterparties or consent (e.g., factor); everything audited
+
+---
+
+## 14) Lane & Zone History + Mass Messaging
+
+### 14.1 History Visibility
+Select a **lane (OTR)** or **zone (metro shuttle)** to see carriers who've completed similar work, with OTIF, dwell, dispute ratio, rating, last-haul date, counts. Identities masked until customer passes verification; then direct invites
+
+### 14.2 Opt-In Messaging (SMS/Push)
+**TCPA** consent timestamps; **STOP** honored; quiet hours; rate limits; proxy numbers; targeting by lane/zone, capability, reputation threshold, availability
+
+**Analytics**: Delivery/open/click/reply; conversion to tenders/acceptances; opt-out trends
+
+**Templates:**
+- **Lane/Zone Alert** â€” "New [Area or ORIGINâ†’DEST] [DATE/TIME]. Commodity [X]. Equipment [Any/Specific]. Rate [$ or $/mi/hr/ton]. Reply YES for tender."
+- **Follow-Up** â€” "Tender sent. Review & accept in portal."
+- **Closure** â€” "Load covered. Reply STOP to opt out."
+
+---
+
+## 15) Freight Factoring â€” Strategy & Integration
+
+### 15.1 Objectives
+Fast, predictable cashflow with transparency
+
+### 15.2 Modes
+
+**QuickPay** â€” Trigger after clean POD; optional fuel advance after pickup; escrow or partner credit; discount shown pre-confirm
+
+**BYO Factor** â€” NOA intake; factor identity/banking verification; invoice routing (lockbox); recourse/chargebacks synced
+
+**Marketplace (Phase 2+)** â€” Compare offers (advance %, reserve %, fee); consent-gated underwriting signals (OTIF, disputes, credit); one-tap NOA routing changes
+
+### 15.3 Legal Mechanics
+**Assignment Registry (UCC 9)**; NOA honor clauses; true-sale preferred; PACA trust flags; KYC/AML via partners
+
+### 15.4 Ops
+Underwriting data pack; funding triggers (POD/milestone); escrowâ†’factor routing; reconciliation & settlement ledger; disputes/chargebacks synced to factor portals
+
+### 15.5 Revenue & KPIs
+Transparent QuickPay discount; optional marketplace rev-share; **no hidden spreads**
+**KPIs**: Median time-to-cash, adoption mix, dispute incidence/time, **double-assignment = 0**
+
+---
+
+## 16) Architecture & Services
+
+### Clients
+- Web portals (carriers/customers)
+- Driver App (offline + voice prompts)
+
+### Gateway
+Auth, RBAC, rate limiting; REST + WebSocket
+
+### Core Services
+Identity/RBAC; Orgs/KYB; Loads/Tenders; Tracking/ETA; Documents/OCR; Ratings; Fraud/Risk; Billing/Escrow; Notifications; Analytics
+
+### Universal Modules
+- **Compliance Guardrail** (OTR + construction + municipal rules; oversize/overweight; escorts; food-grade/hazmat)
+- **Quick Book Orchestrator**
+- **Factoring Orchestrator + Assignment Registry**
+- **Messaging Orchestrator** (TCPA logs; rate limits; analytics)
+- **Relationship Index (trust graph: lane + zone)**
+
+### Data Stores
+- PostgreSQL (RLS)
+- Object storage (docs)
+- Neo4j (trust graph)
+- Redis (cache)
+- LedgerDB (immutable audit)
+- Elasticsearch (search/analytics)
+
+### Observability
+OpenTelemetry traces; event catalogs for assignment creation/funding/settlement/dispute/release
+
+### SLOs
+- API p95 < 300 ms
+- Tracking ingest â‰¤ 5 s
+- Payout job â‰¤ 2 h
+- 99.9% uptime
+
+### Resilience
+Autoscaling workers; retries/backoff; idempotent handlers; circuit breakers
+
+### Trust-Graph Cold-Start Strategy
+Seed with verified FMCSA/org data; import historical rate-con/doc hashes (optional); bootstrap via lane/zone broadcasts; capture off-platform references (COIs, NOAs, PODs) as verifiable edges; incentive tiers drive early participation; masked identities until verification gates passed
+
+---
+
+## 17) API & Event Contracts
+
+### Key Endpoints
+- `POST /loads` â€” Create job (supports LoadType/RateMode/Units)
+- `POST /dispatch/assign` â€” AI match + rationale
+- `GET /compliance/check` â€” Guardrail verdict + "Fix & Book" suggestion (+ rule citations)
+- `POST /escrow/fund` â†’ `PATCH /escrow/release`
+- `POST /factors/noa` â€” Assignment Registry record
+- `GET /audit/chain?loadId=â€¦` â€” Immutable proof
+
+### Events
+`booking_created`, `escrow_locked`, `carrier_assigned`, `compliance_passed/blocked`, `pickup_geofence`, `pod_uploaded`, `escrow_released`, `score_updated`, `audit_finalized`
+
+---
+
+## 18) Security, Privacy & Compliance
+
+### Access Control
+RBAC at app layer; RLS in DB; least-privilege IAM; short-lived tokens; hardware security keys + adaptive MFA for admin
+
+### Encryption
+TLS 1.3; AES-256 at rest; envelope encryption for docs; KMS-managed keys with â‰¤90-day rotation
+
+### Audit & Forensics
+Append-only Merkle chains for critical actions; immutable exports; OpenTelemetry traces; structured logs with PII redaction; anomaly alerts (auth abuse, payout spikes, ELD disconnects)
+
+### Vulnerability Mgmt
+Weekly dependency scans; monthly SAST/DAST; pre-GA pen-test; pinned deps
+
+### TCPA/CTIA
+Consent logging for SMS; STOP/UNSUBSCRIBE honored; rate limits; quiet hours
+
+### SOC 2 Type II Roadmap
+Q1â€“Q2 internal controls; Q3 pen-testing + zero-trust segmentation; Q4 external audit
+
+### Breach Protocol
+24-hour disclosure SLA; token revocation; secondary key escrow
+
+### Privacy Policy
+GDPR/CCPA; DSAR workflow; **explicit "we do not collect/process biometrics"**
+
+---
+
+## 19) Legal & Regulatory Posture
+
+### 19.1 Operating Models
+- **SaaS + Escrow Agent (preferred)** â€” Direct shipperâ†”carrier contracts; funds held with licensed partner
+- **Broker-of-Record (contingency)** â€” Limited, temporary; sunset once liquidity & SLA gates met
+
+### 19.2 Key Agreements
+- **Master Shipper Agreement** â€” Anti-double-broker, escrow terms, NOA recognition, data rights, dispute flow
+- **Carrier Agreement** â€” SLAs, GPS/ELD consent, document duties, scoring/appeals, factoring consent
+- **Privacy Policy / DPA** â€” GDPR/CCPA; DSAR workflow; explicit no biometrics
+- **Incident Response & BCP** â€” Third-party outages, payout failures; RTO/RPO
+- **Data Retention** â€” 7-year ledger/audit; 3-year telemetry aggregates (configurable)
+- **Insurance** â€” Minimum cargo/liability; optional contingent cargo
+
+### 19.3 Payments & Sanctions
+- Escrow via Treasury/Dwolla/Stripe Treasury
+- **RTP primary, ACH failover** if SLA breached (auto-notify both parties with revised ETA)
+- **Dual providers**, mirrored escrow balances, daily reconciliation
+- OFAC/KYC/KYB via partners; settlement account verification
+
+### 19.4 Global Readiness (Cross-Border)
+- CTPAT (driver/facility security; chain-of-custody)
+- USMCA e-BOL, customs broker connectors; bilingual audit UI for Laredo/Nuevo Laredo/Monterrey flows
+- Data minimization for cross-border moves; export control awareness per lane
+
+---
+
+## 20) Delivery Plan (28 Weeks)
+
+ Foundations
+Legal, SaaS+Escrow finalization, infra (IaC/CI/CD), RBAC/RLS; **"no biometric SDKs" gate**
+
+**ADD**: Universal equipment taxonomy (15+ equipment types); Equipment matching logic (Optimal/Acceptable/Unusual tiers); Distance calculator + haul type detector; Rate mode selector (construction + OTR options)
+
+ Vertical Slice
+Loads/tenders, e-sign, docs/OCR, driver accept/view; guardrail v1
+
+ Tracking/Accessorials
+Geofences, ETA v0, detention/TONU, notifications
+
+ Billing/Escrow
+Invoices, fund/hold/release; QuickPay scaffolding; risk freeze hooks
+
+ Ratings/Analytics MVP
+
+ Fraud/Hardening
+Risk svc, anomaly detectors, manual console, pen-test
+
+ Factoring & Messaging
+BYOF (NOA/routing/recon), QuickPay partner; mass messaging MVP; lane/zone history UI
+
+**ADD**: Hybrid zone + lane matching engine; Carrier profile: metro zones + OTR lanes + max distance; Broadcast logic: zone-based for local, lane-based for OTR; FSC calculator (metro vs OTR formulas); HOS/ELD compliance for 150+ mile hauls; Override reason capture + analytics dashboard
+
+ Scale Prep & Pilot
+Stress (payout/lockbox faults), KPI instrumentation; **private beta: 3 OTR corridors + 2 metro zones, 3 shippers (2 quarries + 1 concrete plant + 3 GCs + 2 specialty suppliers), 120 carriers (60 metro dump/mixer + 30 regional flatbed/stepdeck + 20 OTR flatbed/stepdeck + 10 specialized lowboy/heavy haul)**
+
+**ADD**: Equipment pairing success metrics; Distance-based performance analysis; Regional/OTR carrier recruitment materials
+
+---
+
+## 21) Pilot Plan & KPI Gates
+
+### Exit Criteria
+- Median payout â‰¤ 36h (civic & private)
+- â‰¥ 80% auto tracking
+- **0 verified double-broker**
+- â‰¥ 70% one-tap completion on compliant loads
+- CTR â‰¥ 30% and opt-in â‰¥ 60%
+- CSAT â‰¥ 85%
+
+### Pilot Volume
+- 1,000 loads cumulative
+- **Mix**: 750 metro/zone, 200 regional (50-150mi), 50 OTR (150+mi)
+- Equipment diversity: â‰¥5 different equipment types used
+- â‰¥20 "unusual pairing" overrides (learn from real-world needs)
+
+---
+
+## 22) Go-to-Market & Liquidity
+
+### Construction
+Quarries/landfills partnerships; builders; rental houses (equipment + move)
+
+### SMB/Retail
+POS/e-com connectors (mid-mile & returns)
+
+### Industrial
+MRO & steel/coil suppliers (flat/conestoga)
+
+### Carrier Community
+Owner-operator groups including dump/lowboy forums; energy field vendors
+
+**Value Prop**: Escrow certainty, faster pay, compliant pairing, **no spreads**
+
+---
+
+## 23) Finance & Unit Economics
+
+### Revenue
+- Per-load platform fees
+- Payment fees
+- QuickPay discount
+- Marketplace rev-share
+
+### Costs
+Cloud/ELD/OCR/treasury; support; risk ops
+
+### Cash
+Minimal float via escrow; credit partner for QuickPay; dispute reserves
+
+### Scenarios
+200 / 500 / 2,000 loads-per-month with â‰¥ 60% QuickPay adoption and â‰¥ 30% messaging CTR
+
+### FSC Linkage
+DOE index-based FSC; 3-month treasury reserve for volatility
+
+---
+
+## 24) Operations, Risk & Claims
+
+### Support Tiers
+L1 bot, L2 ops, L3 eng/sec
+
+### Verification & Fraud
+Verification queues; fraud playbooks; timed appeals
+
+### OS&D Claims
+Photo evidence; insurer TPA integration; reserves
+
+### Factoring Ops
+NOA checks; payee routing; assignment ledger tie-outs; remittance recon; chargebacks
+
+### Messaging Ops
+Consent governance; rate limits; templates; deliver/open/reply audits
+
+---
+
+## 25) Risks & Mitigations
+
+- **Regulatory drift (state/municipal)** â†’ Rule plug-ins; quarterly reviews
+- **Escrow friction** â†’ Tiered limits; graduated/batch escrow; credit lines for trusted shippers
+- **Fraud false positives** â†’ Human review; appeal SLA; score transparency
+- **ELD outages/spoofing** â†’ Multi-provider; confidence scoring; manual attestation path
+- **Factoring complexity** â†’ Assignment registry; strict NOA; PACA flags
+- **LLM dependency** â†’ Human gates; vendor redundancy; classic ML fallbacks
+- **Copycats** â†’ Open-source non-core schemas (COI/Transparency) while keeping orchestration/scoring proprietary (BSL 36-month delay)
+- **Macro cycles/fuel volatility** â†’ Diversify OTR + construction + SMB; DOE index-based FSC; 3-month treasury reserve
+
+---
+
+## 26) Go/No-Go for GA
+
+Pen-test remediated; DR drills passed; immutable audit verified; 30-day uptime â‰¥ 99.9%; API p95 < 300 ms; fraud < 0.5%; **0 double-broker**; CSAT â‰¥ 85%; 24/7 on-call; KB live; factoring & messaging steady
+
+---
+
+## 27) Future Bets (12â€“24 Months)
+
+- Dynamic discounting (carrier auction with caps)
+- COâ‚‚ & sustainability credits
+- Optional on-chain anchors (hashes for tender/escrow/POD when required)
+- Autonomy/EV lane readiness
+- Working-capital extensions (fuel cards; maintenance BNPL via partner credit)
+
+---
+
+## 28) Entity & Event Schemas
+
+### Core Entities (ERD Excerpt)
+```
+Carrier(id, org_id, mc_dot, insurance_id)
+Shipper(id, org_id)
+Load(id, shipper_id, carrier_id, rate_mode, load_type, status)
+Escrow(id, load_id, funded_at, released_at, amount)
+Document(id, load_id, type, checksum, url)
+ScaleTicket(id, load_id, tare_weight, gross_weight, net_tonnage, timestamp)
+Event(id, type, payload, created_at)
+```
+
+**Relations**: Carrier 1-* Load Â· Load 1-1 Escrow Â· Load 1-* Document Â· Load 0-* ScaleTicket Â· Load 1-* Event
+
+### Canonical Events
+```json
+{
+  "type": "booking_created",
+  "load_id": "L12345",
+  "shipper_id": "S6789",
+  "rate": 2200.00,
+  "mode": "PerTon",
+  "created_at": "2025-05-12T14:22Z",
+  "signature_hash": "SHA256-..."
+}
+```
+
+Other events: `escrow_funded`, `scale_ticket_uploaded`, `pod_uploaded`, `escrow_released`, `score_updated`, `audit_finalized`
+
+---
+
+## 29) Pilot Corridors & Zones (0â€“6 Months)
+
+### Primary OTR Corridors
+1. I-40 Dallas â†’ Memphis â†’ Atlanta
+2. I-10 Houston â†’ San Antonio â†’ Phoenix â†’ Los Angeles
+3. I-70 Kansas City â†’ Columbus â†’ Baltimore
+4. Cross-Border Laredo â†’ Monterrey
+5. Midwest Feeder Chicago â†’ Minneapolis â†’ Omaha
+
+### Metro Zone Pilots (Construction/Aggregates)
+- Houston Metro
+- DFW
+- Phoenix/Maricopa
+
+Quarryâ†”site shuttles with **tons/hour** and **trips/day** KPIs
+
+### Success Targets (First 6â€“12 Months)
+- Carrier messaging opt-in â‰¥ 60%, engagement â‰¥ 35%
+- Shipper tiered-limit conversion â‰¥ 50% within 3 loads
+- Trust-graph coverage â‰¥ 10k nodes (â‰¥ 3 datapoints each) by M6
+- Uptime 99.9%; failover < 2h (RTPâ†’ACH)
+- AI corr â‰¥ 0.85 vs dispute rate by M12
+
+---
+
+## 30) What to Build Next (Immediate)
+
+1. **Universal Equipment Matcher** â€” Input: Commodity + Customer selection; Output: Tier classification + suggestions; Override workflow with reason capture; Learning loop
+
+2. **Haul Type Detector** â€” Calculate distance; Auto-suggest rate mode; Flag when HOS/ELD rules apply; Regional FSC vs OTR FSC calculation
+
+3. **Hybrid Zone + Lane Engine** â€” Primary: Zone-based carrier matching; Fallback: Lane-based matching; Carrier profiles: metro zones + OTR lanes + max distance
+
+4. **Compliance Orchestrator** â€” Equipment-agnostic weight checks; Distance-based HOS rules; Commodity-specific rules (hazmat, temp control); State-by-state permit matrix; Municipal dump/transfer validation
+
+5. **Scale Ticket OCR + Ledger Integration** â€” Photo capture â†’ Google Vision/AWS Textract â†’ Parse tare/gross/net â†’ Auto-calc GROSS_REV â†’ Mismatch alerts
+
+6. **Factoring Orchestrator** â€” BYOF (NOA/routing/recon) + QuickPay wiring; Assignment Registry with UCC-9 tracking
+
+7. **Lane/Zone History & Messaging** â€” Finalize targeting; Consent UX; Broadcast analytics; TCPA compliance logging
+
+8. **Job Costing Export API** â€” Procore, Foundation, Sage, HeavyJob connectors; CSV/API format options
+
+---
+
+## Tech Stack Recommendations
+
+### Backend
+- **Language**: TypeScript/Node.js or Go
+- **API**: Express/Fastify or Go Fiber
+- **Database**: PostgreSQL 14+ with RLS policies
+- **Graph DB**: Neo4j (trust relationships)
+- **Cache**: Redis
+- **Queue**: BullMQ or AWS SQS
+- **Storage**: S3-compatible (AWS/Cloudflare R2)
+- **Search**: Elasticsearch
+
+### Frontend
+- **Web**: React or Next.js
+- **Mobile**: React Native or Flutter
+- **State**: Zustand or Redux Toolkit
+- **Forms**: React Hook Form + Zod validation
+
+### Infrastructure
+- **Cloud**: AWS or GCP
+- **Container**: Docker + Kubernetes
+- **CI/CD**: GitHub Actions
+- **Monitoring**: DataDog or New Relic
+- **Logging**: OpenTelemetry + ELK stack
+- **Secrets**: AWS Secrets Manager or Vault
+
+### Integrations
+- **Treasury/Escrow**: Dwolla or Stripe Treasury
+- **OCR**: Google Vision API + AWS Textract (dual for redundancy)
+- **ELD**: Samsara, Geotab, Motive APIs
+- **Mapping**: Google Maps + Mapbox
+- **SMS**: Twilio
+- **Job Costing**: Procore API, Foundation API, custom CSV exports
+
+---
+
+## Development Priorities
+
+### Foundation + Scale Ticket MVP
+Infrastructure & Auth**
+- Set up PostgreSQL with RLS
+- Implement RBAC system
+- Create JWT-based auth
+- Set up CI/CD pipeline
+- **No biometric SDKs** enforcement in CI
+
+Core Data Models**
+- Organizations (carriers, shippers)
+- Loads with rate modes (PerTon, PerYard, PerMile, PerTrip, PerHour)
+- Equipment types taxonomy
+- Compliance rules engine schema
+- Scale ticket data structure
+
+Load Creation & Matching**
+- Load creation API
+- Equipment matcher (Optimal/Acceptable/Unusual tiers)
+- Distance calculator
+- Haul type detector (Metro/Regional/OTR)
+- Rate mode auto-suggestion
+
+Scale Ticket & OCR**
+- Photo upload endpoint
+- OCR integration (Google Vision primary, Textract backup)
+- Parse tare/gross/net tonnage
+- Auto-calculate GROSS_REV based on rate mode
+- Mismatch alert system

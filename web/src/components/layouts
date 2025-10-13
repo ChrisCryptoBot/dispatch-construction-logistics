@@ -1,0 +1,717 @@
+import React, { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext-fixed'
+import { useTheme } from '../contexts/ThemeContext'
+import SuperiorOneLogo from './SuperiorOneLogo'
+import NotificationSystem from './NotificationSystem'
+import {
+  Package, Truck, Users, BarChart3, FileText, DollarSign, Settings,
+  User, LogOut, MapPin, Calendar, Building, ChevronDown, CheckCircle,
+  Plus, Clock, TrendingUp, Filter, MessageCircle, Navigation, AlertTriangle
+} from 'lucide-react'
+
+const CustomerLayout = ({ children }: { children: React.ReactNode }) => {
+  const { user, organization, logout } = useAuth()
+  const { theme } = useTheme()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
+  
+  // Mock real-time metrics for customer (TODO: Replace with actual data)
+  const realTimeMetrics = {
+    activeLoads: 12,
+    pendingApproval: 3,
+    deliveredToday: 8
+  }
+
+  // Navigation handler
+  const handleNavigation = (label: string) => {
+    const routeMap: { [key: string]: string } = {
+      'Dashboard': '/customer-dashboard',
+      'Post Load': '/customer/post-load',
+      'My Loads': '/customer/loads',
+      'Draft Loads': '/draft-loads',
+      'Disputes': '/disputes',
+      'Messages': '/customer/messages',
+      'Truck Board': '/customer/truck-board',
+      'Job Sites': '/customer/job-sites',
+      'Documents': '/customer/documents',
+      'Invoices': '/customer/invoices',
+      'Schedule': '/customer/schedule',
+      'Calendar': '/customer/calendar'
+    }
+    const route = routeMap[label]
+    if (route) navigate(route)
+  }
+
+  const sidebarItems = [
+    { icon: Package, label: 'Dashboard', active: location.pathname === '/customer-dashboard' },
+    { 
+      icon: Plus, 
+      label: 'Post Load', 
+      active: location.pathname === '/customer/post-load',
+      highlight: true // Special highlight for primary action
+    },
+    { 
+      icon: Truck, 
+      label: 'My Loads', 
+      count: realTimeMetrics.activeLoads,
+      active: location.pathname === '/customer/loads'
+    },
+    { 
+      icon: FileText, 
+      label: 'Draft Loads', 
+      active: location.pathname === '/draft-loads'
+    },
+    { 
+      icon: AlertTriangle, 
+      label: 'Disputes', 
+      count: 2,
+      active: location.pathname === '/disputes'
+    },
+    { 
+      icon: MessageCircle, 
+      label: 'Messages', 
+      count: 3,
+      active: location.pathname === '/customer/messages'
+    },
+    { 
+      icon: Users, 
+      label: 'Truck Board', 
+      active: location.pathname === '/customer/truck-board'
+    },
+    { 
+      icon: MapPin, 
+      label: 'Job Sites', 
+      active: location.pathname === '/customer/job-sites'
+    },
+    { 
+      icon: Calendar, 
+      label: 'Calendar', 
+      path: '/customer/calendar',
+      active: location.pathname === '/customer/calendar'
+    },
+    { 
+      icon: FileText, 
+      label: 'Documents', 
+      active: location.pathname === '/customer/documents'
+    },
+    { 
+      icon: DollarSign, 
+      label: 'Invoices', 
+      count: realTimeMetrics.pendingApproval,
+      badge: realTimeMetrics.pendingApproval > 0 ? 'PENDING' : null,
+      active: location.pathname === '/customer/invoices'
+    }
+  ]
+
+  return (
+    <div style={{ minHeight: '100vh', background: theme.colors.background }}>
+      {/* Customer Sidebar */}
+      <div style={{
+        width: sidebarCollapsed ? '80px' : '320px',
+        height: '100vh',
+        background: theme.colors.sidebarBg,
+        borderRight: `1px solid ${theme.colors.sidebarBorder}`,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 40,
+        boxShadow: '8px 0 24px -4px rgba(0, 0, 0, 0.5)',
+        transition: 'width 0.3s ease'
+      }}>
+        {/* Logo Section */}
+        <div style={{
+          padding: '24px 20px',
+          borderBottom: `1px solid ${theme.colors.border}`,
+          background: theme.colors.headerBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
+        }}>
+          {!sidebarCollapsed ? (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease'
+            }}
+            onClick={() => navigate('/customer-dashboard')}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              <SuperiorOneLogo 
+                variant={theme.name} 
+                width={180}
+                height={50}
+              />
+            </div>
+          ) : (
+            <div 
+              onClick={() => navigate('/customer-dashboard')}
+              style={{ cursor: 'pointer' }}
+            >
+              <SuperiorOneLogo 
+                variant={theme.name} 
+                width={40}
+                height={40}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Collapse Toggle */}
+        <div style={{
+          padding: '16px 20px',
+          borderBottom: `1px solid ${theme.colors.border}`,
+          display: 'flex',
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-end'
+        }}>
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            style={{
+              padding: '8px',
+              background: 'transparent',
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: theme.colors.textSecondary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+            }}
+          >
+            <Filter style={{ 
+              height: '18px', 
+              width: '18px',
+              transform: sidebarCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+              transition: 'transform 0.3s ease'
+            }} />
+          </button>
+        </div>
+
+        {/* Navigation Items */}
+        <nav style={{
+          flex: 1,
+          padding: '20px 16px',
+          overflowY: 'auto'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {sidebarItems.map((item, index) => (
+              <div key={index}>
+                <button
+                  onClick={() => handleNavigation(item.label)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    padding: '14px 16px',
+                    backgroundColor: item.highlight && !item.active 
+                      ? `${theme.colors.success}20` 
+                      : item.active 
+                        ? theme.colors.primary 
+                        : 'transparent',
+                    color: item.active ? 'white' : theme.colors.textSecondary,
+                    borderRadius: '12px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    boxShadow: item.active ? `0 4px 12px ${theme.colors.primary}40` : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!item.active) {
+                      e.currentTarget.style.backgroundColor = 'rgba(55, 65, 81, 0.5)'
+                      e.currentTarget.style.color = '#f9fafb'
+                      e.currentTarget.style.transform = 'translateX(4px)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!item.active) {
+                      e.currentTarget.style.backgroundColor = item.highlight ? `${theme.colors.success}20` : 'transparent'
+                      e.currentTarget.style.color = theme.colors.textSecondary
+                      e.currentTarget.style.transform = 'translateX(0)'
+                    }
+                  }}
+                >
+                  {item.active && (
+                    <div style={{
+                      position: 'absolute',
+                      left: '0',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '3px',
+                      height: '20px',
+                      backgroundColor: 'white',
+                      borderRadius: '0 2px 2px 0',
+                      boxShadow: '0 0 8px rgba(255, 255, 255, 0.4)'
+                    }} />
+                  )}
+                  <item.icon style={{ height: '20px', width: '20px', flexShrink: 0 }} />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                      {item.count !== undefined && item.count > 0 && (
+                        <span style={{
+                          backgroundColor: item.active ? 'rgba(255, 255, 255, 0.25)' : theme.colors.primary,
+                          color: 'white',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          padding: '3px 8px',
+                          borderRadius: '10px',
+                          minWidth: '24px',
+                          textAlign: 'center'
+                        }}>
+                          {item.count}
+                        </span>
+                      )}
+                      {item.badge && (
+                        <span style={{
+                          backgroundColor: item.badge === 'PENDING' ? theme.colors.warning : theme.colors.success,
+                          color: 'white',
+                          fontSize: '9px',
+                          fontWeight: 'bold',
+                          padding: '3px 6px',
+                          borderRadius: '6px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        </nav>
+      </div>
+
+      {/* Main Content Area */}
+      <div style={{ 
+        marginLeft: sidebarCollapsed ? '80px' : '320px', 
+        transition: 'margin-left 0.3s ease',
+        position: 'relative',
+        minHeight: '100vh'
+      }}>
+        {/* Logo Backdrop Watermark */}
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          opacity: theme.name === 'dark' ? 0.03 : 0.02,
+          pointerEvents: 'none',
+          zIndex: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <SuperiorOneLogo 
+            variant={theme.name}
+            width={600}
+            height={200}
+          />
+        </div>
+
+        {/* Header */}
+        <header style={{
+          backgroundColor: theme.colors.backgroundCard,
+          borderBottom: `1px solid ${theme.colors.border}`,
+          padding: '24px 32px',
+          boxShadow: theme.shadow.subtle,
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+          background: theme.colors.headerBg
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Search Bar (Customer-focused) */}
+            <div style={{ position: 'relative', flex: 1, maxWidth: '600px' }}>
+              <input
+                type="text"
+                placeholder="Search loads, trucks, job sites, invoices..."
+                style={{
+                  width: '100%',
+                  paddingLeft: '56px',
+                  paddingRight: '20px',
+                  paddingTop: '16px',
+                  paddingBottom: '16px',
+                  border: `2px solid ${theme.colors.border}`,
+                  borderRadius: '16px',
+                  fontSize: '16px',
+                  backgroundColor: theme.colors.inputBg,
+                  color: theme.colors.textPrimary,
+                  transition: 'all 0.3s ease',
+                  fontWeight: '500'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.colors.backgroundTertiary
+                  e.currentTarget.style.borderColor = theme.colors.primary
+                  e.currentTarget.style.boxShadow = `0 0 0 4px ${theme.colors.primary}40`
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.colors.inputBg
+                  e.currentTarget.style.borderColor = theme.colors.border
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '20px',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none'
+              }}>
+                <Package style={{ height: '22px', width: '22px', color: '#9ca3af' }} />
+              </div>
+            </div>
+
+            {/* Right Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: '40px' }}>
+              {/* Quick Stats */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px',
+                padding: '8px 16px',
+                backgroundColor: 'rgba(31, 41, 55, 0.6)',
+                borderRadius: '10px',
+                border: '1px solid rgba(75, 85, 99, 0.4)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: theme.colors.info,
+                    borderRadius: '50%',
+                    boxShadow: `0 0 8px ${theme.colors.info}60`
+                  }} />
+                  <span style={{ fontSize: '12px', color: '#d1d5db', fontWeight: '600' }}>
+                    Active
+                  </span>
+                  <span style={{ fontSize: '11px', color: theme.colors.info, fontWeight: '700' }}>
+                    {realTimeMetrics.activeLoads}
+                  </span>
+                </div>
+                
+                <div style={{ width: '1px', height: '16px', backgroundColor: '#4b5563' }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: theme.colors.success,
+                    borderRadius: '50%',
+                    boxShadow: `0 0 8px ${theme.colors.success}60`
+                  }} />
+                  <span style={{ fontSize: '12px', color: '#d1d5db', fontWeight: '600' }}>
+                    Today
+                  </span>
+                  <span style={{ fontSize: '11px', color: theme.colors.success, fontWeight: '700' }}>
+                    {realTimeMetrics.deliveredToday}
+                  </span>
+                </div>
+              </div>
+
+              {/* Notifications */}
+              <NotificationSystem />
+
+              {/* Profile Dropdown */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    backgroundColor: theme.colors.backgroundTertiary,
+                    borderRadius: '12px',
+                    border: `1px solid ${theme.colors.border}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.backgroundHover
+                    e.currentTarget.style.borderColor = theme.colors.primary
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.backgroundTertiary
+                    e.currentTarget.style.borderColor = theme.colors.border
+                  }}
+                >
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <User style={{ height: '18px', width: '18px', color: 'white' }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ 
+                      fontSize: '13px', 
+                      fontWeight: '600', 
+                      color: theme.colors.textPrimary, 
+                      margin: 0,
+                      lineHeight: 1.2
+                    }}>
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p style={{ 
+                      fontSize: '11px', 
+                      color: theme.colors.textSecondary, 
+                      margin: '2px 0 0 0',
+                      lineHeight: 1.2
+                    }}>
+                      {organization?.name}
+                    </p>
+                  </div>
+                  <ChevronDown style={{ 
+                    height: '16px', 
+                    width: '16px', 
+                    color: theme.colors.textSecondary,
+                    transform: profileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }} />
+                </button>
+
+                {/* Profile Dropdown Menu */}
+                {profileDropdownOpen && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '8px',
+                    width: '280px',
+                    backgroundColor: theme.colors.backgroundCard,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                    zIndex: 1000,
+                    overflow: 'hidden'
+                  }}>
+                    {/* User Info Section */}
+                    <div style={{
+                      padding: '16px',
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                      backgroundColor: theme.colors.backgroundTertiary
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <Building style={{ height: '24px', width: '24px', color: 'white' }} />
+                        </div>
+                        <div>
+                          <p style={{ 
+                            fontSize: '15px', 
+                            fontWeight: '600', 
+                            color: theme.colors.textPrimary, 
+                            margin: 0,
+                            lineHeight: 1.3
+                          }}>
+                            {organization?.name}
+                          </p>
+                          <p style={{ 
+                            fontSize: '13px', 
+                            color: theme.colors.textSecondary, 
+                            margin: '4px 0 0 0',
+                            lineHeight: 1.3
+                          }}>
+                            Customer Account
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Role Switcher Section */}
+                    <div style={{
+                      padding: '8px',
+                      borderBottom: `1px solid ${theme.colors.border}`
+                    }}>
+                      <p style={{
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        color: theme.colors.textSecondary,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        margin: '8px 12px 8px 12px'
+                      }}>
+                        Switch View
+                      </p>
+                      <button
+                        onClick={() => {
+                          navigate('/customer-dashboard')
+                          setProfileDropdownOpen(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          backgroundColor: `${theme.colors.primary}20`,
+                          color: theme.colors.primary,
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <Building style={{ height: '18px', width: '18px' }} />
+                        <span style={{ flex: 1 }}>Customer Dashboard</span>
+                        <CheckCircle style={{ height: '16px', width: '16px', color: theme.colors.success }} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/carrier-dashboard')
+                          setProfileDropdownOpen(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          backgroundColor: 'transparent',
+                          color: theme.colors.textPrimary,
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = theme.colors.backgroundHover
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                      >
+                        <Truck style={{ height: '18px', width: '18px' }} />
+                        <span style={{ flex: 1 }}>Carrier Dashboard</span>
+                      </button>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div style={{ padding: '8px' }}>
+                      <button
+                        onClick={() => {
+                          navigate('/settings')
+                          setProfileDropdownOpen(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          backgroundColor: 'transparent',
+                          color: theme.colors.textPrimary,
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = theme.colors.backgroundHover
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                      >
+                        <Settings style={{ height: '18px', width: '18px' }} />
+                        <span>Settings</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          logout()
+                          setProfileDropdownOpen(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          backgroundColor: 'transparent',
+                          color: theme.colors.error,
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = `${theme.colors.error}10`
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                      >
+                        <LogOut style={{ height: '18px', width: '18px' }} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        {/* Page Content */}
+        <main style={{ 
+          padding: '40px',
+          minHeight: 'calc(100vh - 80px)',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}
+
+export default CustomerLayout
+

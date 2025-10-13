@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:14
+    container_name: construction-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_DB: construction_logistics
+    ports:
+      - "5432:5432"
+    volumes:
+      - construction_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d construction_logistics"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:alpine
+    container_name: construction-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - construction_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes
+
+volumes:
+  construction_pgdata:
+  construction_redisdata:
+
