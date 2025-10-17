@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-10-16T21:45:32Z",
+  "phase": "Phase 2 - One-Time Fix Scripts",
+  "branch": "chore/cleanup_safe-20251016-2142",
+  "operation": "archive",
+  "files": [
+    {
+      "unit": "P2-01",
+      "oldPath": "fix-import-paths-final.js",
+      "newPath": "archive/staged/2025-10-16T21-45-32Z/phase2-scripts/fix-import-paths-final.js",
+      "sha256": "DC6DA24EA2460DF4F06438D1C3A0394D84FF504CB1662E0CAC320EA47B241F7C",
+      "size": 1847,
+      "type": "one-time-fix-script",
+      "purpose": "Fix import paths for nested React files",
+      "references": 0,
+      "safeToArchive": true
+    },
+    {
+      "unit": "P2-02",
+      "oldPath": "fix-pagination-all-routes.sh",
+      "newPath": "archive/staged/2025-10-16T21-45-32Z/phase2-scripts/fix-pagination-all-routes.sh",
+      "sha256": "97B90A2446F1F64DFCC758228D53303B44770952735821E689565DC43371BC79",
+      "size": 781,
+      "type": "one-time-fix-script",
+      "purpose": "Add pagination imports to route files",
+      "references": 0,
+      "safeToArchive": true
+    }
+  ],
+  "summary": {
+    "totalFiles": 2,
+    "totalSize": 2628,
+    "allSafeToArchive": true,
+    "zeroReferences": true
+  }
+}
+
