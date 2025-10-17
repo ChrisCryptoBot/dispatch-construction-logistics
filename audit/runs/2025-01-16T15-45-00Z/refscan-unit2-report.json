@@ -1,0 +1,62 @@
+{
+  "timestamp": "2025-01-16T15-45-00Z",
+  "unit": "Unit 2 - Duplicate audit reports cleanup",
+  "config": {
+    "name": "Unit 2 – Duplicate audit reports",
+    "description": "Redundant audit documentation files",
+    "includeGlobs": ["**/*AUDIT*.md", "**/*audit*.md", "**/*SUMMARY*.md", "**/*summary*.md"],
+    "excludeGlobs": ["audit/90_safety_matrix.md", "audit/00_summary.md", "audit/70_obsolete_candidates.md", "backups/**", "archive/**", ".git/**", "node_modules/**", "web/node_modules/**", "tools/**"],
+    "maxFiles": 15,
+    "riskLevel": "zero",
+    "fileTypes": ["documentation"]
+  },
+  "targets": [
+    "BUTTON_AUDIT_EXECUTIVE_SUMMARY.md",
+    "COMPREHENSIVE_AUDIT_FINAL_REPORT.md",
+    "FINAL_AUDIT_SUMMARY.md",
+    "BUTTON_FUNCTIONALITY_AUDIT.md",
+    "PLATFORM_FILE_STRUCTURE_AUDIT.md",
+    "PRE_LAUNCH_READINESS_AUDIT.md",
+    "BUTTON_AUDIT_QUICK_REFERENCE.md",
+    "COMPREHENSIVE_FRONTEND_AUDIT.md",
+    "SIDEBAR_AUDIT_REPORT.md",
+    "CUSTOMER_SIDEBAR_COMPLETE_AUDIT.md",
+    "MOCK_DATA_AUDIT_AND_INTEGRATION_PLAN.md",
+    "LOAD_POSTING_WIZARD_DEEP_AUDIT.md",
+    "LOAD_TRACKING_AUDIT_REPORT.md",
+    "LOAD_POSTING_WORKFLOW_AUDIT_REPORT.md",
+    "CARRIER_ONBOARDING_AUDIT_REPORT.md"
+  ],
+  "references": {
+    "BUTTON_AUDIT_EXECUTIVE_SUMMARY.md": [],
+    "COMPREHENSIVE_AUDIT_FINAL_REPORT.md": [],
+    "FINAL_AUDIT_SUMMARY.md": [],
+    "BUTTON_FUNCTIONALITY_AUDIT.md": [],
+    "PLATFORM_FILE_STRUCTURE_AUDIT.md": [],
+    "PRE_LAUNCH_READINESS_AUDIT.md": [],
+    "BUTTON_AUDIT_QUICK_REFERENCE.md": [],
+    "COMPREHENSIVE_FRONTEND_AUDIT.md": [],
+    "SIDEBAR_AUDIT_REPORT.md": [],
+    "CUSTOMER_SIDEBAR_COMPLETE_AUDIT.md": [],
+    "MOCK_DATA_AUDIT_AND_INTEGRATION_PLAN.md": [],
+    "LOAD_POSTING_WIZARD_DEEP_AUDIT.md": [],
+    "LOAD_TRACKING_AUDIT_REPORT.md": [],
+    "LOAD_POSTING_WORKFLOW_AUDIT_REPORT.md": [],
+    "CARRIER_ONBOARDING_AUDIT_REPORT.md": []
+  },
+  "summary": {
+    "totalFiles": 15,
+    "filesWithReferences": 0,
+    "totalReferences": 0,
+    "safeToStage": true,
+    "scanAreas": ["src", "web/src", "prisma", "scripts"],
+    "scanResults": {
+      "src": "0 references found",
+      "web/src": "0 references found", 
+      "prisma": "0 references found",
+      "scripts": "0 references found"
+    }
+  }
+}
+
+

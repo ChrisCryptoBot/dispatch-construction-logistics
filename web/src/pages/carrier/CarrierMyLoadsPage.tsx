@@ -7,12 +7,14 @@ import Card from '../../components/ui/Card'
 import ReleaseStatusCard from '../../components/shared/ReleaseStatusCard'
 import TonuFilingModal from '../../components/compliance/TonuFilingModal'
 import { formatNumber, formatCurrency, formatCompactCurrency, formatPercentage } from '../../utils/formatters';
+import AnimatedCounter from '../../components/enhanced/AnimatedCounter';
 
 import {
   Truck, Package, MapPin, Clock, AlertCircle,
   Navigation, DollarSign, TrendingUp, Phone, MessageSquare,
   Calendar, User, Loader, XCircle, Search,
-  FileText, FileSignature, ChevronDown, ChevronUp, Gauge, Fuel, Edit, Save
+  FileText, FileSignature, ChevronDown, ChevronUp, Gauge, Fuel, Edit, Save,
+  ArrowUpDown, X, CheckSquare, Square, Filter, Layers
 } from 'lucide-react'
 
 interface Load {
@@ -93,6 +95,16 @@ const CarrierMyLoadsPage = () => {
   const [expandedLoads, setExpandedLoads] = useState<Set<string>>(new Set())
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingLoad, setEditingLoad] = useState<Load | null>(null)
+  
+  // Enhanced filtering and sorting
+  type SortOption = 'date' | 'revenue' | 'status' | 'miles' | 'customer' | 'none'
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [dateRangeFilter, setDateRangeFilter] = useState({ from: '', to: '' })
+  const [revenueRangeFilter, setRevenueRangeFilter] = useState({ min: '', max: '' })
+  
+  // Bulk operations
+  const [selectedLoads, setSelectedLoads] = useState<string[]>([])
+  const [showBulkActions, setShowBulkActions] = useState(false)
   const [editForm, setEditForm] = useState({
     deadhead: 0,
     tolls: 0,
@@ -526,6 +538,35 @@ const CarrierMyLoadsPage = () => {
     }
   }
 
+  // Bulk operations utilities
+  const toggleLoadSelection = (loadId: string) => {
+    setSelectedLoads(prev => 
+      prev.includes(loadId) 
+        ? prev.filter(id => id !== loadId)
+        : [...prev, loadId]
+    )
+  }
+
+  const selectAllLoads = () => {
+    const allLoadIds = filteredLoads.map(load => load.id)
+    setSelectedLoads(allLoadIds)
+  }
+
+  const clearSelection = () => {
+    setSelectedLoads([])
+  }
+
+  const handleBulkExport = () => {
+    console.log('Bulk export loads:', selectedLoads)
+    // Implementation for bulk export
+  }
+
+  const handleBulkStatusUpdate = () => {
+    console.log('Bulk status update for loads:', selectedLoads)
+    // Implementation for bulk status update
+  }
+
+  // Enhanced filtering and sorting
   const filteredLoads = loads.filter(load => {
     const matchesStatus = filterStatus === 'all' || load.status === filterStatus.toUpperCase()
     const matchesSearch = searchTerm === '' || 
@@ -537,8 +578,45 @@ const CarrierMyLoadsPage = () => {
     const matchesEquipment = filterEquipment === 'all' || load.equipmentType === filterEquipment
     const matchesDriver = filterDriver === 'all' || load.driver?.name === filterDriver
     
-    return matchesStatus && matchesSearch && matchesEquipment && matchesDriver
+    // Date range filter
+    const loadDate = new Date(load.assignedAt)
+    const matchesDateFrom = dateRangeFilter.from === '' || loadDate >= new Date(dateRangeFilter.from)
+    const matchesDateTo = dateRangeFilter.to === '' || loadDate <= new Date(dateRangeFilter.to)
+    
+    // Revenue range filter
+    const loadRevenue = load.revenue || 0
+    const matchesRevenueMin = revenueRangeFilter.min === '' || loadRevenue >= parseFloat(revenueRangeFilter.min)
+    const matchesRevenueMax = revenueRangeFilter.max === '' || loadRevenue <= parseFloat(revenueRangeFilter.max)
+    
+    return matchesStatus && matchesSearch && matchesEquipment && matchesDriver && matchesDateFrom && matchesDateTo && matchesRevenueMin && matchesRevenueMax
   })
+
+  // Enhanced sorting
+  const getSortedLoads = () => {
+    if (sortBy === 'none') return filteredLoads
+
+    const sorted = [...filteredLoads].sort((a, b) => {
+      let comparison = 0
+
+      if (sortBy === 'date') {
+        comparison = new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime()
+      } else if (sortBy === 'revenue') {
+        comparison = (a.revenue || 0) - (b.revenue || 0)
+      } else if (sortBy === 'status') {
+        comparison = a.status.localeCompare(b.status)
+      } else if (sortBy === 'miles') {
+        comparison = (a.miles || 0) - (b.miles || 0)
+      } else if (sortBy === 'customer') {
+        comparison = (a.customer?.name || '').localeCompare(b.customer?.name || '')
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+
+    return sorted
+  }
+
+  const finalFilteredLoads = getSortedLoads()
 
   // Real calendar sync functionality for carrier loads
   const syncLoadsWithCalendar = () => {
@@ -649,7 +727,7 @@ const CarrierMyLoadsPage = () => {
 
   if (loading) {
     return (
-      <PageContainer title="My Loads" subtitle="Loading your assigned loads..." icon={Truck}>
+      <PageContainer title="My Loads" subtitle="Loading your assigned loads..." icon={Layers as any}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', flexDirection: 'column', gap: '16px' }}>
           <Loader size={48} style={{ animation: 'spin 1s linear infinite', color: theme.colors.primary }} />
           <p style={{ fontSize: '16px', color: theme.colors.textSecondary, fontWeight: '500' }}>Loading your loads...</p>
@@ -660,7 +738,7 @@ const CarrierMyLoadsPage = () => {
 
   if (error) {
     return (
-      <PageContainer title="My Loads" subtitle="Error loading data" icon={Truck}>
+      <PageContainer title="My Loads" subtitle="Error loading data" icon={Layers as any}>
         <Card padding="40px">
           <div style={{ textAlign: 'center' }}>
             <AlertCircle size={64} style={{ color: theme.colors.error, marginBottom: '16px' }} />
@@ -792,25 +870,41 @@ const CarrierMyLoadsPage = () => {
     <PageContainer
       title="My Loads"
       subtitle="Manage your assigned loads and deliveries"
-      icon={Truck}
+      icon={Layers as any}
       headerAction={headerAction}
     >
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Active', value: stats.total, icon: Package, color: theme.colors.primary },
-          { label: 'Assigned', value: stats.assigned, icon: Clock, color: theme.colors.warning },
-          { label: 'In Transit', value: stats.inTransit, icon: Truck, color: theme.colors.info },
-          { label: 'Completed', value: stats.completed, icon: Package, color: theme.colors.success },
-          { label: 'Total Revenue', value: `$${formatNumber(stats.totalRevenue)}`, icon: DollarSign, color: theme.colors.success }
+          { label: 'Total Active', value: stats.total, icon: Package, color: theme.colors.textSecondary, isRevenue: false },
+          { label: 'Assigned', value: stats.assigned, icon: Clock, color: theme.colors.textSecondary, isRevenue: false },
+          { label: 'In Transit', value: stats.inTransit, icon: Truck, color: theme.colors.textSecondary, isRevenue: false },
+          { label: 'Completed', value: stats.completed, icon: Package, color: theme.colors.textSecondary, isRevenue: false },
+          { label: 'Total Revenue', value: stats.totalRevenue, icon: DollarSign, color: theme.colors.success, isRevenue: true }
         ].map(stat => (
           <Card key={stat.label} padding="24px">
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '12px', backgroundColor: `${stat.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '12px', 
+                backgroundColor: stat.isRevenue ? `${stat.color}20` : theme.colors.backgroundTertiary, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+              }}>
                 {React.createElement(stat.icon, { size: 28, color: stat.color })}
               </div>
               <div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>{stat.value}</p>
+                {stat.isRevenue ? (
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: stat.color, margin: 0, lineHeight: 1 }}>
+                    <AnimatedCounter value={stat.value} prefix="$" />
+                  </p>
+                ) : (
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                    {stat.value}
+                  </p>
+                )}
                 <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>{stat.label}</p>
               </div>
             </div>
@@ -818,37 +912,11 @@ const CarrierMyLoadsPage = () => {
         ))}
       </div>
 
-      {/* Status Filter */}
-      <Card padding="20px" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textSecondary }}>Filter by Status:</span>
-          {['all', 'assigned', 'in_transit', 'completed'].map(status => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: filterStatus === status ? theme.colors.primary : theme.colors.backgroundTertiary,
-                color: filterStatus === status ? 'white' : theme.colors.textPrimary,
-                border: `1px solid ${filterStatus === status ? theme.colors.primary : theme.colors.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textTransform: 'capitalize'
-              }}
-            >
-              {status.replace('_', ' ')}
-            </button>
-          ))}
-        </div>
-      </Card>
 
-      {/* Search and Filters */}
+      {/* Enhanced Search and Filters */}
       <Card padding="24px" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Search Bar */}
+        {/* Search Bar and Bulk Actions */}
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
           <div style={{ flex: '1', minWidth: '300px' }}>
             <div style={{ position: 'relative' }}>
               <Search 
@@ -889,102 +957,393 @@ const CarrierMyLoadsPage = () => {
             </div>
           </div>
 
+          {/* Bulk Actions */}
+          {selectedLoads.length > 0 && (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handleBulkExport}
+                style={{
+                  padding: '12px 16px',
+                  background: theme.colors.primary,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FileText size={16} />
+                Export ({selectedLoads.length})
+              </button>
+              <button
+                onClick={handleBulkStatusUpdate}
+                style={{
+                  padding: '12px 16px',
+                  background: theme.colors.warning,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Edit size={16} />
+                Update Status ({selectedLoads.length})
+              </button>
+              <button
+                onClick={clearSelection}
+                style={{
+                  padding: '12px 16px',
+                  background: theme.colors.background,
+                  color: theme.colors.textSecondary,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <X size={16} />
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Filter Controls */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
           {/* Status Filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{
-              padding: '12px 16px',
-              background: theme.colors.background,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: '12px',
-              color: theme.colors.textPrimary,
-              fontSize: '14px',
-              outline: 'none',
-              cursor: 'pointer',
-              minWidth: '140px'
-            }}
-          >
-            <option value="all" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>All Status</option>
-            <option value="assigned" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Assigned</option>
-            <option value="in_progress" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>In Progress</option>
-            <option value="completed" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Completed</option>
-            <option value="cancelled" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Cancelled</option>
-          </select>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Status
+            </label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="all">All Status</option>
+              <option value="assigned">Assigned</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
 
           {/* Equipment Filter */}
-          <select
-            value={filterEquipment}
-            onChange={(e) => setFilterEquipment(e.target.value)}
-            style={{
-              padding: '12px 16px',
-              background: theme.colors.background,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: '12px',
-              color: theme.colors.textPrimary,
-              fontSize: '14px',
-              outline: 'none',
-              cursor: 'pointer',
-              minWidth: '140px'
-            }}
-          >
-            <option value="all" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>All Equipment</option>
-            <option value="End Dump" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>End Dump</option>
-            <option value="Mixer" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Mixer</option>
-            <option value="Flatbed" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Flatbed</option>
-            <option value="Step Deck" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Step Deck</option>
-          </select>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Equipment
+            </label>
+            <select
+              value={filterEquipment}
+              onChange={(e) => setFilterEquipment(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="all">All Equipment</option>
+              <option value="End Dump">End Dump</option>
+              <option value="Mixer">Mixer</option>
+              <option value="Flatbed">Flatbed</option>
+              <option value="Step Deck">Step Deck</option>
+            </select>
+          </div>
 
           {/* Driver Filter */}
-          <select
-            value={filterDriver}
-            onChange={(e) => setFilterDriver(e.target.value)}
-            style={{
-              padding: '12px 16px',
-              background: theme.colors.background,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: '12px',
-              color: theme.colors.textPrimary,
-              fontSize: '14px',
-              outline: 'none',
-              cursor: 'pointer',
-              minWidth: '140px'
-            }}
-          >
-            <option value="all" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>All Drivers</option>
-            <option value="John Smith" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>John Smith</option>
-            <option value="Sarah Johnson" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Sarah Johnson</option>
-            <option value="Mike Wilson" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Mike Wilson</option>
-          </select>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Driver
+            </label>
+            <select
+              value={filterDriver}
+              onChange={(e) => setFilterDriver(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="all">All Drivers</option>
+              <option value="John Smith">John Smith</option>
+              <option value="Sarah Johnson">Sarah Johnson</option>
+              <option value="Mike Wilson">Mike Wilson</option>
+            </select>
+          </div>
 
           {/* Sort By */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <ArrowUpDown size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Sort By
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="none">None</option>
+              <option value="date">Date</option>
+              <option value="revenue">Revenue</option>
+              <option value="status">Status</option>
+              <option value="miles">Miles</option>
+              <option value="customer">Customer</option>
+            </select>
+          </div>
+
+          {/* Sort Direction */}
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Direction
+            </label>
+            <select
+              value={sortDirection}
+              onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="asc">Low → High</option>
+              <option value="desc">High → Low</option>
+            </select>
+          </div>
+
+          {/* Date Range From */}
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Calendar size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Date From
+            </label>
+            <input
+              type="date"
+              value={dateRangeFilter.from}
+              onChange={(e) => setDateRangeFilter(prev => ({ ...prev, from: e.target.value }))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          {/* Date Range To */}
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Date To
+            </label>
+            <input
+              type="date"
+              value={dateRangeFilter.to}
+              onChange={(e) => setDateRangeFilter(prev => ({ ...prev, to: e.target.value }))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          {/* Revenue Range Min */}
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <DollarSign size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Min Revenue
+            </label>
+            <input
+              type="number"
+              placeholder="0"
+              value={revenueRangeFilter.min}
+              onChange={(e) => setRevenueRangeFilter(prev => ({ ...prev, min: e.target.value }))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          {/* Revenue Range Max */}
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Max Revenue
+            </label>
+            <input
+              type="number"
+              placeholder="999999"
+              value={revenueRangeFilter.max}
+              onChange={(e) => setRevenueRangeFilter(prev => ({ ...prev, max: e.target.value }))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Clear Filters Button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+          <button
+            onClick={() => {
+              setSearchTerm('')
+              setFilterStatus('all')
+              setFilterEquipment('all')
+              setFilterDriver('all')
+              setSortBy('date')
+              setSortDirection('desc')
+              setDateRangeFilter({ from: '', to: '' })
+              setRevenueRangeFilter({ min: '', max: '' })
+              clearSelection()
+            }}
             style={{
-              padding: '12px 16px',
+              padding: '8px 16px',
               background: theme.colors.background,
               border: `1px solid ${theme.colors.border}`,
-              borderRadius: '12px',
-              color: theme.colors.textPrimary,
+              borderRadius: '8px',
+              color: theme.colors.textSecondary,
               fontSize: '14px',
-              outline: 'none',
+              fontWeight: '600',
               cursor: 'pointer',
-              minWidth: '140px'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.primary
+              e.currentTarget.style.color = '#FFFFFF'
+              e.currentTarget.style.borderColor = theme.colors.primary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = theme.colors.background
+              e.currentTarget.style.color = theme.colors.textSecondary
+              e.currentTarget.style.borderColor = theme.colors.border
             }}
           >
-            <option value="date" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Sort by Date</option>
-            <option value="revenue" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Sort by Revenue</option>
-            <option value="status" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Sort by Status</option>
-            <option value="customer" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Sort by Customer</option>
-          </select>
+            <X size={16} />
+            Clear All Filters
+          </button>
         </div>
       </Card>
 
       {/* Loads List */}
-      <Card title="Your Loads" subtitle={`${filteredLoads.length} load${filteredLoads.length !== 1 ? 's' : ''}`}>
+      <Card title="Your Loads" subtitle={`${finalFilteredLoads.length} load${finalFilteredLoads.length !== 1 ? 's' : ''}`}>
+        {/* Select All Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: `1px solid ${theme.colors.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={selectedLoads.length === finalFilteredLoads.length ? clearSelection : selectAllLoads}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = `${theme.colors.primary}20`
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none'
+              }}
+            >
+              {selectedLoads.length === finalFilteredLoads.length ? (
+                <CheckSquare size={20} color={theme.colors.primary} />
+              ) : (
+                <Square size={20} color={theme.colors.textSecondary} />
+              )}
+              <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                {selectedLoads.length === finalFilteredLoads.length ? 'Deselect All' : 'Select All'}
+              </span>
+            </button>
+            
+            {selectedLoads.length > 0 && (
+              <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
+                {selectedLoads.length} selected
+              </span>
+            )}
+          </div>
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredLoads.length === 0 ? (
+          {finalFilteredLoads.length === 0 ? (
             <div style={{ padding: '60px 20px', textAlign: 'center', background: theme.colors.background, borderRadius: '12px', border: `1px dashed ${theme.colors.border}` }}>
               <Truck size={48} style={{ color: theme.colors.textTertiary, marginBottom: '16px' }} />
               <h3 style={{ color: theme.colors.textSecondary, marginBottom: '8px' }}>No loads found</h3>
@@ -994,7 +1353,7 @@ const CarrierMyLoadsPage = () => {
               </button>
             </div>
           ) : (
-            filteredLoads.map((load) => {
+            finalFilteredLoads.map((load) => {
               const origin = typeof load.origin === 'string' ? JSON.parse(load.origin) : load.origin
               const destination = typeof load.destination === 'string' ? JSON.parse(load.destination) : load.destination
               const statusColor = getStatusColor(load.status)
@@ -1015,11 +1374,42 @@ const CarrierMyLoadsPage = () => {
                 >
                   {/* Header Section */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '20px', fontWeight: '700', color: theme.colors.textPrimary }}>
-                          {load.commodity}
-                        </span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1 }}>
+                      {/* Bulk Selection Checkbox */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleLoadSelection(load.id)
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          borderRadius: '4px',
+                          transition: 'all 0.2s ease',
+                          marginTop: '4px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = `${theme.colors.primary}20`
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'none'
+                        }}
+                        title={selectedLoads.includes(load.id) ? 'Deselect load' : 'Select load for bulk actions'}
+                      >
+                        {selectedLoads.includes(load.id) ? (
+                          <CheckSquare size={20} color={theme.colors.primary} />
+                        ) : (
+                          <Square size={20} color={theme.colors.textSecondary} />
+                        )}
+                      </button>
+
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '20px', fontWeight: '700', color: theme.colors.textPrimary }}>
+                            {load.commodity}
+                          </span>
                         <span style={{
                           padding: '6px 12px',
                           background: `${statusColor}20`,
@@ -1045,6 +1435,7 @@ const CarrierMyLoadsPage = () => {
                           </span>
                         )}
                       </p>
+                      </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <p style={{ fontSize: '32px', fontWeight: 'bold', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
@@ -1350,8 +1741,8 @@ const CarrierMyLoadsPage = () => {
                         style={{
                           padding: '12px 28px',
                           background: 'transparent',
-                          color: theme.colors.primary,
-                          border: `2px solid ${theme.colors.primary}`,
+                          color: theme.colors.textSecondary,
+                          border: `1px solid ${theme.colors.border}`,
                           borderRadius: '8px',
                           fontSize: '14px',
                           fontWeight: '600',
@@ -1363,16 +1754,16 @@ const CarrierMyLoadsPage = () => {
                           letterSpacing: '0.3px'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = theme.colors.primary
-                          e.currentTarget.style.color = 'white'
+                          e.currentTarget.style.background = theme.colors.backgroundCardHover
+                          e.currentTarget.style.color = theme.colors.textPrimary
+                          e.currentTarget.style.borderColor = theme.colors.primary
                           e.currentTarget.style.transform = 'translateY(-1px)'
-                          e.currentTarget.style.boxShadow = `0 4px 12px ${theme.colors.primary}30`
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent'
-                          e.currentTarget.style.color = theme.colors.primary
+                          e.currentTarget.style.color = theme.colors.textSecondary
+                          e.currentTarget.style.borderColor = theme.colors.border
                           e.currentTarget.style.transform = 'translateY(0)'
-                          e.currentTarget.style.boxShadow = 'none'
                         }}
                       >
                         <Navigation size={16} />
@@ -1391,29 +1782,30 @@ const CarrierMyLoadsPage = () => {
                         }}
                         style={{
                           padding: '12px 28px',
-                          background: '#ef4444',
-                          color: 'white',
-                          border: 'none',
+                          background: 'transparent',
+                          color: theme.colors.textSecondary,
+                          border: `1px solid ${theme.colors.border}`,
                           borderRadius: '8px',
                           fontSize: '14px',
-                          fontWeight: '700',
+                          fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '8px',
-                          letterSpacing: '0.3px',
-                          boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)'
+                          letterSpacing: '0.3px'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#dc2626'
+                          e.currentTarget.style.background = theme.colors.backgroundCardHover
+                          e.currentTarget.style.color = theme.colors.textPrimary
+                          e.currentTarget.style.borderColor = theme.colors.primary
                           e.currentTarget.style.transform = 'translateY(-1px)'
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.5)'
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#ef4444'
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = theme.colors.textSecondary
+                          e.currentTarget.style.borderColor = theme.colors.border
                           e.currentTarget.style.transform = 'translateY(0)'
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(239, 68, 68, 0.3)'
                         }}
                       >
                         <AlertCircle size={16} />
@@ -1546,13 +1938,13 @@ const CarrierMyLoadsPage = () => {
                         }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = theme.colors.backgroundCardHover
-                        e.currentTarget.style.borderColor = theme.colors.primary
                         e.currentTarget.style.color = theme.colors.textPrimary
+                        e.currentTarget.style.borderColor = theme.colors.primary
                       }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent'
-                          e.currentTarget.style.borderColor = theme.colors.border
                           e.currentTarget.style.color = theme.colors.textSecondary
+                          e.currentTarget.style.borderColor = theme.colors.border
                         }}
                       >
                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -1564,8 +1956,8 @@ const CarrierMyLoadsPage = () => {
                         style={{
                           padding: '10px 16px',
                           backgroundColor: 'transparent',
-                          color: theme.colors.primary,
-                          border: `1px solid ${theme.colors.primary}`,
+                          color: theme.colors.textSecondary,
+                          border: `1px solid ${theme.colors.border}`,
                           borderRadius: '8px',
                           fontSize: '14px',
                           fontWeight: '600',
@@ -1576,12 +1968,14 @@ const CarrierMyLoadsPage = () => {
                           gap: '6px'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = theme.colors.primary
-                          e.currentTarget.style.color = 'white'
+                          e.currentTarget.style.background = theme.colors.backgroundCardHover
+                          e.currentTarget.style.color = theme.colors.textPrimary
+                          e.currentTarget.style.borderColor = theme.colors.primary
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent'
-                          e.currentTarget.style.color = theme.colors.primary
+                          e.currentTarget.style.color = theme.colors.textSecondary
+                          e.currentTarget.style.borderColor = theme.colors.border
                         }}
                       >
                         <Edit size={16} />

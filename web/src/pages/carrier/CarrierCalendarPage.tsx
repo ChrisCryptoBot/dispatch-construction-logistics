@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { carrierAPI } from '../../services/api'
 import PageContainer from '../../components/shared/PageContainer'
 import Card from '../../components/ui/Card'
 import { 
@@ -7,24 +10,38 @@ import {
   Truck, User, Wrench, AlertTriangle, Clock, MapPin,
   Eye, EyeOff, Settings, Download, Upload, RefreshCw,
   CheckCircle, XCircle, AlertCircle, Info, Search,
-  ArrowRight, ArrowLeft, CalendarDays, MoreHorizontal
+  ArrowRight, ArrowLeft, CalendarDays, MoreHorizontal,
+  Edit, Trash2, Copy, Bell, BellOff, Star, StarOff,
+  BarChart3, PieChart, TrendingUp, Calendar as CalendarIcon,
+  PlusCircle, MinusCircle, Grid3X3, List, Layout, Package
 } from 'lucide-react'
 import CalendarSyncService from '../../services/calendarSync'
 import NotificationService from '../../services/notificationService'
-import type { CalendarEvent } from '../../types'
+import type { CalendarEvent, CalendarView, CalendarEventType, CalendarEventPriority, CalendarEventStatus } from '../../types'
+import { formatDate, formatTime, formatCurrency } from '../../utils/formatters'
 
-const CalendarPage = () => {
+const CarrierCalendarPage = () => {
   const { theme } = useTheme()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   
   // State management
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [view, setView] = useState<'week' | 'month' | 'day'>('week')
+  const [view, setView] = useState<CalendarView>('week')
+  const [resourceView, setResourceView] = useState<'driver' | 'vehicle' | 'project'>('driver')
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showEventModal, setShowEventModal] = useState(false)
   const [showNewEventModal, setShowNewEventModal] = useState(false)
+  const [showEditEventModal, setShowEditEventModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showStatsModal, setShowStatsModal] = useState(false)
+  const [conflicts, setConflicts] = useState<any[]>([])
+  
+  // Form states
   const [newEventForm, setNewEventForm] = useState({
     title: '',
-    type: 'custom' as CalendarEvent['type'],
+    type: 'custom' as CalendarEventType,
     startDate: '',
     startTime: '',
     endDate: '',
@@ -32,504 +49,429 @@ const CalendarPage = () => {
     allDay: false,
     location: '',
     description: '',
-    priority: 'medium' as CalendarEvent['priority']
+    priority: 'medium' as CalendarEventPriority,
+    driverId: '',
+    vehicleId: '',
+    loadId: '',
+    reminder: { enabled: true, minutesBefore: 15 }
   })
-  const [filteredCategories, setFilteredCategories] = useState<string[]>(['load', 'maintenance', 'compliance', 'driver', 'meeting'])
+  
+  // Filter and search states
+  const [filteredCategories, setFilteredCategories] = useState<string[]>(['load', 'maintenance', 'compliance', 'driver', 'meeting', 'custom'])
   const [searchTerm, setSearchTerm] = useState('')
+  const [filteredDrivers, setFilteredDrivers] = useState<string[]>([])
+  const [filteredVehicles, setFilteredVehicles] = useState<string[]>([])
+  const [filteredPriorities, setFilteredPriorities] = useState<CalendarEventPriority[]>(['low', 'medium', 'high', 'urgent'])
+  const [filteredStatuses, setFilteredStatuses] = useState<CalendarEventStatus[]>(['scheduled', 'confirmed', 'in_progress', 'completed'])
+  
+  // UI states
+  const [showFilters, setShowFilters] = useState(false)
+  const [showMiniCalendar, setShowMiniCalendar] = useState(false)
+  const [compactView, setCompactView] = useState(false)
+  // Services
   const [syncService] = useState(() => CalendarSyncService.getInstance())
   const [notificationService] = useState(() => NotificationService.getInstance())
-  const [showYearPicker, setShowYearPicker] = useState(false)
-  const [showMonthPicker, setShowMonthPicker] = useState(false)
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
-  const [showMonthSelection, setShowMonthSelection] = useState(false)
-  const [showTimeSlotModal, setShowTimeSlotModal] = useState(false)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{hour: number, minute: number} | null>(null)
 
-  // Auto-sync events from various sources
-  const [events, setEvents] = useState<CalendarEvent[]>([])
-
-  // Initialize auto-sync on component mount
-  useEffect(() => {
-    // Subscribe to calendar sync updates
-    const unsubscribe = syncService.subscribe((syncedEvents) => {
-      setEvents(syncedEvents)
-    })
-
-    // Initialize with mock data for demonstration
-    initializeMockData()
-
-    // Start notification monitoring
-    notificationService.startEventMonitoring(syncService)
-
-    // Request notification permission
-    notificationService.requestPermission()
-
-    return () => {
-      unsubscribe()
-      notificationService.stopEventMonitoring()
-    }
-  }, [])
-
-  // Initialize mock data for demonstration
-  const initializeMockData = () => {
-    // Mock loads
-    const mockLoads = [
-      {
-        id: 'load-1',
-        loadNumber: '12345',
-        customer: 'ABC Manufacturing',
-        pickupDate: new Date(2025, 0, 27, 8, 0),
-        deliveryDate: new Date(2025, 0, 27, 16, 0),
-        pickupLocation: 'Dallas, TX',
-        deliveryLocation: 'Houston, TX',
-        driver: 'John Smith',
-        status: 'booked' as const,
-        rate: 2500,
-        equipment: 'Dry Van',
-        specialInstructions: 'Handle with care - fragile cargo'
-      },
-      {
-        id: 'load-2',
-        loadNumber: '12346',
-        customer: 'XYZ Corp',
-        pickupDate: new Date(2025, 0, 28, 9, 0),
-        deliveryDate: new Date(2025, 0, 28, 17, 0),
-        pickupLocation: 'Houston, TX',
-        deliveryLocation: 'Austin, TX',
-        driver: 'Mike Johnson',
-        status: 'booked' as const,
-        rate: 3200,
-        equipment: 'Flatbed'
+  // Fetch calendar events
+  const { data: events = [], isLoading, refetch } = useQuery({
+    queryKey: ['calendar-events', currentDate, view],
+    queryFn: async () => {
+      try {
+        // Mock API call - replace with actual API when available
+        return generateMockEvents()
+      } catch (error) {
+        console.warn('API not available, using mock data:', error)
+        return generateMockEvents()
       }
-    ]
-
-    // Mock maintenance
-    const mockMaintenance = [
-      {
-        id: 'maintenance-1',
-        vehicleId: 'truck-001',
-        vehicleNumber: 'Truck #1',
-        serviceType: 'Oil Change',
-        scheduledDate: new Date(2025, 0, 27, 9, 0),
-        estimatedDuration: 60,
-        serviceProvider: 'Fleet Service Center',
-        cost: 150,
-        priority: 'medium' as const,
-        description: 'Regular oil change service',
-        status: 'scheduled' as const
-      },
-      {
-        id: 'maintenance-2',
-        vehicleId: 'truck-002',
-        vehicleNumber: 'Truck #2',
-        serviceType: 'DOT Inspection',
-        scheduledDate: new Date(2025, 0, 28, 8, 0),
-        estimatedDuration: 240,
-        serviceProvider: 'DOT Inspection Station',
-        cost: 300,
-        priority: 'urgent' as const,
-        description: 'Annual DOT inspection required',
-        status: 'scheduled' as const
-      }
-    ]
-
-    // Mock compliance
-    const mockCompliance = [
-      {
-        id: 'compliance-1',
-        type: 'insurance-renewal' as const,
-        entity: 'Fleet Insurance',
-        dueDate: new Date(2025, 0, 30),
-        priority: 'high' as const,
-        description: 'Fleet insurance renewal due',
-        status: 'pending' as const
-      }
-    ]
-
-    // Mock driver events
-    const mockDrivers = [
-      {
-        id: 'driver-1',
-        driverId: 'driver-001',
-        driverName: 'John Smith',
-        type: 'license-expiry' as const,
-        dueDate: new Date(2025, 1, 5),
-        priority: 'high' as const,
-        description: 'CDL license renewal required',
-        status: 'pending' as const
-      }
-    ]
-
-    // Sync all data to calendar
-    syncService.syncLoads(mockLoads)
-    syncService.syncMaintenance(mockMaintenance)
-    syncService.syncCompliance(mockCompliance)
-    syncService.syncDrivers(mockDrivers)
-
-    // Create notifications for new events
-    mockLoads.forEach(load => {
-      notificationService.createLoadBookingNotification(
-        load.loadNumber,
-        load.customer,
-        load.pickupDate
-      )
-    })
-
-    mockMaintenance.forEach(maintenance => {
-      notificationService.createMaintenanceNotification(
-        maintenance.vehicleNumber,
-        maintenance.serviceType,
-        maintenance.scheduledDate
-      )
-    })
-
-    mockCompliance.forEach(compliance => {
-      notificationService.createComplianceNotification(
-        compliance.entity,
-        compliance.type,
-        compliance.dueDate
-      )
-    })
-
-    mockDrivers.forEach(driver => {
-      notificationService.createDriverNotification(
-        driver.driverName,
-        driver.type,
-        driver.dueDate
-      )
-    })
-  }
-
-  // All mock data is now managed by the auto-sync system above
-  // No legacy event arrays needed
-  /* REMOVED LEGACY ARRAY:
-      id: 'load-2',
-      title: 'Load Delivery - Houston Site',
-      type: 'load',
-      start: new Date(2025, 0, 27, 14, 30),
-      end: new Date(2025, 0, 27, 15, 30),
-      status: 'scheduled',
-      priority: 'high',
-      location: 'Houston Construction Site',
-      assignee: 'John Smith',
-      vehicle: 'Truck #1',
-      loadId: 'LT-1234',
-      customer: 'ABC Construction',
-      color: theme.colors.primary
-    },
-    {
-      id: 'load-3',
-      title: 'Load Pickup - Austin to San Antonio',
-      type: 'load',
-      start: new Date(2025, 0, 28, 10, 0),
-      end: new Date(2025, 0, 28, 11, 0),
-      status: 'scheduled',
-      priority: 'medium',
-      location: 'Austin Material Yard',
-      assignee: 'Mike Johnson',
-      vehicle: 'Truck #3',
-      loadId: 'LT-1235',
-      customer: 'XYZ Builders',
-      color: theme.colors.primary
-    },
-
-    // Maintenance Events
-    {
-      id: 'maint-1',
-      title: 'Oil Change - Truck #2',
-      type: 'maintenance',
-      start: new Date(2025, 0, 27, 9, 0),
-      end: new Date(2025, 0, 27, 11, 0),
-      status: 'scheduled',
-      priority: 'medium',
-      location: 'Maintenance Shop',
-      vehicle: 'Truck #2',
-      color: theme.colors.warning
-    },
-    {
-      id: 'maint-2',
-      title: 'DOT Inspection - Truck #4',
-      type: 'maintenance',
-      start: new Date(2025, 0, 28, 8, 0),
-      end: new Date(2025, 0, 28, 12, 0),
-      status: 'scheduled',
-      priority: 'urgent',
-      location: 'DOT Inspection Station',
-      vehicle: 'Truck #4',
-      color: theme.colors.error
-    },
-
-    // Compliance Events
-    {
-      id: 'comp-1',
-      title: 'Insurance Renewal Due',
-      type: 'compliance',
-      start: new Date(2025, 0, 30),
-      end: new Date(2025, 0, 30),
-      allDay: true,
-      status: 'scheduled',
-      priority: 'high',
-      description: 'Primary liability insurance renewal',
-      color: theme.colors.error
-    },
-    {
-      id: 'comp-2',
-      title: 'Driver License Verification',
-      type: 'compliance',
-      start: new Date(2025, 1, 5),
-      end: new Date(2025, 1, 5),
-      allDay: true,
-      status: 'scheduled',
-      priority: 'medium',
-      assignee: 'Sarah Davis',
-      color: theme.colors.info
-    },
-
-    // Driver Events
-    {
-      id: 'driver-1',
-      title: 'John Smith - Off Duty',
-      type: 'driver',
-      start: new Date(2025, 0, 29, 18, 0),
-      end: new Date(2025, 0, 30, 6, 0),
-      status: 'scheduled',
-      priority: 'low',
-      assignee: 'John Smith',
-      color: theme.colors.textSecondary
-    },
-    {
-      id: 'driver-2',
-      title: 'Mike Johnson - Training',
-      type: 'driver',
-      start: new Date(2025, 0, 28, 14, 0),
-      end: new Date(2025, 0, 28, 17, 0),
-      status: 'scheduled',
-      priority: 'medium',
-      assignee: 'Mike Johnson',
-      location: 'Training Center',
-      color: theme.colors.info
-    },
-
-    // Meeting Events
-    {
-      id: 'meeting-1',
-      title: 'Customer Meeting - ABC Construction',
-      type: 'meeting',
-      start: new Date(2025, 0, 29, 10, 0),
-      end: new Date(2025, 0, 29, 11, 0),
-      status: 'scheduled',
-      priority: 'high',
-      location: 'ABC Construction Office',
-      customer: 'ABC Construction',
-      color: theme.colors.accent
     }
-  ])  END OF REMOVED LEGACY ARRAY */
+  })
 
-  // Calendar navigation
-  const navigateCalendar = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate)
-    if (view === 'week') {
-      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7))
-    } else if (view === 'month') {
-      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1))
-    } else {
-      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1))
+  // Fetch drivers and vehicles for forms
+  const { data: drivers = [] } = useQuery({
+    queryKey: ['drivers'],
+    queryFn: async () => {
+      try {
+        // Mock API call - replace with actual API when available
+        return [
+          { id: '1', name: 'Mike Johnson', status: 'available' },
+          { id: '2', name: 'Sarah Wilson', status: 'on_duty' },
+          { id: '3', name: 'David Brown', status: 'available' }
+        ]
+      } catch (error) {
+        return [
+          { id: '1', name: 'Mike Johnson', status: 'available' },
+          { id: '2', name: 'Sarah Wilson', status: 'on_duty' },
+          { id: '3', name: 'David Brown', status: 'available' }
+        ]
+      }
     }
-    setCurrentDate(newDate)
-  }
+  })
 
-  const goToToday = () => {
-    setShowYearPicker(!showYearPicker)
-    setShowMonthPicker(false)
-    setShowMonthSelection(false)
-  }
-
-  const jumpToYear = (year: number) => {
-    setSelectedYear(year)
-    setShowYearPicker(false)
-    setShowMonthSelection(true)
-  }
-
-  const jumpToMonth = (month: number) => {
-    const newDate = new Date(currentDate)
-    newDate.setFullYear(selectedYear)
-    newDate.setMonth(month)
-    setCurrentDate(newDate)
-    setShowMonthPicker(false)
-    setShowMonthSelection(false)
-  }
-
-  const jumpToToday = () => {
-    setCurrentDate(new Date())
-    setShowYearPicker(false)
-    setShowMonthPicker(false)
-    setShowMonthSelection(false)
-  }
-
-  const handleTimeSlotClick = (hour: number, minute: number = 0) => {
-    setSelectedTimeSlot({ hour, minute })
-    setShowTimeSlotModal(true)
-  }
-
-  const createAppointmentFromTimeSlot = (title: string, type: CalendarEvent['type'], duration: number = 60) => {
-    if (!selectedTimeSlot) return
-
-    const startTime = new Date(currentDate)
-    startTime.setHours(selectedTimeSlot.hour, selectedTimeSlot.minute, 0, 0)
-    
-    const endTime = new Date(startTime)
-    endTime.setMinutes(endTime.getMinutes() + duration)
-
-    const newEvent: CalendarEvent = {
-      id: `event-${Date.now()}`,
-      title,
-      type,
-      start: startTime,
-      end: endTime,
-      allDay: false,
-      color: getEventColor(type),
-      priority: 'medium',
-      description: `Appointment created at ${startTime.toLocaleTimeString()}`
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      try {
+        // Mock API call - replace with actual API when available
+        return [
+          { id: '1', number: 'TRK-001', type: 'Dry Van', status: 'available' },
+          { id: '2', number: 'TRK-002', type: 'Flatbed', status: 'in_use' },
+          { id: '3', number: 'TRK-003', type: 'Refrigerated', status: 'maintenance' }
+        ]
+      } catch (error) {
+        return [
+          { id: '1', number: 'TRK-001', type: 'Dry Van', status: 'available' },
+          { id: '2', number: 'TRK-002', type: 'Flatbed', status: 'in_use' },
+          { id: '3', number: 'TRK-003', type: 'Refrigerated', status: 'maintenance' }
+        ]
+      }
     }
+  })
 
-    setEvents(prev => [...prev, newEvent])
-    setShowTimeSlotModal(false)
-    setSelectedTimeSlot(null)
-    
-    // Show success notification
-    if (notificationService) {
-      notificationService.createLoadBookingNotification({
-        title: 'Appointment Created',
-        message: `${title} scheduled for ${startTime.toLocaleTimeString()}`,
-        icon: '/icons/icon-192x192.png'
+  // Mutations
+  const createEventMutation = useMutation({
+    mutationFn: async (eventData: Partial<CalendarEvent>) => {
+      // Mock API call - replace with actual API when available
+      return Promise.resolve(eventData)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+      setShowNewEventModal(false)
+      resetNewEventForm()
+      notificationService.addNotification({
+        title: 'Event Created',
+        message: 'New calendar event has been created successfully',
+        type: 'success',
+        priority: 'medium'
       })
     }
-  }
-
-  const getEventColor = (type: CalendarEvent['type']) => {
-    const colors = {
-      load: '#3B82F6',
-      maintenance: '#F59E0B', 
-      compliance: '#EF4444',
-      driver: '#10B981',
-      meeting: '#8B5CF6',
-      custom: '#6B7280'
-    }
-    return colors[type] || colors.custom
-  }
-
-  // Get week dates
-  const getWeekDates = (date: Date) => {
-    const week = []
-    const startOfWeek = new Date(date)
-    const day = startOfWeek.getDay()
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1) // Adjust for Monday start
-    startOfWeek.setDate(diff)
-
-    for (let i = 0; i < 7; i++) {
-      const weekDay = new Date(startOfWeek)
-      weekDay.setDate(startOfWeek.getDate() + i)
-      week.push(weekDay)
-    }
-    return week
-  }
-
-  // Filter events
-  const filteredEvents = events.filter(event => {
-    const matchesCategory = filteredCategories.includes(event.type)
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.assignee?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesCategory && matchesSearch
   })
 
-  // Get events for specific date
-  const getEventsForDate = (date: Date) => {
-    return filteredEvents.filter(event => {
-      const eventDate = new Date(event.start)
-      return eventDate.toDateString() === date.toDateString()
-    })
-  }
-
-  // Get time slots for week view
-  const timeSlots = Array.from({ length: 24 }, (_, i) => {
-    const hour = i
-    const timeString = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`
-    return { hour, timeString }
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CalendarEvent> }) => {
+      // Mock API call - replace with actual API when available
+      return Promise.resolve({ id, ...data })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+      setShowEditEventModal(false)
+      setSelectedEvent(null)
+      notificationService.addNotification({
+        title: 'Event Updated',
+        message: 'Calendar event has been updated successfully',
+        type: 'success',
+        priority: 'medium'
+      })
+    }
   })
 
-  // Event type configurations
-  const eventTypes = {
-    load: { label: 'Loads', icon: Truck, color: theme.colors.primary },
-    maintenance: { label: 'Maintenance', icon: Wrench, color: theme.colors.warning },
-    compliance: { label: 'Compliance', icon: AlertTriangle, color: theme.colors.error },
-    driver: { label: 'Drivers', icon: User, color: theme.colors.info },
-    meeting: { label: 'Meetings', icon: Calendar, color: theme.colors.accent },
-    custom: { label: 'Custom', icon: Plus, color: theme.colors.textSecondary }
-  }
-
-  const getEventIcon = (type: string) => {
-    const config = eventTypes[type as keyof typeof eventTypes]
-    return config ? config.icon : Plus
-  }
-
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    })
-  }
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    })
-  }
-
-  const handleDayClick = (date: Date) => {
-    setCurrentDate(date)
-    setView('day')
-  }
-
-  const handleCreateEvent = () => {
-    if (!newEventForm.title.trim()) {
-      alert('Please enter an event title')
-      return
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Mock API call - replace with actual API when available
+      return Promise.resolve({ id })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+      setShowDeleteModal(false)
+      setSelectedEvent(null)
+      notificationService.addNotification({
+        title: 'Event Deleted',
+        message: 'Calendar event has been deleted successfully',
+        type: 'info',
+        priority: 'medium'
+      })
     }
+  })
 
-    if (!newEventForm.startDate) {
-      alert('Please select a start date')
-      return
-    }
-
-    const startDateTime = newEventForm.allDay 
-      ? new Date(newEventForm.startDate)
-      : new Date(`${newEventForm.startDate}T${newEventForm.startTime}`)
+  // Helper functions
+  const getDateRange = () => {
+    const start = new Date(currentDate)
+    const end = new Date(currentDate)
     
-    const endDateTime = newEventForm.allDay 
-      ? new Date(newEventForm.endDate || newEventForm.startDate)
-      : new Date(`${newEventForm.endDate || newEventForm.startDate}T${newEventForm.endTime}`)
-
-    const newEvent: CalendarEvent = {
-      id: `event-${Date.now()}`,
-      title: newEventForm.title,
-      type: newEventForm.type,
-      start: startDateTime,
-      end: endDateTime,
-      allDay: newEventForm.allDay,
-      status: 'scheduled',
-      priority: newEventForm.priority,
-      location: newEventForm.location,
-      description: newEventForm.description,
-      color: getEventColor(newEventForm.type)
+    switch (view) {
+      case 'day':
+        return { start: start.toISOString(), end: start.toISOString() }
+      case 'week':
+        start.setDate(start.getDate() - start.getDay())
+        end.setDate(start.getDate() + 6)
+        return { start: start.toISOString(), end: end.toISOString() }
+      case 'month':
+        start.setDate(1)
+        end.setMonth(end.getMonth() + 1)
+        end.setDate(0)
+        return { start: start.toISOString(), end: end.toISOString() }
+      default:
+        return { start: start.toISOString(), end: end.toISOString() }
     }
+  }
 
-    setEvents(prev => [...prev, newEvent])
-    setShowNewEventModal(false)
+  const getMonthDays = () => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const startDate = new Date(firstDay)
+    startDate.setDate(startDate.getDate() - firstDay.getDay())
+    
+    const days = []
+    const today = new Date()
+    
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate)
+      date.setDate(startDate.getDate() + i)
+      
+      days.push({
+        date: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+        isCurrentMonth: date.getMonth() === month,
+        isToday: date.toDateString() === today.toDateString()
+      })
+    }
+    
+    return days
+  }
+
+  const getWeekDays = () => {
+    const startDate = new Date(currentDate)
+    startDate.setDate(startDate.getDate() - startDate.getDay())
+    
+    const days = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startDate)
+      date.setDate(startDate.getDate() + i)
+      days.push(date)
+    }
+    
+    return days
+  }
+
+  const generateMockEvents = (): CalendarEvent[] => {
+    const today = new Date()
+    return [
+      {
+        id: '1',
+        title: 'Load Pickup - ACME Logistics',
+        type: 'pickup',
+        startDate: new Date(today.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(today.getTime() + 3 * 60 * 60 * 1000).toISOString(),
+        startTime: '10:00',
+        endTime: '11:00',
+        allDay: false,
+        location: '123 Main St, Dallas, TX',
+        description: 'Dry van pickup for electronics - Release expires at 10:30 AM',
+        priority: 'high',
+        status: 'confirmed',
+        driverId: '1',
+        driverName: 'Mike Johnson',
+        vehicleId: '1',
+        vehicleName: 'TRK-001',
+        loadId: 'LD-2024-001',
+        customerName: 'ACME Logistics',
+        pickupLocation: '123 Main St, Dallas, TX',
+        estimatedDuration: 60,
+        reminder: { enabled: true, minutesBefore: 30 },
+        createdAt: today.toISOString(),
+        updatedAt: today.toISOString(),
+        createdBy: 'user1'
+      },
+      {
+        id: '2',
+        title: 'Load Delivery - Global Shipping',
+        type: 'delivery',
+        startDate: new Date(today.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(today.getTime() + 6 * 60 * 60 * 1000).toISOString(),
+        startTime: '13:00',
+        endTime: '14:00',
+        allDay: false,
+        location: '456 Commerce Blvd, Houston, TX',
+        description: 'Electronics delivery - ETA: 1:15 PM',
+        priority: 'high',
+        status: 'confirmed',
+        driverId: '1',
+        driverName: 'Mike Johnson',
+        vehicleId: '1',
+        vehicleName: 'TRK-001',
+        loadId: 'LD-2024-001',
+        customerName: 'Global Shipping',
+        deliveryLocation: '456 Commerce Blvd, Houston, TX',
+        estimatedDuration: 45,
+        reminder: { enabled: true, minutesBefore: 15 },
+        createdAt: today.toISOString(),
+        updatedAt: today.toISOString(),
+        createdBy: 'user1'
+      },
+      {
+        id: '3',
+        title: 'Vehicle Maintenance - TRK-002',
+        type: 'maintenance',
+        startDate: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(today.getTime() + 25 * 60 * 60 * 1000).toISOString(),
+        startTime: '09:00',
+        endTime: '12:00',
+        allDay: false,
+        location: 'ABC Auto Repair, Houston, TX',
+        description: 'Routine oil change and inspection - Maintenance lock prevents load assignment',
+        priority: 'medium',
+        status: 'scheduled',
+        vehicleId: '2',
+        vehicleName: 'TRK-002',
+        estimatedDuration: 180,
+        reminder: { enabled: true, minutesBefore: 60 },
+        createdAt: today.toISOString(),
+        updatedAt: today.toISOString(),
+        createdBy: 'user1'
+      },
+      {
+        id: '4',
+        title: 'Load Pickup - DEF Industries',
+        type: 'pickup',
+        startDate: new Date(today.getTime() + 26 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(today.getTime() + 27 * 60 * 60 * 1000).toISOString(),
+        startTime: '11:00',
+        endTime: '12:00',
+        allDay: false,
+        location: '789 Industrial Way, Austin, TX',
+        description: 'Flatbed pickup for machinery - Release expires at 11:30 AM',
+        priority: 'urgent',
+        status: 'confirmed',
+        driverId: '2',
+        driverName: 'Sarah Wilson',
+        vehicleId: '3',
+        vehicleName: 'TRK-003',
+        loadId: 'LD-2024-002',
+        customerName: 'DEF Industries',
+        pickupLocation: '789 Industrial Way, Austin, TX',
+        estimatedDuration: 60,
+        reminder: { enabled: true, minutesBefore: 30 },
+        createdAt: today.toISOString(),
+        updatedAt: today.toISOString(),
+        createdBy: 'user1'
+      },
+      {
+        id: '5',
+        title: 'CDL Medical Expiry Reminder',
+        type: 'compliance',
+        startDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
+        startTime: '08:00',
+        endTime: '09:00',
+        allDay: false,
+        location: 'Medical Center, Dallas, TX',
+        description: 'Mike Johnson CDL medical certificate expires in 7 days',
+        priority: 'urgent',
+        status: 'scheduled',
+        driverId: '1',
+        driverName: 'Mike Johnson',
+        reminder: { enabled: true, minutesBefore: 1440 }, // 24 hours
+        createdAt: today.toISOString(),
+        updatedAt: today.toISOString(),
+        createdBy: 'user1'
+      },
+      {
+        id: '6',
+        title: 'Driver Meeting - Safety Briefing',
+        type: 'meeting',
+        startDate: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
+        startTime: '14:00',
+        endTime: '15:00',
+        allDay: false,
+        location: 'Office Conference Room',
+        description: 'Weekly safety briefing - All drivers required',
+        priority: 'medium',
+        status: 'scheduled',
+        reminder: { enabled: true, minutesBefore: 15 },
+        createdAt: today.toISOString(),
+        updatedAt: today.toISOString(),
+        createdBy: 'user1'
+      }
+    ]
+  }
+
+  // Conflict detection logic
+  const detectConflicts = (events: CalendarEvent[]) => {
+    const conflicts: any[] = []
+    
+    // Group events by resource (driver/vehicle)
+    const driverEvents = events.filter(e => e.driverId)
+    const vehicleEvents = events.filter(e => e.vehicleId)
+    
+    // Check driver conflicts
+    const driverGroups = driverEvents.reduce((acc, event) => {
+      if (!event.driverId) return acc
+      if (!acc[event.driverId]) acc[event.driverId] = []
+      acc[event.driverId].push(event)
+      return acc
+    }, {} as Record<string, CalendarEvent[]>)
+    
+    Object.entries(driverGroups).forEach(([driverId, driverEvents]) => {
+      for (let i = 0; i < driverEvents.length; i++) {
+        for (let j = i + 1; j < driverEvents.length; j++) {
+          const event1 = driverEvents[i]
+          const event2 = driverEvents[j]
+          
+          const start1 = new Date(event1.startDate)
+          const end1 = new Date(event1.endDate)
+          const start2 = new Date(event2.startDate)
+          const end2 = new Date(event2.endDate)
+          
+          // Check for overlap
+          if (start1 < end2 && start2 < end1) {
+            conflicts.push({
+              id: `conflict-${event1.id}-${event2.id}`,
+              type: 'hard_clash',
+              severity: 'high',
+              message: `Driver ${event1.driverName} double-booked`,
+              events: [event1, event2],
+              resourceType: 'driver',
+              resourceId: driverId,
+              resourceName: event1.driverName
+            })
+          }
+        }
+      }
+    })
+    
+    // Check vehicle conflicts
+    const vehicleGroups = vehicleEvents.reduce((acc, event) => {
+      if (!event.vehicleId) return acc
+      if (!acc[event.vehicleId]) acc[event.vehicleId] = []
+      acc[event.vehicleId].push(event)
+      return acc
+    }, {} as Record<string, CalendarEvent[]>)
+    
+    Object.entries(vehicleGroups).forEach(([vehicleId, vehicleEvents]) => {
+      for (let i = 0; i < vehicleEvents.length; i++) {
+        for (let j = i + 1; j < vehicleEvents.length; j++) {
+          const event1 = vehicleEvents[i]
+          const event2 = vehicleEvents[j]
+          
+          const start1 = new Date(event1.startDate)
+          const end1 = new Date(event1.endDate)
+          const start2 = new Date(event2.startDate)
+          const end2 = new Date(event2.endDate)
+          
+          // Check for overlap
+          if (start1 < end2 && start2 < end1) {
+            conflicts.push({
+              id: `conflict-${event1.id}-${event2.id}`,
+              type: 'hard_clash',
+              severity: 'high',
+              message: `Vehicle ${event1.vehicleName} double-booked`,
+              events: [event1, event2],
+              resourceType: 'vehicle',
+              resourceId: vehicleId,
+              resourceName: event1.vehicleName
+            })
+          }
+        }
+      }
+    })
+    
+    return conflicts
+  }
+
+  const resetNewEventForm = () => {
     setNewEventForm({
       title: '',
       type: 'custom',
@@ -540,15 +482,205 @@ const CalendarPage = () => {
       allDay: false,
       location: '',
       description: '',
-      priority: 'medium'
+      priority: 'medium',
+      driverId: '',
+      vehicleId: '',
+      loadId: '',
+      reminder: { enabled: true, minutesBefore: 15 }
     })
   }
 
-  const weekDates = getWeekDates(currentDate)
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      const matchesCategory = filteredCategories.includes(event.type)
+      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           event.location?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesDriver = filteredDrivers.length === 0 || filteredDrivers.includes(event.driverId || '')
+      const matchesVehicle = filteredVehicles.length === 0 || filteredVehicles.includes(event.vehicleId || '')
+      const matchesPriority = filteredPriorities.includes(event.priority)
+      const matchesStatus = filteredStatuses.includes(event.status)
+      
+      return matchesCategory && matchesSearch && matchesDriver && matchesVehicle && matchesPriority && matchesStatus
+    })
+  }, [events, filteredCategories, searchTerm, filteredDrivers, filteredVehicles, filteredPriorities, filteredStatuses])
+
+  const getEventIcon = (type: CalendarEventType) => {
+    switch (type) {
+      case 'load': return <Truck size={16} />
+      case 'pickup': return <ArrowRight size={16} />
+      case 'delivery': return <CheckCircle size={16} />
+      case 'maintenance': return <Wrench size={16} />
+      case 'compliance': return <AlertTriangle size={16} />
+      case 'driver': return <User size={16} />
+      case 'meeting': return <Calendar size={16} />
+      case 'break': return <Clock size={16} />
+      case 'training': return <Info size={16} />
+      case 'inspection': return <CheckCircle size={16} />
+      default: return <Calendar size={16} />
+    }
+  }
+
+  const getEventColor = (type: CalendarEventType, priority: CalendarEventPriority) => {
+    if (priority === 'urgent') return theme.colors.error
+    if (priority === 'high') return theme.colors.warning
+    
+    switch (type) {
+      case 'load': return theme.colors.primary
+      case 'pickup': return theme.colors.success
+      case 'delivery': return theme.colors.success
+      case 'maintenance': return theme.colors.warning
+      case 'compliance': return theme.colors.error
+      case 'driver': return theme.colors.textPrimary
+      case 'meeting': return theme.colors.primary
+      case 'break': return theme.colors.textSecondary
+      case 'training': return theme.colors.primary
+      case 'inspection': return theme.colors.success
+      default: return theme.colors.textSecondary
+    }
+  }
+
+  const getStatusColor = (status: CalendarEventStatus) => {
+    switch (status) {
+      case 'completed': return theme.colors.success
+      case 'in_progress': return theme.colors.primary
+      case 'confirmed': return theme.colors.success
+      case 'cancelled': return theme.colors.error
+      case 'rescheduled': return theme.colors.warning
+      default: return theme.colors.textSecondary
+    }
+  }
+
+  // Calendar navigation
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate)
+    switch (view) {
+      case 'day':
+        newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1))
+        break
+      case 'week':
+        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7))
+        break
+      case 'month':
+        newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1))
+        break
+    }
+    setCurrentDate(newDate)
+  }
+
+  const goToToday = () => {
+    setCurrentDate(new Date())
+  }
+
+  // Event handlers
+  const handleCreateEvent = () => {
+    const eventData: Partial<CalendarEvent> = {
+      ...newEventForm,
+      id: Date.now().toString(),
+      status: 'scheduled',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'current-user'
+    }
+    createEventMutation.mutate(eventData)
+  }
+
+  const handleUpdateEvent = () => {
+    if (!selectedEvent) return
+    updateEventMutation.mutate({ id: selectedEvent.id, data: selectedEvent })
+  }
+
+  const handleDeleteEvent = () => {
+    if (!selectedEvent) return
+    deleteEventMutation.mutate(selectedEvent.id)
+  }
+
+  const handleEventClick = (event: CalendarEvent) => {
+    setSelectedEvent(event)
+    setShowEventModal(true)
+  }
+
+  const handleEditEvent = () => {
+    setShowEventModal(false)
+    setShowEditEventModal(true)
+  }
+
+  // Auto-sync events on mount and detect conflicts
+  useEffect(() => {
+    const syncEvents = async () => {
+      try {
+        // Mock sync call - replace with actual sync when available
+        refetch()
+      } catch (error) {
+        console.warn('Sync failed:', error)
+      }
+    }
+    
+    syncEvents()
+    
+    // Set up periodic sync
+    const syncInterval = setInterval(syncEvents, 5 * 60 * 1000) // Every 5 minutes
+    
+    return () => clearInterval(syncInterval)
+  }, [refetch])
+
+  // Detect conflicts when events change
+  useEffect(() => {
+    if (events.length > 0) {
+      const detectedConflicts = detectConflicts(events)
+      setConflicts(detectedConflicts)
+    }
+  }, [events])
+
+  if (isLoading) {
+    return (
+      <PageContainer title="Schedule & Calendar" subtitle="Loading calendar events...">
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <RefreshCw size={32} className="animate-spin" color={theme.colors.primary} />
+        </div>
+      </PageContainer>
+    )
+  }
 
   return (
-    <PageContainer>
-      {/* Header */}
+    <PageContainer 
+      title="Schedule & Calendar" 
+      subtitle="Manage your schedule, loads, maintenance, and appointments"
+      icon={Calendar as any}
+      headerAction={
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{
+            padding: '8px 12px',
+            background: 'transparent',
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: '8px',
+            color: theme.colors.textSecondary,
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = theme.colors.backgroundCardHover
+            e.currentTarget.style.color = theme.colors.textPrimary
+            e.currentTarget.style.borderColor = theme.colors.textSecondary
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = theme.colors.textSecondary
+            e.currentTarget.style.borderColor = theme.colors.border
+          }}
+        >
+          <ArrowLeft size={16} />
+          Back to Dashboard
+        </button>
+      }
+    >
+      {/* Header Controls */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -557,1806 +689,1522 @@ const CalendarPage = () => {
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Calendar size={32} color={theme.colors.primary} />
-          <div>
-            <h1 style={{ 
-              color: theme.colors.textPrimary, 
-              fontSize: '28px', 
-              fontWeight: 'bold', 
-              margin: 0 
-            }}>
-              Calendar
-            </h1>
-            <p style={{ 
-              color: theme.colors.textSecondary, 
-              margin: '4px 0 0 0',
-              fontSize: '14px'
-            }}>
-              Manage schedules, loads, and operations
-            </p>
+        {/* View Controls */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {(['day', 'week', 'month', 'agenda'] as CalendarView[]).map((viewType) => (
+            <button
+              key={viewType}
+              onClick={() => setView(viewType)}
+              style={{
+                padding: '8px 16px',
+                background: 'transparent',
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textSecondary,
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textTransform: 'capitalize'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.colors.backgroundCardHover
+                e.currentTarget.style.color = theme.colors.textPrimary
+                e.currentTarget.style.borderColor = theme.colors.primary
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = theme.colors.textSecondary
+                e.currentTarget.style.borderColor = theme.colors.border
+              }}
+            >
+              {viewType}
+            </button>
+          ))}
+        </div>
+
+        {/* Resource Lane Toggle */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, alignSelf: 'center', marginRight: '8px' }}>
+            View by:
+          </span>
+          {(['driver', 'vehicle', 'project'] as const).map((resourceType) => (
+            <button
+              key={resourceType}
+              onClick={() => setResourceView(resourceType)}
+              style={{
+                padding: '8px 16px',
+                background: 'transparent',
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textSecondary,
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textTransform: 'capitalize'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.colors.backgroundCardHover
+                e.currentTarget.style.color = theme.colors.textPrimary
+                e.currentTarget.style.borderColor = theme.colors.primary
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = theme.colors.textSecondary
+                e.currentTarget.style.borderColor = theme.colors.border
+              }}
+            >
+              {resourceType}s
+            </button>
+          ))}
+        </div>
+
+        {/* Date Navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => navigateDate('prev')}
+            style={{
+              padding: '8px',
+              background: 'transparent',
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '8px',
+              color: theme.colors.textSecondary,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+            }}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          
+          <button
+            onClick={goToToday}
+            style={{
+              padding: '8px 16px',
+              background: 'transparent',
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '8px',
+              color: theme.colors.textSecondary,
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+              e.currentTarget.style.borderColor = theme.colors.primary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+              e.currentTarget.style.borderColor = theme.colors.border
+            }}
+          >
+            Today
+          </button>
+          
+          <button
+            onClick={() => navigateDate('next')}
+            style={{
+              padding: '8px',
+              background: 'transparent',
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '8px',
+              color: theme.colors.textSecondary,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+            }}
+          >
+            <ChevronRight size={20} />
+          </button>
+          
+          <div style={{ 
+            fontSize: '16px', 
+            fontWeight: '600', 
+            color: theme.colors.textPrimary,
+            minWidth: '200px',
+            textAlign: 'center'
+          }}>
+            {currentDate.toLocaleDateString('en-US', { 
+              month: 'long', 
+              year: 'numeric',
+              ...(view === 'day' && { weekday: 'long', day: 'numeric' })
+            })}
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Conflict Indicator */}
+          {conflicts.length > 0 && (
+            <button
+              onClick={() => alert(`${conflicts.length} conflicts detected. Click to view details.`)}
+              style={{
+                padding: '8px 12px',
+                background: 'transparent',
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textSecondary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.colors.backgroundCardHover
+                e.currentTarget.style.color = theme.colors.textPrimary
+                e.currentTarget.style.borderColor = theme.colors.warning
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = theme.colors.textSecondary
+                e.currentTarget.style.borderColor = theme.colors.border
+              }}
+            >
+              <AlertTriangle size={16} />
+              {conflicts.length} Conflicts
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '8px',
+              color: theme.colors.textSecondary,
+              fontSize: '14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+              e.currentTarget.style.borderColor = theme.colors.primary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+              e.currentTarget.style.borderColor = theme.colors.border
+            }}
+          >
+            <Filter size={16} />
+            Filters
+          </button>
+
+          <button
+            onClick={() => setShowNewEventModal(true)}
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '8px',
+              color: theme.colors.textSecondary,
+              fontSize: '14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+            }}
+          >
+            <Plus size={16} />
+            New Event
+          </button>
+
+          <button
+            onClick={() => refetch()}
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '8px',
+              color: theme.colors.textSecondary,
+              fontSize: '14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+            }}
+          >
+            <RefreshCw size={16} />
+            Sync
+          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ display: 'flex', gap: '20px', height: 'calc(100vh - 200px)' }}>
-        {/* Left Sidebar */}
-        <div style={{
-          width: '280px',
-          background: theme.colors.background,
-          borderRadius: '12px',
-          border: `1px solid ${theme.colors.border}`,
-          padding: '20px',
-          overflow: 'hidden'
-        }}>
-              {/* Mini Calendar */}
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '12px'
-                }}>
-                  <button
-                    onClick={goToToday}
-                    style={{
-                      background: theme.colors.primary,
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = theme.colors.accent
-                      e.currentTarget.style.transform = 'scale(1.05)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = theme.colors.primary
-                      e.currentTarget.style.transform = 'scale(1)'
-                    }}
-                  >
-                    <CalendarDays size={16} />
-                    {currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </button>
-                </div>
-
-                {/* Year Selection Grid */}
-                {showYearPicker && (
-                  <div style={{
-                    marginBottom: '16px',
-                    padding: '12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    border: `1px solid ${theme.colors.border}`
-                  }}>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: theme.colors.textPrimary,
-                      marginBottom: '12px',
-                      textAlign: 'center'
-                    }}>
-                      Select Year
-                    </div>
-                    
-                    {/* Go to Today Button */}
-                    <button
-                      onClick={jumpToToday}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primary}dd 100%)`,
-                        border: 'none',
-                        borderRadius: '6px',
-                        color: 'white',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        marginBottom: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)'
-                        e.currentTarget.style.background = `linear-gradient(135deg, ${theme.colors.accent} 0%, ${theme.colors.accent}dd 100%)`
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.background = `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primary}dd 100%)`
-                      }}
-                    >
-                      <CalendarDays size={14} />
-                      Go to Today
-                    </button>
-                    
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(4, 1fr)',
-                      gap: '6px',
-                      marginBottom: '12px'
-                    }}>
-                      {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 10 + i).map(year => (
-                        <button
-                          key={year}
-                          onClick={() => jumpToYear(year)}
-                          style={{
-                            padding: '8px 4px',
-                            background: year === currentDate.getFullYear() 
-                              ? theme.colors.primary 
-                              : 'rgba(255, 255, 255, 0.05)',
-                            border: `1px solid ${year === currentDate.getFullYear() 
-                              ? theme.colors.primary 
-                              : 'rgba(255, 255, 255, 0.1)'}`,
-                            borderRadius: '6px',
-                            color: year === currentDate.getFullYear() 
-                              ? 'white' 
-                              : theme.colors.textPrimary,
-                            fontSize: '12px',
-                            fontWeight: year === currentDate.getFullYear() ? '600' : '500',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            textAlign: 'center'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (year !== currentDate.getFullYear()) {
-                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-                              e.currentTarget.style.transform = 'scale(1.05)'
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (year !== currentDate.getFullYear()) {
-                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                              e.currentTarget.style.transform = 'scale(1)'
-                            }
-                          }}
-                        >
-                          {year}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setShowYearPicker(false)}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        background: 'transparent',
-                        border: `1px solid ${theme.colors.border}`,
-                        borderRadius: '6px',
-                        color: theme.colors.textSecondary,
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                        e.currentTarget.style.color = theme.colors.textPrimary
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent'
-                        e.currentTarget.style.color = theme.colors.textSecondary
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-
-                {/* Month Selection Grid */}
-                {showMonthSelection && (
-                  <div style={{
-                    marginBottom: '16px',
-                    padding: '12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    border: `1px solid ${theme.colors.border}`
-                  }}>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: theme.colors.textPrimary,
-                      marginBottom: '12px',
-                      textAlign: 'center'
-                    }}>
-                      Select Month for {selectedYear}
-                    </div>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(3, 1fr)',
-                      gap: '6px'
-                    }}>
-                      {[
-                        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-                      ].map((month, index) => (
-                        <button
-                          key={month}
-                          onClick={() => jumpToMonth(index)}
-                          style={{
-                            padding: '8px 4px',
-                            background: index === currentDate.getMonth() && selectedYear === currentDate.getFullYear()
-                              ? theme.colors.primary 
-                              : 'rgba(255, 255, 255, 0.05)',
-                            border: `1px solid ${index === currentDate.getMonth() && selectedYear === currentDate.getFullYear()
-                              ? theme.colors.primary 
-                              : 'rgba(255, 255, 255, 0.1)'}`,
-                            borderRadius: '6px',
-                            color: index === currentDate.getMonth() && selectedYear === currentDate.getFullYear()
-                              ? 'white' 
-                              : theme.colors.textPrimary,
-                            fontSize: '12px',
-                            fontWeight: index === currentDate.getMonth() && selectedYear === currentDate.getFullYear() ? '600' : '500',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            textAlign: 'center'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!(index === currentDate.getMonth() && selectedYear === currentDate.getFullYear())) {
-                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-                              e.currentTarget.style.transform = 'scale(1.05)'
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!(index === currentDate.getMonth() && selectedYear === currentDate.getFullYear())) {
-                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                              e.currentTarget.style.transform = 'scale(1)'
-                            }
-                          }}
-                        >
-                          {month}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setShowMonthSelection(false)}
-                      style={{
-                        width: '100%',
-                        marginTop: '12px',
-                        padding: '8px',
-                        background: 'transparent',
-                        border: `1px solid ${theme.colors.border}`,
-                        borderRadius: '6px',
-                        color: theme.colors.textSecondary,
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                        e.currentTarget.style.color = theme.colors.textPrimary
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent'
-                        e.currentTarget.style.color = theme.colors.textSecondary
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: '4px',
-                  marginBottom: '8px'
-                }}>
-                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                    <div key={day} style={{
-                      padding: '4px',
-                      textAlign: 'center',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: theme.colors.textSecondary
-                    }}>
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: '4px'
-                }}>
-                  {(() => {
-                    const year = currentDate.getFullYear()
-                    const month = currentDate.getMonth()
-                    const firstDay = new Date(year, month, 1)
-                    const lastDay = new Date(year, month + 1, 0)
-                    const startDate = new Date(firstDay)
-                    startDate.setDate(startDate.getDate() - firstDay.getDay())
-                    
-                    const days = []
-                    for (let i = 0; i < 42; i++) {
-                      const date = new Date(startDate)
-                      date.setDate(startDate.getDate() + i)
-                      days.push(date)
-                    }
-                    
-                    return days.map((date, index) => {
-                      const isCurrentMonth = date.getMonth() === month
-                      const isToday = date.toDateString() === new Date().toDateString()
-                      const isSelected = date.toDateString() === currentDate.toDateString()
-                      const hasEvents = getEventsForDate(date).length > 0
-
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => handleDayClick(date)}
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '6px',
-                          border: 'none',
-                          background: isSelected ? theme.colors.primary : 
-                                    isToday ? `${theme.colors.primary}20` : 'transparent',
-                          color: isSelected ? 'white' : 
-                                isToday ? theme.colors.primary :
-                                isCurrentMonth ? theme.colors.textPrimary : theme.colors.textSecondary,
-                          fontSize: '12px',
-                          fontWeight: isToday ? '600' : '400',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'relative',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isSelected) {
-                            e.currentTarget.style.background = theme.colors.backgroundHover
-                            e.currentTarget.style.transform = 'scale(1.1)'
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSelected) {
-                            e.currentTarget.style.background = isToday ? `${theme.colors.primary}20` : 'transparent'
-                            e.currentTarget.style.transform = 'scale(1)'
-                          }
-                        }}
-                      >
-                        {date.getDate()}
-                        {hasEvents && (
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '2px',
-                            width: '4px',
-                            height: '4px',
-                            borderRadius: '50%',
-                            background: theme.colors.primary
-                          }} />
-                        )}
-                        </button>
-                      )
-                    })
-                  })()}
-                </div>
-              </div>
-
-              {/* Event Categories */}
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{
-                  color: theme.colors.textPrimary,
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  margin: '0 0 12px 0'
-                }}>
-                  Categories
-                </h4>
-                {Object.entries(eventTypes).map(([type, config]) => {
-                  const Icon = config.icon
-                  const isFiltered = filteredCategories.includes(type)
-                  
-                  return (
-                    <label
-                      key={type}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s ease',
-                        background: isFiltered ? theme.colors.backgroundHover : 'transparent'
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isFiltered}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFilteredCategories(prev => [...prev, type])
-                          } else {
-                            setFilteredCategories(prev => prev.filter(cat => cat !== type))
-                          }
-                        }}
-                        style={{
-                          width: '16px',
-                          height: '16px',
-                          cursor: 'pointer'
-                        }}
-                      />
-                      <Icon size={16} color={config.color} />
-                      <span style={{
-                        fontSize: '13px',
-                        color: theme.colors.textPrimary,
-                        textTransform: 'capitalize'
-                      }}>
-                        {config.label}
-                      </span>
-                    </label>
-                  )
-                })}
-              </div>
-
-              {/* Quick Stats */}
-              <div>
-                <h4 style={{
-                  color: theme.colors.textPrimary,
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  margin: '0 0 12px 0'
-                }}>
-                  Today's Overview
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {Object.entries(eventTypes).map(([type, config]) => {
-                    const Icon = config.icon
-                    const todayEvents = getEventsForDate(new Date()).filter(e => e.type === type)
-                    
-                    if (todayEvents.length === 0) return null
-                    
-                    return (
-                      <div
-                        key={type}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '8px',
-                          background: theme.colors.backgroundHover,
-                          borderRadius: '6px'
-                        }}
-                      >
-                        <Icon size={14} color={config.color} />
-                        <span style={{
-                          fontSize: '12px',
-                          color: theme.colors.textPrimary,
-                          fontWeight: '500'
-                        }}>
-                          {todayEvents.length} {config.label}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-        </div>
-
-        {/* Main Calendar View */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {/* Calendar Header */}
-          <Card padding="16px" style={{ marginBottom: '16px' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h2 
-                onClick={() => {
-                  if (view === 'month') {
-                    setSelectedYear(currentDate.getFullYear())
-                    setShowMonthPicker(true)
-                    setShowYearPicker(false)
-                  }
-                }}
-                style={{
-                  color: theme.colors.textPrimary,
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  margin: 0,
-                  cursor: view === 'month' ? 'pointer' : 'default',
-                  transition: view === 'month' ? 'color 0.2s ease' : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (view === 'month') {
-                    e.currentTarget.style.color = theme.colors.primary
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (view === 'month') {
-                    e.currentTarget.style.color = theme.colors.textPrimary
-                  }
-                }}
-              >
-                {view === 'week' && `${formatDate(weekDates[0])} - ${formatDate(weekDates[6])}`}
-                {view === 'month' && currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                {view === 'day' && formatDate(currentDate)}
-              </h2>
-
-              {/* Search */}
-              <div style={{ position: 'relative', minWidth: '250px' }}>
-                <Search size={18} color={theme.colors.textSecondary} style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)'
-                }} />
+      {/* Filters Section */}
+      {showFilters && (
+        <Card style={{ marginBottom: '24px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            padding: '20px'
+          }}>
+            {/* Search */}
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                Search Events
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: theme.colors.textSecondary }} />
                 <input
                   type="text"
-                  placeholder="Search events..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search events..."
                   style={{
                     width: '100%',
-                    padding: '12px 12px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '10px 12px 10px 40px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
                     borderRadius: '8px',
-                    color: '#FFFFFF',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#667eea'
-                    e.target.style.background = 'rgba(255, 255, 255, 0.08)'
-                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)'
-                    e.target.style.boxShadow = 'none'
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
                   }}
                 />
               </div>
             </div>
-          </Card>
 
-          {/* Calendar Grid */}
-          <Card padding="0" style={{ flex: 1, overflow: 'hidden' }}>
-            {view === 'day' && (
-              <div style={{ display: 'flex', height: '100%' }}>
-                {/* Time Column */}
-                <div style={{
-                  width: '80px',
-                  borderRight: `1px solid ${theme.colors.border}`,
-                  padding: '12px 8px'
-                }}>
-                  {timeSlots.map(({ hour, timeString }) => (
-                    <div
-                      key={hour}
-                      style={{
-                        height: '60px',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'flex-end',
-                        paddingRight: '8px',
-                        fontSize: '12px',
-                        color: theme.colors.textSecondary,
-                        borderBottom: hour < 23 ? `1px solid ${theme.colors.border}20` : 'none'
-                      }}
-                    >
-                      {timeString}
-                    </div>
-                  ))}
-                </div>
+            {/* Category Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                Categories
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {['load', 'pickup', 'delivery', 'maintenance', 'compliance', 'driver', 'meeting', 'custom'].map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => {
+                      if (filteredCategories.includes(category)) {
+                        setFilteredCategories(prev => prev.filter(c => c !== category))
+                      } else {
+                        setFilteredCategories(prev => [...prev, category])
+                      }
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      background: filteredCategories.includes(category) ? theme.colors.backgroundCardHover : 'transparent',
+                      border: `1px solid ${filteredCategories.includes(category) ? theme.colors.textSecondary : theme.colors.border}`,
+                      borderRadius: '6px',
+                      color: filteredCategories.includes(category) ? theme.colors.textPrimary : theme.colors.textSecondary,
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                {/* Day Content */}
-                <div style={{ flex: 1, position: 'relative', borderRight: `1px solid ${theme.colors.border}` }}>
-                  {/* Day Header */}
+            {/* Priority Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                Priority
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {(['low', 'medium', 'high', 'urgent'] as CalendarEventPriority[]).map((priority) => (
+                  <button
+                    key={priority}
+                    onClick={() => {
+                      if (filteredPriorities.includes(priority)) {
+                        setFilteredPriorities(prev => prev.filter(p => p !== priority))
+                      } else {
+                        setFilteredPriorities(prev => [...prev, priority])
+                      }
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      background: filteredPriorities.includes(priority) ? 
+                        (priority === 'urgent' ? theme.colors.error : 
+                         priority === 'high' ? theme.colors.warning : theme.colors.primary) : 
+                        theme.colors.backgroundTertiary,
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: filteredPriorities.includes(priority) ? '#ffffff' : theme.colors.textSecondary,
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {priority}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                Status
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {(['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled'] as CalendarEventStatus[]).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      if (filteredStatuses.includes(status)) {
+                        setFilteredStatuses(prev => prev.filter(s => s !== status))
+                      } else {
+                        setFilteredStatuses(prev => [...prev, status])
+                      }
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      background: filteredStatuses.includes(status) ? getStatusColor(status) : theme.colors.backgroundTertiary,
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: filteredStatuses.includes(status) ? '#ffffff' : theme.colors.textSecondary,
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {status.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Color Legend and Heatmap */}
+      <Card style={{ marginBottom: '16px' }}>
+        <div style={{ padding: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            {/* Color Legend */}
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              {[
+                { type: 'load', label: 'Loads', color: theme.colors.primary, count: filteredEvents.filter(e => e.type === 'load' || e.type === 'pickup' || e.type === 'delivery').length },
+                { type: 'maintenance', label: 'Maintenance', color: theme.colors.warning, count: filteredEvents.filter(e => e.type === 'maintenance').length },
+                { type: 'compliance', label: 'Compliance', color: theme.colors.error, count: filteredEvents.filter(e => e.type === 'compliance').length },
+                { type: 'driver', label: 'Driver', color: theme.colors.textPrimary, count: filteredEvents.filter(e => e.type === 'driver' || e.type === 'meeting').length },
+                { type: 'custom', label: 'Custom', color: theme.colors.textSecondary, count: filteredEvents.filter(e => e.type === 'custom').length }
+              ].map((legend) => (
+                <div key={legend.type} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <div style={{
-                    padding: '12px',
-                    borderBottom: `1px solid ${theme.colors.border}`,
-                    textAlign: 'center',
-                    background: `${theme.colors.primary}10`
-                  }}>
-                    <div style={{
-                      fontSize: '18px',
-                      fontWeight: 'bold',
-                      color: theme.colors.primary,
-                      marginBottom: '4px'
-                    }}>
-                      {currentDate.toLocaleDateString('en-US', { weekday: 'long' })}
-                    </div>
-                    <div style={{
-                      fontSize: '24px',
-                      fontWeight: 'bold',
-                      color: theme.colors.textPrimary
-                    }}>
-                      {currentDate.getDate()}
-                    </div>
-                    <div 
-                      onClick={() => {
-                        setSelectedYear(currentDate.getFullYear())
-                        setShowMonthPicker(true)
-                        setShowYearPicker(false)
-                      }}
-                      style={{
-                        fontSize: '14px',
-                        color: theme.colors.textSecondary,
-                        cursor: 'pointer',
-                        transition: 'color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = theme.colors.primary
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = theme.colors.textSecondary
-                      }}
-                    >
-                      {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </div>
+                    width: '12px',
+                    height: '12px',
+                    background: legend.color,
+                    borderRadius: '2px'
+                  }}></div>
+                  <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
+                    {legend.label} {legend.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Conflict Summary */}
+            {conflicts.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={16} color={theme.colors.error} />
+                <span style={{ fontSize: '12px', color: theme.colors.error, fontWeight: '600' }}>
+                  {conflicts.length} resource conflicts detected
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Mini Heatmap Ribbon */}
+          <div style={{ marginTop: '12px', padding: '8px 0', borderTop: `1px solid ${theme.colors.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', color: theme.colors.textSecondary, fontWeight: '600' }}>
+                Daily Activity Heatmap:
+              </span>
+              <span style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
+                (Darker = busier hours)
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '2px', height: '20px' }}>
+              {Array.from({ length: 24 }, (_, hour) => {
+                const hourEvents = filteredEvents.filter(event => {
+                  if (!event.startTime) return false
+                  const eventHour = parseInt(event.startTime.split(':')[0])
+                  return eventHour === hour
+                }).length
+                const intensity = Math.min(hourEvents / 3, 1) // Max 3 events = full intensity
+                return (
+                  <div
+                    key={hour}
+                    style={{
+                      flex: 1,
+                      background: `rgba(59, 130, 246, ${intensity * 0.8})`,
+                      borderRadius: '2px',
+                      minWidth: '8px'
+                    }}
+                    title={`${hour}:00 - ${hourEvents} events`}
+                  ></div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Calendar Content */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: view === 'agenda' ? '1fr' : compactView ? '1fr 300px' : '1fr',
+        gap: '24px'
+      }}>
+        {/* Main Calendar View */}
+        <Card>
+          {view === 'agenda' ? (
+            // Agenda View
+            <div>
+              <div style={{ padding: '20px', borderBottom: `1px solid ${theme.colors.border}` }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                  Upcoming Events
+                </h3>
+              </div>
+              <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                {filteredEvents.length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', color: theme.colors.textSecondary }}>
+                    <Calendar size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                    <p>No events found for the selected filters</p>
                   </div>
-
-                  {/* All Day Events */}
-                  {getEventsForDate(currentDate).filter(event => event.allDay).map(event => (
-                    <div
-                      key={event.id}
-                      style={{
-                        background: event.color,
-                        color: 'white',
-                        padding: '8px 12px',
-                        margin: '8px',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => {
-                        setSelectedEvent(event)
-                        setShowEventModal(true)
-                      }}
-                    >
-                      {event.title}
-                    </div>
-                  ))}
-
-                  {/* Time Slots */}
-                  <div style={{ position: 'relative' }}>
-                    {timeSlots.map(({ hour }) => (
+                ) : (
+                  <div style={{ padding: '20px' }}>
+                    {filteredEvents.map((event) => (
                       <div
-                        key={hour}
-                        onClick={() => handleTimeSlotClick(hour, 0)}
+                        key={event.id}
+                        onClick={() => handleEventClick(event)}
                         style={{
-                          height: '60px',
-                          borderBottom: hour < 23 ? `1px solid ${theme.colors.border}20` : 'none',
-                          position: 'relative',
+                          padding: '16px',
+                          background: theme.colors.background,
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: '10px',
+                          marginBottom: '12px',
                           cursor: 'pointer',
-                          transition: 'background-color 0.2s ease'
+                          transition: 'all 0.2s ease',
+                          borderLeft: `4px solid ${getEventColor(event.type, event.priority)}`
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                          e.currentTarget.style.background = theme.colors.backgroundCardHover
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${theme.colors.primary}20`
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent'
+                          e.currentTarget.style.background = theme.colors.background
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = 'none'
                         }}
-                      />
-                    ))}
-
-                    {/* Events */}
-                    {getEventsForDate(currentDate).filter(event => !event.allDay).map(event => {
-                      const startHour = event.start.getHours() + event.start.getMinutes() / 60
-                      const endHour = event.end.getHours() + event.end.getMinutes() / 60
-                      const duration = endHour - startHour
-                      const top = (startHour * 60) + 12
-                      
-                      return (
-                        <div
-                          key={event.id}
-                          onClick={() => {
-                            setSelectedEvent(event)
-                            setShowEventModal(true)
-                          }}
-                          style={{
-                            position: 'absolute',
-                            top: `${top}px`,
-                            left: '8px',
-                            right: '8px',
-                            height: `${Math.max(duration * 60, 20)}px`,
-                            background: event.color,
-                            color: 'white',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            fontSize: '11px',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            overflow: 'hidden',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                          }}
-                        >
-                          <div style={{ fontWeight: '600' }}>{event.title}</div>
-                          <div style={{ fontSize: '10px', opacity: 0.9 }}>
-                            {formatTime(event.start)} - {formatTime(event.end)}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <div style={{ color: getEventColor(event.type, event.priority) }}>
+                              {getEventIcon(event.type)}
+                            </div>
+                            <div style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                              {event.title}
+                            </div>
+                            <span style={{
+                              padding: '2px 6px',
+                              background: getEventColor(event.type, event.priority),
+                              color: '#ffffff',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              textTransform: 'uppercase'
+                            }}>
+                              {event.type}
+                            </span>
+                            <span style={{
+                              padding: '2px 6px',
+                              background: getStatusColor(event.status),
+                              color: '#ffffff',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              textTransform: 'uppercase'
+                            }}>
+                              {event.status.replace('_', ' ')}
+                            </span>
+                            
+                            {/* Smart Badges */}
+                            {event.type === 'pickup' && event.description?.includes('Release expires') && (
+                              <span style={{
+                                padding: '2px 6px',
+                                background: theme.colors.warning,
+                                color: '#ffffff',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                textTransform: 'uppercase'
+                              }}>
+                                Release Expires Soon
+                              </span>
+                            )}
+                            
+                            {event.type === 'delivery' && event.description?.includes('ETA') && (
+                              <span style={{
+                                padding: '2px 6px',
+                                background: theme.colors.success,
+                                color: '#ffffff',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                textTransform: 'uppercase'
+                              }}>
+                                ETA Tracked
+                              </span>
+                            )}
+                            
+                            {event.type === 'compliance' && event.description?.includes('expires') && (
+                              <span style={{
+                                padding: '2px 6px',
+                                background: theme.colors.error,
+                                color: '#ffffff',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                textTransform: 'uppercase'
+                              }}>
+                                Expires Soon
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={14} color={theme.colors.textSecondary} />
+                            <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
+                              {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                            </span>
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
+                        
+                        {event.location && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                            <MapPin size={12} color={theme.colors.textSecondary} />
+                            <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
+                              {event.location}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Resource Information */}
+                        <div style={{ display: 'flex', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                          {event.driverName && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <User size={12} color={theme.colors.textSecondary} />
+                              <span style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
+                                {event.driverName}
+                              </span>
+                            </div>
+                          )}
+                          {event.vehicleName && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Truck size={12} color={theme.colors.textSecondary} />
+                              <span style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
+                                {event.vehicleName}
+                              </span>
+                            </div>
+                          )}
+                          {event.loadId && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Package size={12} color={theme.colors.textSecondary} />
+                              <span style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
+                                {event.loadId}
+                              </span>
+                            </div>
+                          )}
+                        </div>
 
-                {/* Agenda Bar */}
-                <div style={{
-                  width: '280px',
-                  background: theme.colors.backgroundCard,
-                  borderLeft: `1px solid ${theme.colors.border}`,
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}>
-                  {/* Agenda Header */}
-                  <div style={{
-                    padding: '16px',
-                    borderBottom: `1px solid ${theme.colors.border}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <h3 style={{
-                      margin: 0,
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: theme.colors.textPrimary
-                    }}>
-                      Agenda
-                    </h3>
-                    <button
-                      onClick={() => setShowNewEventModal(true)}
-                      style={{
-                        padding: '8px',
-                        background: theme.colors.primary,
-                        border: 'none',
-                        borderRadius: '6px',
-                        color: 'white',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = theme.colors.accent
-                        e.currentTarget.style.transform = 'scale(1.05)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = theme.colors.primary
-                        e.currentTarget.style.transform = 'scale(1)'
-                      }}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
+                        {event.description && (
+                          <p style={{ fontSize: '13px', color: theme.colors.textSecondary, margin: '0 0 8px 0', lineHeight: '1.4' }}>
+                            {event.description}
+                          </p>
+                        )}
 
-                  {/* Agenda Content */}
-                  <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
-                    {/* Today's Events */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <h4 style={{
-                        margin: '0 0 12px 0',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: theme.colors.textPrimary,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <Calendar size={16} />
-                        Today ({currentDate.getDate()})
-                      </h4>
-                      
-                      {getEventsForDate(currentDate).length === 0 ? (
-                        <p style={{
-                          margin: 0,
-                          fontSize: '13px',
-                          color: theme.colors.textSecondary,
-                          fontStyle: 'italic'
-                        }}>
-                          No events today
-                        </p>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {getEventsForDate(currentDate).map(event => (
-                            <div
-                              key={event.id}
+                        {/* Quick Actions */}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          {event.type === 'pickup' || event.type === 'delivery' ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  // Navigate to load details
+                                  alert(`Navigate to load ${event.loadId}`)
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: 'transparent',
+                                  border: `1px solid ${theme.colors.border}`,
+                                  borderRadius: '4px',
+                                  color: theme.colors.textSecondary,
+                                  fontSize: '10px',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                                  e.currentTarget.style.color = theme.colors.textPrimary
+                                  e.currentTarget.style.borderColor = theme.colors.primary
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                  e.currentTarget.style.color = theme.colors.textSecondary
+                                  e.currentTarget.style.borderColor = theme.colors.border
+                                }}
+                              >
+                                View Load
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // Call driver
+                                  alert(`Call ${event.driverName}`)
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: 'transparent',
+                                  border: `1px solid ${theme.colors.border}`,
+                                  borderRadius: '4px',
+                                  color: theme.colors.textSecondary,
+                                  fontSize: '10px',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                                  e.currentTarget.style.color = theme.colors.textPrimary
+                                  e.currentTarget.style.borderColor = theme.colors.success
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                  e.currentTarget.style.color = theme.colors.textSecondary
+                                  e.currentTarget.style.borderColor = theme.colors.border
+                                }}
+                              >
+                                Call Driver
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // Navigate to location
+                                  alert(`Navigate to ${event.location}`)
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: 'transparent',
+                                  border: `1px solid ${theme.colors.border}`,
+                                  borderRadius: '4px',
+                                  color: theme.colors.textSecondary,
+                                  fontSize: '10px',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                                  e.currentTarget.style.color = theme.colors.textPrimary
+                                  e.currentTarget.style.borderColor = theme.colors.primary
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                  e.currentTarget.style.color = theme.colors.textSecondary
+                                  e.currentTarget.style.borderColor = theme.colors.border
+                                }}
+                              >
+                                Navigate
+                              </button>
+                            </>
+                          ) : event.type === 'maintenance' ? (
+                            <button
                               onClick={() => {
-                                setSelectedEvent(event)
-                                setShowEventModal(true)
+                                // View maintenance details
+                                alert(`View maintenance details for ${event.vehicleName}`)
                               }}
                               style={{
-                                padding: '12px',
-                                background: `${event.color}20`,
-                                border: `1px solid ${event.color}40`,
-                                borderRadius: '8px',
+                                padding: '4px 8px',
+                                background: 'transparent',
+                                border: `1px solid ${theme.colors.border}`,
+                                borderRadius: '4px',
+                                color: theme.colors.textSecondary,
+                                fontSize: '10px',
+                                fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease'
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background = `${event.color}30`
-                                e.currentTarget.style.transform = 'translateY(-1px)'
+                                e.currentTarget.style.background = theme.colors.backgroundCardHover
+                                e.currentTarget.style.color = theme.colors.textPrimary
+                                e.currentTarget.style.borderColor = theme.colors.warning
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.background = `${event.color}20`
-                                e.currentTarget.style.transform = 'translateY(0)'
+                                e.currentTarget.style.background = 'transparent'
+                                e.currentTarget.style.color = theme.colors.textSecondary
+                                e.currentTarget.style.borderColor = theme.colors.border
                               }}
                             >
-                              <div style={{
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                color: event.color,
-                                marginBottom: '4px'
-                              }}>
-                                {event.title}
-                              </div>
-                              <div style={{
-                                fontSize: '12px',
-                                color: theme.colors.textSecondary
-                              }}>
-                                {formatTime(event.start)} - {formatTime(event.end)}
-                              </div>
-                              {event.location && (
-                                <div style={{
-                                  fontSize: '11px',
-                                  color: theme.colors.textSecondary,
-                                  marginTop: '4px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}>
-                                  <MapPin size={12} />
-                                  {event.location}
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                              View Maintenance
+                            </button>
+                          ) : null}
                         </div>
-                      )}
-                    </div>
-
-                    {/* Tomorrow's Events */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <h4 style={{
-                        margin: '0 0 12px 0',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: theme.colors.textPrimary,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <Clock size={16} />
-                        Tomorrow
-                      </h4>
-                      
-                      {(() => {
-                        const tomorrow = new Date(currentDate)
-                        tomorrow.setDate(tomorrow.getDate() + 1)
-                        const tomorrowEvents = getEventsForDate(tomorrow)
-                        
-                        return tomorrowEvents.length === 0 ? (
-                          <p style={{
-                            margin: 0,
-                            fontSize: '13px',
-                            color: theme.colors.textSecondary,
-                            fontStyle: 'italic'
-                          }}>
-                            No events tomorrow
-                          </p>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {tomorrowEvents.map(event => (
-                              <div
-                                key={event.id}
-                                onClick={() => {
-                                  setSelectedEvent(event)
-                                  setShowEventModal(true)
-                                }}
-                                style={{
-                                  padding: '12px',
-                                  background: `${event.color}20`,
-                                  border: `1px solid ${event.color}40`,
-                                  borderRadius: '8px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = `${event.color}30`
-                                  e.currentTarget.style.transform = 'translateY(-1px)'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = `${event.color}20`
-                                  e.currentTarget.style.transform = 'translateY(0)'
-                                }}
-                              >
-                                <div style={{
-                                  fontSize: '13px',
-                                  fontWeight: '600',
-                                  color: event.color,
-                                  marginBottom: '4px'
-                                }}>
-                                  {event.title}
-                                </div>
-                                <div style={{
-                                  fontSize: '12px',
-                                  color: theme.colors.textSecondary
-                                }}>
-                                  {formatTime(event.start)} - {formatTime(event.end)}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })()}
-                    </div>
-
-                    {/* This Week's Events */}
-                    <div>
-                      <h4 style={{
-                        margin: '0 0 12px 0',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: theme.colors.textPrimary,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <Calendar size={16} />
-                        This Week
-                      </h4>
-                      
-                      {(() => {
-                        const weekEvents = []
-                        const startOfWeek = new Date(currentDate)
-                        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
-                        
-                        for (let i = 0; i < 7; i++) {
-                          const date = new Date(startOfWeek)
-                          date.setDate(startOfWeek.getDate() + i)
-                          const events = getEventsForDate(date)
-                          if (events.length > 0) {
-                            weekEvents.push(...events.map(event => ({
-                              ...event,
-                              date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-                            })))
-                          }
-                        }
-                        
-                        return weekEvents.length === 0 ? (
-                          <p style={{
-                            margin: 0,
-                            fontSize: '13px',
-                            color: theme.colors.textSecondary,
-                            fontStyle: 'italic'
-                          }}>
-                            No events this week
-                          </p>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {weekEvents.slice(0, 5).map(event => (
-                              <div
-                                key={event.id}
-                                onClick={() => {
-                                  setSelectedEvent(event)
-                                  setShowEventModal(true)
-                                }}
-                                style={{
-                                  padding: '10px',
-                                  background: `${event.color}15`,
-                                  border: `1px solid ${event.color}30`,
-                                  borderRadius: '6px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = `${event.color}25`
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = `${event.color}15`
-                                }}
-                              >
-                                <div style={{
-                                  fontSize: '12px',
-                                  fontWeight: '600',
-                                  color: event.color,
-                                  marginBottom: '2px'
-                                }}>
-                                  {event.title}
-                                </div>
-                                <div style={{
-                                  fontSize: '11px',
-                                  color: theme.colors.textSecondary
-                                }}>
-                                  {(event as any).date} • {formatTime(event.start)}
-                                </div>
-                              </div>
-                            ))}
-                            {weekEvents.length > 5 && (
-                              <p style={{
-                                margin: '8px 0 0 0',
-                                fontSize: '12px',
-                                color: theme.colors.textSecondary,
-                                fontStyle: 'italic'
-                              }}>
-                                +{weekEvents.length - 5} more events
-                              </p>
-                            )}
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {view === 'week' && (
-              <div style={{ display: 'flex', height: '100%' }}>
-                {/* Time Column */}
-                <div style={{
-                  width: '80px',
-                  borderRight: `1px solid ${theme.colors.border}`,
-                  padding: '12px 8px'
-                }}>
-                  {timeSlots.map(({ hour, timeString }) => (
-                    <div
-                      key={hour}
-                      style={{
-                        height: '60px',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'flex-end',
-                        paddingRight: '8px',
-                        fontSize: '12px',
-                        color: theme.colors.textSecondary,
-                        borderBottom: hour < 23 ? `1px solid ${theme.colors.border}20` : 'none'
-                      }}
-                    >
-                      {timeString}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Days Grid */}
-                <div style={{ flex: 1, display: 'flex' }}>
-                  {weekDates.map((date, dayIndex) => {
-                    const dayEvents = getEventsForDate(date).filter(event => !event.allDay)
-                    
-                    return (
-                      <div
-                        key={dayIndex}
-                        style={{
-                          flex: 1,
-                          borderRight: dayIndex < 6 ? `1px solid ${theme.colors.border}` : 'none',
-                          position: 'relative'
-                        }}
-                      >
-                        {/* Day Header */}
-                        <div style={{
-                          padding: '12px',
-                          borderBottom: `1px solid ${theme.colors.border}`,
-                          textAlign: 'center',
-                          background: date.toDateString() === new Date().toDateString() 
-                            ? `${theme.colors.primary}10` 
-                            : 'transparent'
-                        }}>
-                          <div style={{
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: theme.colors.textPrimary,
-                            marginBottom: '4px'
-                          }}>
-                            {date.toLocaleDateString('en-US', { weekday: 'short' })}
-                          </div>
-                          <div style={{
-                            fontSize: '18px',
-                            fontWeight: 'bold',
-                            color: date.toDateString() === new Date().toDateString() 
-                              ? theme.colors.primary 
-                              : theme.colors.textPrimary
-                          }}>
-                            {date.getDate()}
-                          </div>
-                        </div>
-
-                        {/* All Day Events */}
-                        {getEventsForDate(date).filter(event => event.allDay).map(event => (
-                          <div
-                            key={event.id}
-                            style={{
-                              background: event.color,
-                              color: 'white',
-                              padding: '4px 8px',
-                              margin: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer'
-                            }}
-                            onClick={() => {
-                              setSelectedEvent(event)
-                              setShowEventModal(true)
-                            }}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
-
-                        {/* Time Slots */}
-                        <div style={{ position: 'relative' }}>
-                          {timeSlots.map(({ hour }) => (
-                            <div
-                              key={hour}
-                              style={{
-                                height: '60px',
-                                borderBottom: hour < 23 ? `1px solid ${theme.colors.border}20` : 'none',
-                                position: 'relative'
-                              }}
-                            />
-                          ))}
-
-                          {/* Events */}
-                          {dayEvents.map(event => {
-                            const startHour = event.start.getHours() + event.start.getMinutes() / 60
-                            const endHour = event.end.getHours() + event.end.getMinutes() / 60
-                            const duration = endHour - startHour
-                            const top = (startHour * 60) + 12 // 12px for header
-                            
-                            return (
-                              <div
-                                key={event.id}
-                                onClick={() => {
-                                  setSelectedEvent(event)
-                                  setShowEventModal(true)
-                                }}
-                                style={{
-                                  position: 'absolute',
-                                  top: `${top}px`,
-                                  left: '8px',
-                                  right: '8px',
-                                  height: `${Math.max(duration * 60, 20)}px`,
-                                  background: event.color,
-                                  color: 'white',
-                                  borderRadius: '4px',
-                                  padding: '4px 8px',
-                                  fontSize: '11px',
-                                  fontWeight: '500',
-                                  cursor: 'pointer',
-                                  overflow: 'hidden',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'space-between',
-                                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                }}
-                              >
-                                <div style={{ fontWeight: '600' }}>{event.title}</div>
-                                <div style={{ fontSize: '10px', opacity: 0.9 }}>
-                                  {formatTime(event.start)} - {formatTime(event.end)}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Agenda Sidebar */}
-                <div style={{
-                  width: '280px',
-                  borderLeft: `1px solid ${theme.colors.border}`,
-                  background: theme.colors.background,
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}>
-                  {/* Agenda Header */}
-                  <div style={{
-                    padding: '16px',
-                    borderBottom: `1px solid ${theme.colors.border}`,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <h3 style={{
-                      color: theme.colors.textPrimary,
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      margin: 0
-                    }}>
-                      Agenda
-                    </h3>
-                    <button
-                      onClick={() => setShowNewEventModal(true)}
-                      style={{
-                        padding: '6px 12px',
-                        background: theme.colors.primary,
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = theme.colors.accent
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = theme.colors.primary
-                      }}
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-
-                  {/* Agenda Content */}
-                  <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
-                    {/* Today's Events */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '12px'
-                      }}>
-                        <div style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          background: theme.colors.primary
-                        }} />
-                        <h4 style={{
-                          color: theme.colors.textPrimary,
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          margin: 0
-                        }}>
-                          Today {new Date().getDate()}
-                        </h4>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {getEventsForDate(new Date()).map(event => (
-                          <div
-                            key={event.id}
-                            onClick={() => {
-                              setSelectedEvent(event)
-                              setShowEventModal(true)
-                            }}
-                            style={{
-                              padding: '8px',
-                              background: theme.colors.cardBackground,
-                              border: `1px solid ${theme.colors.border}`,
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = event.color
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = theme.colors.border
-                            }}
-                          >
-                            <div style={{
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: theme.colors.textPrimary,
-                              marginBottom: '2px'
-                            }}>
-                              {event.title}
-                            </div>
-                            <div style={{
-                              fontSize: '10px',
-                              color: theme.colors.textSecondary
-                            }}>
-                              {event.allDay ? 'All-day' : `${formatTime(event.start)} - ${formatTime(event.end)}`}
-                            </div>
-                          </div>
-                        ))}
-                        {getEventsForDate(new Date()).length === 0 && (
-                          <div style={{
-                            padding: '12px',
-                            textAlign: 'center',
-                            color: theme.colors.textSecondary,
-                            fontSize: '11px'
-                          }}>
-                            No events today
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Tomorrow's Events */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '12px'
-                      }}>
-                        <div style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          background: theme.colors.info
-                        }} />
-                        <h4 style={{
-                          color: theme.colors.textPrimary,
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          margin: 0
-                        }}>
-                          Tomorrow
-                        </h4>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {getEventsForDate(new Date(Date.now() + 24 * 60 * 60 * 1000)).map(event => (
-                          <div
-                            key={event.id}
-                            onClick={() => {
-                              setSelectedEvent(event)
-                              setShowEventModal(true)
-                            }}
-                            style={{
-                              padding: '8px',
-                              background: theme.colors.cardBackground,
-                              border: `1px solid ${theme.colors.border}`,
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = event.color
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = theme.colors.border
-                            }}
-                          >
-                            <div style={{
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: theme.colors.textPrimary,
-                              marginBottom: '2px'
-                            }}>
-                              {event.title}
-                            </div>
-                            <div style={{
-                              fontSize: '10px',
-                              color: theme.colors.textSecondary
-                            }}>
-                              {event.allDay ? 'All-day' : `${formatTime(event.start)} - ${formatTime(event.end)}`}
-                            </div>
-                          </div>
-                        ))}
-                        {getEventsForDate(new Date(Date.now() + 24 * 60 * 60 * 1000)).length === 0 && (
-                          <div style={{
-                            padding: '12px',
-                            textAlign: 'center',
-                            color: theme.colors.textSecondary,
-                            fontSize: '11px'
-                          }}>
-                            No events tomorrow
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* This Week Events */}
-                    <div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '12px'
-                      }}>
-                        <div style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          background: theme.colors.warning
-                        }} />
-                        <h4 style={{
-                          color: theme.colors.textPrimary,
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          margin: 0
-                        }}>
-                          This Week
-                        </h4>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {events
-                          .filter(event => {
-                            const eventDate = new Date(event.start)
-                            const today = new Date()
-                            const weekEnd = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-                            return eventDate > weekEnd && eventDate <= new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
-                          })
-                          .slice(0, 3)
-                          .map(event => (
-                          <div
-                            key={event.id}
-                            onClick={() => {
-                              setSelectedEvent(event)
-                              setShowEventModal(true)
-                            }}
-                            style={{
-                              padding: '8px',
-                              background: theme.colors.cardBackground,
-                              border: `1px solid ${theme.colors.border}`,
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = event.color
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = theme.colors.border
-                            }}
-                          >
-                            <div style={{
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: theme.colors.textPrimary,
-                              marginBottom: '2px'
-                            }}>
-                              {event.title}
-                            </div>
-                            <div style={{
-                              fontSize: '10px',
-                              color: theme.colors.textSecondary
-                            }}>
-                              {formatDate(event.start)} • {event.allDay ? 'All-day' : formatTime(event.start)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {view === 'month' && (
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                {/* Month Grid */}
-                <div style={{ flex: 1, padding: '20px' }}>
-                  {/* Days of Week Header */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(7, 1fr)',
-                    gap: '1px',
-                    marginBottom: '8px'
-                  }}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                      <div
-                        key={day}
-                        style={{
-                          padding: '12px',
-                          textAlign: 'center',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: theme.colors.textSecondary,
-                          background: theme.colors.background
-                        }}
-                      >
-                        {day}
                       </div>
                     ))}
                   </div>
-
-                  {/* Month Calendar Grid */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(7, 1fr)',
-                    gap: '1px',
-                    background: theme.colors.border
-                  }}>
-                    {(() => {
-                      const year = currentDate.getFullYear()
-                      const month = currentDate.getMonth()
-                      const firstDay = new Date(year, month, 1)
-                      const startDate = new Date(firstDay)
-                      startDate.setDate(startDate.getDate() - firstDay.getDay())
+                )}
+              </div>
+            </div>
+          ) : (
+            // Calendar Grid View (Day/Week/Month)
+            <div style={{ padding: '20px' }}>
+              {view === 'month' ? (
+                // Month View
+                <div style={{ 
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  gap: '1px',
+                  background: theme.colors.border,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '10px',
+                  overflow: 'hidden'
+                }}>
+                  {/* Day Headers */}
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                    <div key={day} style={{
+                      background: theme.colors.backgroundTertiary,
+                      padding: '12px 8px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: theme.colors.textPrimary,
+                      borderBottom: `1px solid ${theme.colors.border}`
+                    }}>
+                      {day}
+                    </div>
+                  ))}
+                  
+                  {/* Month Days */}
+                  {getMonthDays().map((day, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        background: theme.colors.backgroundCard,
+                        minHeight: '120px',
+                        padding: '8px',
+                        borderRight: `1px solid ${theme.colors.border}`,
+                        borderBottom: `1px solid ${theme.colors.border}`,
+                        position: 'relative',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => {
+                        setCurrentDate(new Date(day.year, day.month, day.date))
+                        setView('day')
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = theme.colors.backgroundCardHover
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = theme.colors.backgroundCard
+                      }}
+                    >
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: day.isToday ? '700' : '500',
+                        background: day.isToday ? theme.colors.primary : 'transparent',
+                        color: day.isToday ? '#ffffff' : day.isCurrentMonth ? theme.colors.textPrimary : theme.colors.textSecondary,
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: '4px'
+                      }}>
+                        {day.date}
+                      </div>
                       
-                      const days = []
-                      for (let i = 0; i < 42; i++) {
-                        const date = new Date(startDate)
-                        date.setDate(startDate.getDate() + i)
-                        days.push(date)
-                      }
-                      
-                      return days.map((date, index) => {
-                        const isCurrentMonth = date.getMonth() === month
-                        const isToday = date.toDateString() === new Date().toDateString()
-                        const dayEvents = getEventsForDate(date)
-                        
-                        return (
+                      {/* Events for this day */}
+                      {filteredEvents
+                        .filter(event => {
+                          const eventDate = new Date(event.startDate)
+                          return eventDate.getDate() === day.date && 
+                                 eventDate.getMonth() === day.month && 
+                                 eventDate.getFullYear() === day.year
+                        })
+                        .slice(0, 3)
+                        .map((event) => (
                           <div
-                            key={index}
-                            onClick={() => handleDayClick(date)}
+                            key={event.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEventClick(event)
+                            }}
                             style={{
-                              minHeight: '120px',
-                              padding: '8px',
-                              background: theme.colors.cardBackground,
-                              border: `1px solid ${theme.colors.border}`,
+                              background: getEventColor(event.type, event.priority),
+                              color: '#ffffff',
+                              fontSize: '10px',
+                              padding: '2px 4px',
+                              borderRadius: '3px',
+                              marginBottom: '2px',
                               cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              position: 'relative'
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
                             }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = theme.colors.backgroundHover
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = theme.colors.cardBackground
-                            }}
+                            title={event.title}
                           >
-                            {/* Day Number */}
-                            <div style={{
-                              fontSize: '14px',
-                              fontWeight: isToday ? 'bold' : '500',
-                              color: isCurrentMonth 
-                                ? (isToday ? theme.colors.primary : theme.colors.textPrimary)
-                                : theme.colors.textSecondary,
-                              marginBottom: '4px'
-                            }}>
-                              {date.getDate()}
-                            </div>
-                            
-                            {/* Events */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              {dayEvents.slice(0, 3).map(event => (
-                                <div
-                                  key={event.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setSelectedEvent(event)
-                                    setShowEventModal(true)
-                                  }}
-                                  style={{
-                                    fontSize: '10px',
-                                    padding: '2px 4px',
-                                    background: event.color,
-                                    color: 'white',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                  }}
-                                >
-                                  {event.title}
-                                </div>
-                              ))}
-                              {dayEvents.length > 3 && (
-                                <div style={{
+                            {event.startTime && `${formatTime(event.startTime)} `}{event.title}
+                          </div>
+                        ))}
+                      
+                      {/* Show more indicator */}
+                      {filteredEvents.filter(event => {
+                        const eventDate = new Date(event.startDate)
+                        return eventDate.getDate() === day.date && 
+                               eventDate.getMonth() === day.month && 
+                               eventDate.getFullYear() === day.year
+                      }).length > 3 && (
+                        <div style={{
+                          fontSize: '10px',
+                          color: theme.colors.textSecondary,
+                          textAlign: 'center',
+                          marginTop: '2px'
+                        }}>
+                          +{filteredEvents.filter(event => {
+                            const eventDate = new Date(event.startDate)
+                            return eventDate.getDate() === day.date && 
+                                   eventDate.getMonth() === day.month && 
+                                   eventDate.getFullYear() === day.year
+                          }).length - 3} more
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : view === 'week' ? (
+                // Week View
+                <div style={{ 
+                  display: 'grid',
+                  gridTemplateColumns: '60px repeat(7, 1fr)',
+                  gap: '1px',
+                  background: theme.colors.border,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '10px',
+                  overflow: 'hidden'
+                }}>
+                  {/* Time column header */}
+                  <div style={{
+                    background: theme.colors.backgroundTertiary,
+                    padding: '12px 8px',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: theme.colors.textPrimary,
+                    borderBottom: `1px solid ${theme.colors.border}`
+                  }}>
+                    Time
+                  </div>
+                  
+                  {/* Day Headers */}
+                  {getWeekDays().map((day) => (
+                    <div key={day.toISOString()} style={{
+                      background: theme.colors.backgroundTertiary,
+                      padding: '12px 8px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: theme.colors.textPrimary,
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                      borderRight: `1px solid ${theme.colors.border}`
+                    }}>
+                      <div>{day.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                      <div style={{ fontSize: '12px', marginTop: '2px' }}>
+                        {day.getDate()}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Time slots and events */}
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    <React.Fragment key={hour}>
+                      {/* Time label */}
+                      <div style={{
+                        background: theme.colors.backgroundCard,
+                        padding: '8px 4px',
+                        textAlign: 'center',
+                        fontSize: '12px',
+                        color: theme.colors.textSecondary,
+                        borderRight: `1px solid ${theme.colors.border}`,
+                        borderBottom: `1px solid ${theme.colors.border}`,
+                        height: '60px'
+                      }}>
+                        {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                      </div>
+                      
+                      {/* Day cells for this hour */}
+                      {getWeekDays().map((day) => (
+                        <div
+                          key={`${day.toISOString()}-${hour}`}
+                          style={{
+                            background: theme.colors.backgroundCard,
+                            minHeight: '60px',
+                            padding: '4px',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            borderBottom: `1px solid ${theme.colors.border}`,
+                            position: 'relative',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => {
+                            const newDate = new Date(day)
+                            newDate.setHours(hour, 0, 0, 0)
+                            setCurrentDate(newDate)
+                            setShowNewEventModal(true)
+                            setNewEventForm(prev => ({
+                              ...prev,
+                              startDate: newDate.toISOString().split('T')[0],
+                              startTime: `${hour.toString().padStart(2, '0')}:00`,
+                              endTime: `${(hour + 1).toString().padStart(2, '0')}:00`
+                            }))
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = theme.colors.backgroundCardHover
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = theme.colors.backgroundCard
+                          }}
+                        >
+                          {/* Events for this time slot */}
+                          {filteredEvents
+                            .filter(event => {
+                              const eventDate = new Date(event.startDate)
+                              const eventHour = event.startTime ? parseInt(event.startTime.split(':')[0]) : 0
+                              return eventDate.toDateString() === day.toDateString() && eventHour === hour
+                            })
+                            .map((event) => (
+                              <div
+                                key={event.id}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleEventClick(event)
+                                }}
+                                style={{
+                                  background: getEventColor(event.type, event.priority),
+                                  color: '#ffffff',
                                   fontSize: '10px',
-                                  color: theme.colors.textSecondary,
-                                  textAlign: 'center'
-                                }}>
-                                  +{dayEvents.length - 3} more
+                                  padding: '2px 4px',
+                                  borderRadius: '3px',
+                                  marginBottom: '1px',
+                                  cursor: 'pointer',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  position: 'absolute',
+                                  top: '2px',
+                                  left: '2px',
+                                  right: '2px'
+                                }}
+                                title={event.title}
+                              >
+                                {event.title}
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </div>
+              ) : (
+                // Day View
+                <div style={{ 
+                  display: 'grid',
+                  gridTemplateColumns: '60px 1fr',
+                  gap: '1px',
+                  background: theme.colors.border,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '10px',
+                  overflow: 'hidden'
+                }}>
+                  {/* Time column header */}
+                  <div style={{
+                    background: theme.colors.backgroundTertiary,
+                    padding: '12px 8px',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: theme.colors.textPrimary,
+                    borderBottom: `1px solid ${theme.colors.border}`
+                  }}>
+                    Time
+                  </div>
+                  
+                  {/* Day header */}
+                  <div style={{
+                    background: theme.colors.backgroundTertiary,
+                    padding: '12px 8px',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: theme.colors.textPrimary,
+                    borderBottom: `1px solid ${theme.colors.border}`,
+                    borderRight: `1px solid ${theme.colors.border}`
+                  }}>
+                    <div>{currentDate.toLocaleDateString('en-US', { weekday: 'long' })}</div>
+                    <div style={{ fontSize: '12px', marginTop: '2px' }}>
+                      {currentDate.getDate()} {currentDate.toLocaleDateString('en-US', { month: 'short' })}
+                    </div>
+                  </div>
+                  
+                  {/* Time slots and events */}
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    <React.Fragment key={hour}>
+                      {/* Time label */}
+                      <div style={{
+                        background: theme.colors.backgroundCard,
+                        padding: '8px 4px',
+                        textAlign: 'center',
+                        fontSize: '12px',
+                        color: theme.colors.textSecondary,
+                        borderRight: `1px solid ${theme.colors.border}`,
+                        borderBottom: `1px solid ${theme.colors.border}`,
+                        height: '80px'
+                      }}>
+                        {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                      </div>
+                      
+                      {/* Day cell for this hour */}
+                      <div
+                        style={{
+                          background: theme.colors.backgroundCard,
+                          minHeight: '80px',
+                          padding: '4px',
+                          borderRight: `1px solid ${theme.colors.border}`,
+                          borderBottom: `1px solid ${theme.colors.border}`,
+                          position: 'relative',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => {
+                          const newDate = new Date(currentDate)
+                          newDate.setHours(hour, 0, 0, 0)
+                          setCurrentDate(newDate)
+                          setShowNewEventModal(true)
+                          setNewEventForm(prev => ({
+                            ...prev,
+                            startDate: newDate.toISOString().split('T')[0],
+                            startTime: `${hour.toString().padStart(2, '0')}:00`,
+                            endTime: `${(hour + 1).toString().padStart(2, '0')}:00`
+                          }))
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = theme.colors.backgroundCardHover
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = theme.colors.backgroundCard
+                        }}
+                      >
+                        {/* Events for this time slot */}
+                        {filteredEvents
+                          .filter(event => {
+                            const eventDate = new Date(event.startDate)
+                            const eventHour = event.startTime ? parseInt(event.startTime.split(':')[0]) : 0
+                            return eventDate.toDateString() === currentDate.toDateString() && eventHour === hour
+                          })
+                          .map((event) => (
+                            <div
+                              key={event.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleEventClick(event)
+                              }}
+                              style={{
+                                background: getEventColor(event.type, event.priority),
+                                color: '#ffffff',
+                                fontSize: '11px',
+                                padding: '4px 6px',
+                                borderRadius: '4px',
+                                marginBottom: '2px',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                position: 'absolute',
+                                top: '2px',
+                                left: '2px',
+                                right: '2px'
+                              }}
+                              title={event.title}
+                            >
+                              <div style={{ fontWeight: '600' }}>{event.title}</div>
+                              {event.startTime && (
+                                <div style={{ fontSize: '9px', opacity: 0.9 }}>
+                                  {formatTime(event.startTime)} - {formatTime(event.endTime)}
                                 </div>
                               )}
                             </div>
-                          </div>
-                        )
-                      })
-                    })()}
+                          ))}
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+
+        {/* Sidebar (when not in compact view) */}
+        {!compactView && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Quick Stats */}
+            <Card>
+              <div style={{ padding: '16px' }}>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                  Quick Stats
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>Total Events</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>{filteredEvents.length}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>This Week</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                      {filteredEvents.filter(e => {
+                        const eventDate = new Date(e.startDate)
+                        const weekStart = new Date(currentDate)
+                        weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+                        const weekEnd = new Date(weekStart)
+                        weekEnd.setDate(weekEnd.getDate() + 6)
+                        return eventDate >= weekStart && eventDate <= weekEnd
+                      }).length}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>Completed</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.success }}>
+                      {filteredEvents.filter(e => e.status === 'completed').length}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>Pending</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.warning }}>
+                      {filteredEvents.filter(e => e.status === 'scheduled' || e.status === 'confirmed').length}
+                    </span>
                   </div>
                 </div>
               </div>
-            )}
-          </Card>
-        </div>
+            </Card>
+
+            {/* Upcoming Events */}
+            <Card>
+              <div style={{ padding: '16px' }}>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                  Upcoming
+                </h4>
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {filteredEvents
+                    .filter(e => new Date(e.startDate) >= new Date())
+                    .slice(0, 5)
+                    .map((event) => (
+                    <div
+                      key={event.id}
+                      onClick={() => handleEventClick(event)}
+                      style={{
+                        padding: '12px',
+                        background: theme.colors.background,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: '8px',
+                        marginBottom: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = theme.colors.backgroundCardHover
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = theme.colors.background
+                      }}
+                    >
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '4px' }}>
+                        {event.title}
+                      </div>
+                      <div style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
+                        {formatDate(event.startDate)} at {formatTime(event.startTime)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Event Detail Modal */}
       {showEventModal && selectedEvent && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}
-          onClick={() => setShowEventModal(false)}
-        >
-          <div
-            style={{
-              background: theme.colors.cardBackground,
-              borderRadius: '16px',
-              maxWidth: '500px',
-              width: '100%',
-              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{
-              padding: '24px',
-              borderBottom: `1px solid ${theme.colors.border}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start'
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '12px'
-                }}>
-                  {React.createElement(getEventIcon(selectedEvent.type), {
-                    size: 24,
-                    color: selectedEvent.color
-                  })}
-                  <h2 style={{
-                    color: theme.colors.textPrimary,
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    margin: 0,
-                    flex: 1
-                  }}>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: theme.colors.backgroundCard,
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            border: `1px solid ${theme.colors.border}`
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ color: getEventColor(selectedEvent.type, selectedEvent.priority) }}>
+                  {getEventIcon(selectedEvent.type)}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: theme.colors.textPrimary }}>
                     {selectedEvent.title}
-                  </h2>
+                  </h3>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <span style={{
+                      padding: '2px 8px',
+                      background: getEventColor(selectedEvent.type, selectedEvent.priority),
+                      color: '#ffffff',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      textTransform: 'uppercase'
+                    }}>
+                      {selectedEvent.type}
+                    </span>
+                    <span style={{
+                      padding: '2px 8px',
+                      background: getStatusColor(selectedEvent.status),
+                      color: '#ffffff',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      textTransform: 'uppercase'
+                    }}>
+                      {selectedEvent.status.replace('_', ' ')}
+                    </span>
+                    <span style={{
+                      padding: '2px 8px',
+                      background: theme.colors.backgroundTertiary,
+                      color: theme.colors.textSecondary,
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      textTransform: 'uppercase'
+                    }}>
+                      {selectedEvent.priority}
+                    </span>
+                  </div>
                 </div>
-                
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px'
-                }}>
-                  <Clock size={16} color={theme.colors.textSecondary} />
-                  <span style={{ color: theme.colors.textSecondary, fontSize: '14px' }}>
-                    {selectedEvent.allDay 
-                      ? 'All Day' 
-                      : `${formatTime(selectedEvent.start)} - ${formatTime(selectedEvent.end)}`
-                    }
-                  </span>
-                </div>
-
-                {selectedEvent.location && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '8px'
-                  }}>
-                    <MapPin size={16} color={theme.colors.textSecondary} />
-                    <span style={{ color: theme.colors.textSecondary, fontSize: '14px' }}>
-                      {selectedEvent.location}
-                    </span>
-                  </div>
-                )}
-
-                {selectedEvent.assignee && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '8px'
-                  }}>
-                    <User size={16} color={theme.colors.textSecondary} />
-                    <span style={{ color: theme.colors.textSecondary, fontSize: '14px' }}>
-                      {selectedEvent.assignee}
-                    </span>
-                  </div>
-                )}
-
-                {selectedEvent.vehicle && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '8px'
-                  }}>
-                    <Truck size={16} color={theme.colors.textSecondary} />
-                    <span style={{ color: theme.colors.textSecondary, fontSize: '14px' }}>
-                      {selectedEvent.vehicle}
-                    </span>
-                  </div>
-                )}
               </div>
-
               <button
                 onClick={() => setShowEventModal(false)}
                 style={{
+                  padding: '8px',
                   background: 'transparent',
                   border: 'none',
                   color: theme.colors.textSecondary,
                   cursor: 'pointer',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  borderRadius: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
                 }}
               >
-                <XCircle size={24} />
+                <XCircle size={20} />
               </button>
             </div>
 
-            {selectedEvent.description && (
-              <div style={{ padding: '20px 24px' }}>
-                <h4 style={{
-                  color: theme.colors.textPrimary,
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  margin: '0 0 8px 0'
-                }}>
-                  Description
-                </h4>
-                <p style={{
-                  color: theme.colors.textSecondary,
-                  fontSize: '14px',
-                  margin: 0,
-                  lineHeight: 1.5
-                }}>
-                  {selectedEvent.description}
-                </p>
-              </div>
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {selectedEvent.startTime && (
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '4px' }}>
+                    Time
+                  </div>
+                  <div style={{ fontSize: '14px', color: theme.colors.textSecondary }}>
+                    {formatTime(selectedEvent.startTime)} - {formatTime(selectedEvent.endTime)}
+                  </div>
+                </div>
+              )}
 
-            <div style={{
-              padding: '16px 24px',
-              borderTop: `1px solid ${theme.colors.border}`,
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px'
-            }}>
+              {selectedEvent.location && (
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '4px' }}>
+                    Location
+                  </div>
+                  <div style={{ fontSize: '14px', color: theme.colors.textSecondary }}>
+                    {selectedEvent.location}
+                  </div>
+                </div>
+              )}
+
+              {selectedEvent.driverName && (
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '4px' }}>
+                    Driver
+                  </div>
+                  <div style={{ fontSize: '14px', color: theme.colors.textSecondary }}>
+                    {selectedEvent.driverName}
+                  </div>
+                </div>
+              )}
+
+              {selectedEvent.vehicleName && (
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '4px' }}>
+                    Vehicle
+                  </div>
+                  <div style={{ fontSize: '14px', color: theme.colors.textSecondary }}>
+                    {selectedEvent.vehicleName}
+                  </div>
+                </div>
+              )}
+
+              {selectedEvent.description && (
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '4px' }}>
+                    Description
+                  </div>
+                  <div style={{ fontSize: '14px', color: theme.colors.textSecondary, lineHeight: '1.5' }}>
+                    {selectedEvent.description}
+                  </div>
+                </div>
+              )}
+
+              {selectedEvent.notes && (
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '4px' }}>
+                    Notes
+                  </div>
+                  <div style={{ fontSize: '14px', color: theme.colors.textSecondary, lineHeight: '1.5' }}>
+                    {selectedEvent.notes}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button
-                onClick={() => setShowEventModal(false)}
+                onClick={handleEditEvent}
                 style={{
-                  padding: '10px 20px',
+                  flex: 1,
+                  padding: '12px',
                   background: 'transparent',
-                  color: theme.colors.textSecondary,
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: '8px',
+                  color: theme.colors.textSecondary,
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                  e.currentTarget.style.color = theme.colors.textPrimary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.textSecondary
                 }}
               >
-                Close
+                <Edit size={16} />
+                Edit
               </button>
+              
               <button
+                onClick={() => {
+                  setShowEventModal(false)
+                  setShowDeleteModal(true)
+                }}
                 style={{
-                  padding: '10px 20px',
-                  background: theme.colors.primary,
-                  color: 'white',
-                  border: 'none',
+                  flex: 1,
+                  padding: '12px',
+                  background: 'transparent',
+                  border: `1px solid ${theme.colors.error}`,
                   borderRadius: '8px',
+                  color: theme.colors.error,
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.error
+                  e.currentTarget.style.color = '#ffffff'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.error
                 }}
               >
-                Edit Event
+                <Trash2 size={16} />
+                Delete
               </button>
             </div>
           </div>
@@ -2365,764 +2213,485 @@ const CalendarPage = () => {
 
       {/* New Event Modal */}
       {showNewEventModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}
-          onClick={() => setShowNewEventModal(false)}
-        >
-          <div
-            style={{
-              background: theme.colors.cardBackground,
-              borderRadius: '16px',
-              maxWidth: '600px',
-              width: '100%',
-              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div style={{
-              padding: '24px',
-              borderBottom: `1px solid ${theme.colors.border}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h2 style={{ color: theme.colors.textPrimary, fontSize: '24px', fontWeight: 'bold', margin: 0 }}>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: theme.colors.backgroundCard,
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            border: `1px solid ${theme.colors.border}`
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: theme.colors.textPrimary }}>
                 Create New Event
-              </h2>
+              </h3>
               <button
-                onClick={() => setShowNewEventModal(false)}
+                onClick={() => {
+                  setShowNewEventModal(false)
+                  resetNewEventForm()
+                }}
                 style={{
+                  padding: '8px',
                   background: 'transparent',
                   border: 'none',
                   color: theme.colors.textSecondary,
                   cursor: 'pointer',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  borderRadius: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
                 }}
               >
-                <XCircle size={24} />
+                <XCircle size={20} />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* Event Title */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                    Event Title *
-                  </label>
-                  <input
-                    type="text"
-                    value={newEventForm.title}
-                    onChange={(e) => setNewEventForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Enter event title"
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          color: '#FFFFFF',
-                          fontSize: '14px',
-                          outline: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#667eea'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.08)'
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.05)'
-                          e.target.style.boxShadow = 'none'
-                        }}
-                        />
-                </div>
-
-                {/* Event Type */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                    Event Type
-                  </label>
-                  <select
-                    value={newEventForm.type}
-                    onChange={(e) => setNewEventForm(prev => ({ ...prev, type: e.target.value as CalendarEvent['type'] }))}
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          color: '#FFFFFF',
-                          fontSize: '14px',
-                          outline: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#667eea'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.08)'
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.05)'
-                          e.target.style.boxShadow = 'none'
-                        }}
-                        >
-                    <option value="custom" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Custom</option>
-                    <option value="load" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Load</option>
-                    <option value="maintenance" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Maintenance</option>
-                    <option value="compliance" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Compliance</option>
-                    <option value="driver" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Driver</option>
-                    <option value="meeting" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>Meeting</option>
-                  </select>
-                </div>
-
-                {/* All Day Toggle */}
-                <div>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    cursor: 'pointer',
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Event Title *
+                </label>
+                <input
+                  type="text"
+                  value={newEventForm.title}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter event title"
+                  style={{
+                    width: '100%',
                     padding: '12px',
                     background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
                     borderRadius: '8px',
-                    border: `1px solid ${theme.colors.border}`
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={newEventForm.allDay}
-                      onChange={(e) => setNewEventForm(prev => ({ ...prev, allDay: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span style={{ fontSize: '14px', fontWeight: '500', color: theme.colors.textPrimary }}>
-                      All Day Event
-                    </span>
-                  </label>
-                </div>
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
 
-                {/* Date and Time */}
-                <div style={{ display: 'grid', gridTemplateColumns: newEventForm.allDay ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                      Start Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={newEventForm.startDate}
-                      onChange={(e) => setNewEventForm(prev => ({ ...prev, startDate: e.target.value }))}
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          color: '#FFFFFF',
-                          fontSize: '14px',
-                          outline: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#667eea'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.08)'
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.05)'
-                          e.target.style.boxShadow = 'none'
-                        }}
-                        />
-                  </div>
-                  
-                  {!newEventForm.allDay && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                        Start Time
-                      </label>
-                      <input
-                        type="time"
-                        value={newEventForm.startTime}
-                        onChange={(e) => setNewEventForm(prev => ({ ...prev, startTime: e.target.value }))}
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          color: '#FFFFFF',
-                          fontSize: '14px',
-                          outline: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#667eea'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.08)'
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.05)'
-                          e.target.style.boxShadow = 'none'
-                        }}
-                      />
-                    </div>
-                  )}
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Event Type *
+                </label>
+                <select
+                  value={newEventForm.type}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, type: e.target.value as CalendarEventType }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="custom">Custom</option>
+                  <option value="load">Load</option>
+                  <option value="pickup">Pickup</option>
+                  <option value="delivery">Delivery</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="compliance">Compliance</option>
+                  <option value="driver">Driver</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="break">Break</option>
+                  <option value="training">Training</option>
+                  <option value="inspection">Inspection</option>
+                </select>
+              </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={newEventForm.endDate}
-                      onChange={(e) => setNewEventForm(prev => ({ ...prev, endDate: e.target.value }))}
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          color: '#FFFFFF',
-                          fontSize: '14px',
-                          outline: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#667eea'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.08)'
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.05)'
-                          e.target.style.boxShadow = 'none'
-                        }}
-                        />
-                  </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Start Date *
+                </label>
+                <input
+                  type="date"
+                  value={newEventForm.startDate}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, startDate: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
 
-                  {!newEventForm.allDay && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                        End Time
-                      </label>
-                      <input
-                        type="time"
-                        value={newEventForm.endTime}
-                        onChange={(e) => setNewEventForm(prev => ({ ...prev, endTime: e.target.value }))}
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          color: '#FFFFFF',
-                          fontSize: '14px',
-                          outline: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#667eea'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.08)'
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                          e.target.style.background = 'rgba(255, 255, 255, 0.05)'
-                          e.target.style.boxShadow = 'none'
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Start Time *
+                </label>
+                <input
+                  type="time"
+                  value={newEventForm.startTime}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, startTime: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
 
-                {/* Location */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    value={newEventForm.location}
-                    onChange={(e) => setNewEventForm(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Event location"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: theme.colors.background,
-                      border: `1px solid ${theme.colors.border}`,
-                      borderRadius: '8px',
-                      color: theme.colors.textPrimary,
-                      fontSize: '14px',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  End Date *
+                </label>
+                <input
+                  type="date"
+                  value={newEventForm.endDate}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, endDate: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
 
-                {/* Description */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                    Description
-                  </label>
-                  <textarea
-                    value={newEventForm.description}
-                    onChange={(e) => setNewEventForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Event description"
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: theme.colors.background,
-                      border: `1px solid ${theme.colors.border}`,
-                      borderRadius: '8px',
-                      color: theme.colors.textPrimary,
-                      fontSize: '14px',
-                      outline: 'none',
-                      resize: 'vertical',
-                      fontFamily: 'inherit'
-                    }}
-                  />
-                </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  End Time *
+                </label>
+                <input
+                  type="time"
+                  value={newEventForm.endTime}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, endTime: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
 
-                {/* Priority */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
-                    Priority
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-                    {(['low', 'medium', 'high', 'urgent'] as const).map((priority) => (
-                      <div
-                        key={priority}
-                        onClick={() => setNewEventForm(prev => ({ ...prev, priority }))}
-                        style={{
-                          padding: '12px',
-                          background: newEventForm.priority === priority 
-                            ? `${
-                                priority === 'urgent' ? theme.colors.error :
-                                priority === 'high' ? theme.colors.warning :
-                                priority === 'medium' ? theme.colors.info :
-                                theme.colors.success
-                              }20` 
-                            : theme.colors.background,
-                          border: `2px solid ${newEventForm.priority === priority 
-                            ? (priority === 'urgent' ? theme.colors.error :
-                               priority === 'high' ? theme.colors.warning :
-                               priority === 'medium' ? theme.colors.info :
-                               theme.colors.success)
-                            : theme.colors.border}`,
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: newEventForm.priority === priority 
-                            ? (priority === 'urgent' ? theme.colors.error :
-                               priority === 'high' ? theme.colors.warning :
-                               priority === 'medium' ? theme.colors.info :
-                               theme.colors.success)
-                            : theme.colors.textPrimary,
-                          textAlign: 'center',
-                          textTransform: 'capitalize'
-                        }}
-                      >
-                        {priority}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Priority
+                </label>
+                <select
+                  value={newEventForm.priority}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, priority: e.target.value as CalendarEventPriority }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Driver
+                </label>
+                <select
+                  value={newEventForm.driverId}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, driverId: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="">Select Driver</option>
+                  {drivers.map((driver: any) => (
+                    <option key={driver.id} value={driver.id}>{driver.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Vehicle
+                </label>
+                <select
+                  value={newEventForm.vehicleId}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, vehicleId: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="">Select Vehicle</option>
+                  {vehicles.map((vehicle: any) => (
+                    <option key={vehicle.id} value={vehicle.id}>{vehicle.number} - {vehicle.type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={newEventForm.location}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Enter location"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, marginBottom: '8px' }}>
+                  Description
+                </label>
+                <textarea
+                  value={newEventForm.description}
+                  onChange={(e) => setNewEventForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter event description"
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.background,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textPrimary,
+                    fontSize: '14px',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div style={{
-              padding: '20px 24px',
-              borderTop: `1px solid ${theme.colors.border}`,
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px'
-            }}>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button
-                onClick={() => setShowNewEventModal(false)}
+                onClick={() => {
+                  setShowNewEventModal(false)
+                  resetNewEventForm()
+                }}
                 style={{
-                  padding: '12px 24px',
+                  flex: 1,
+                  padding: '12px',
                   background: 'transparent',
-                  color: theme.colors.textSecondary,
                   border: `1px solid ${theme.colors.border}`,
-                  borderRadius: '10px',
-                  fontSize: '15px',
+                  borderRadius: '8px',
+                  color: theme.colors.textSecondary,
+                  fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = theme.colors.backgroundHover
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
                   e.currentTarget.style.color = theme.colors.textPrimary
+                  e.currentTarget.style.borderColor = theme.colors.primary
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent'
                   e.currentTarget.style.color = theme.colors.textSecondary
+                  e.currentTarget.style.borderColor = theme.colors.border
                 }}
               >
                 Cancel
               </button>
+              
               <button
                 onClick={handleCreateEvent}
+                disabled={!newEventForm.title || !newEventForm.startDate || !newEventForm.startTime}
                 style={{
-                  padding: '12px 24px',
-                  background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '15px',
+                  flex: 1,
+                  padding: '12px',
+                  background: 'transparent',
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '8px',
+                  color: theme.colors.textSecondary,
+                  fontSize: '14px',
                   fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
+                  cursor: newEventForm.title && newEventForm.startDate && newEventForm.startTime ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  boxShadow: `0 4px 12px ${theme.colors.primary}40`
+                  opacity: newEventForm.title && newEventForm.startDate && newEventForm.startTime ? 1 : 0.5
+                }}
+                onMouseEnter={(e) => {
+                  if (newEventForm.title && newEventForm.startDate && newEventForm.startTime) {
+                    e.currentTarget.style.background = theme.colors.backgroundCardHover
+                    e.currentTarget.style.color = theme.colors.textPrimary
+                    e.currentTarget.style.borderColor = theme.colors.primary
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (newEventForm.title && newEventForm.startDate && newEventForm.startTime) {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
+                  }
                 }}
               >
-                <CheckCircle size={18} />
                 Create Event
               </button>
             </div>
           </div>
         </div>
-        )}
+      )}
 
-        {/* Time Slot Appointment Modal */}
-        {showTimeSlotModal && selectedTimeSlot && (
-          <>
-            {/* Backdrop */}
-            <div 
-              onClick={() => {
-                setShowTimeSlotModal(false)
-                setSelectedTimeSlot(null)
-              }}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.5)',
-                zIndex: 999
-              }}
-            />
-            {/* Modal */}
-            <div style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: theme.colors.backgroundCard,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: '12px',
-              padding: '24px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-              zIndex: 1000,
-              minWidth: '400px',
-              maxWidth: '500px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <h3 style={{
-                  margin: 0,
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: theme.colors.textPrimary
-                }}>
-                  Create Appointment
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowTimeSlotModal(false)
-                    setSelectedTimeSlot(null)
-                  }}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: theme.colors.textSecondary,
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    transition: 'color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = theme.colors.textPrimary
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = theme.colors.textSecondary
-                  }}
-                >
-                  ×
-                </button>
-              </div>
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedEvent && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: theme.colors.backgroundCard,
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '100%',
+            border: `1px solid ${theme.colors.border}`
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <AlertTriangle size={24} color={theme.colors.error} />
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                Delete Event
+              </h3>
+            </div>
+            
+            <p style={{ fontSize: '14px', color: theme.colors.textSecondary, marginBottom: '24px', lineHeight: '1.5' }}>
+              Are you sure you want to delete "{selectedEvent.title}"? This action cannot be undone.
+            </p>
 
-              {/* Time Display */}
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '20px',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: theme.colors.textPrimary,
-                  marginBottom: '4px'
-                }}>
-                  Selected Time
-                </div>
-                <div style={{
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  color: theme.colors.primary
-                }}>
-                  {selectedTimeSlot.hour === 0 ? '12:00 AM' : 
-                   selectedTimeSlot.hour < 12 ? `${selectedTimeSlot.hour}:00 AM` : 
-                   selectedTimeSlot.hour === 12 ? '12:00 PM' : 
-                   `${selectedTimeSlot.hour - 12}:00 PM`}
-                </div>
-              </div>
-
-              {/* Quick Appointment Buttons */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '12px',
-                marginBottom: '20px'
-              }}>
-                <button
-                  onClick={() => createAppointmentFromTimeSlot('Meeting', 'meeting', 60)}
-                  style={{
-                    padding: '12px',
-                    background: 'rgba(139, 92, 246, 0.1)',
-                    border: `1px solid rgba(139, 92, 246, 0.3)`,
-                    borderRadius: '8px',
-                    color: theme.colors.textPrimary,
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'
-                    e.currentTarget.style.transform = 'scale(1.02)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'
-                    e.currentTarget.style.transform = 'scale(1)'
-                  }}
-                >
-                  <Calendar size={16} />
-                  Meeting
-                </button>
-
-                <button
-                  onClick={() => createAppointmentFromTimeSlot('Load Pickup', 'load', 90)}
-                  style={{
-                    padding: '12px',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    border: `1px solid rgba(59, 130, 246, 0.3)`,
-                    borderRadius: '8px',
-                    color: theme.colors.textPrimary,
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'
-                    e.currentTarget.style.transform = 'scale(1.02)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'
-                    e.currentTarget.style.transform = 'scale(1)'
-                  }}
-                >
-                  <Truck size={16} />
-                  Load Pickup
-                </button>
-
-                <button
-                  onClick={() => createAppointmentFromTimeSlot('Maintenance', 'maintenance', 120)}
-                  style={{
-                    padding: '12px',
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    border: `1px solid rgba(245, 158, 11, 0.3)`,
-                    borderRadius: '8px',
-                    color: theme.colors.textPrimary,
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(245, 158, 11, 0.2)'
-                    e.currentTarget.style.transform = 'scale(1.02)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)'
-                    e.currentTarget.style.transform = 'scale(1)'
-                  }}
-                >
-                  <Wrench size={16} />
-                  Maintenance
-                </button>
-
-                <button
-                  onClick={() => createAppointmentFromTimeSlot('Custom Event', 'custom', 60)}
-                  style={{
-                    padding: '12px',
-                    background: 'rgba(107, 114, 128, 0.1)',
-                    border: `1px solid rgba(107, 114, 128, 0.3)`,
-                    borderRadius: '8px',
-                    color: theme.colors.textPrimary,
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(107, 114, 128, 0.2)'
-                    e.currentTarget.style.transform = 'scale(1.02)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(107, 114, 128, 0.1)'
-                    e.currentTarget.style.transform = 'scale(1)'
-                  }}
-                >
-                  <Plus size={16} />
-                  Custom Event
-                </button>
-              </div>
-
-              {/* Custom Time Input */}
-              <div style={{
-                marginBottom: '20px'
-              }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: theme.colors.textPrimary,
-                  marginBottom: '8px'
-                }}>
-                  Or create custom appointment:
-                </label>
-                <button
-                  onClick={() => setShowNewEventModal(true)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'transparent',
-                    border: `2px dashed ${theme.colors.border}`,
-                    borderRadius: '8px',
-                    color: theme.colors.textSecondary,
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.primary
-                    e.currentTarget.style.color = theme.colors.primary
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.border
-                    e.currentTarget.style.color = theme.colors.textSecondary
-                    e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  <Plus size={16} />
-                  Create Custom Appointment
-                </button>
-              </div>
-
-              {/* Cancel Button */}
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
-                onClick={() => {
-                  setShowTimeSlotModal(false)
-                  setSelectedTimeSlot(null)
-                }}
+                onClick={() => setShowDeleteModal(false)}
                 style={{
-                  width: '100%',
-                  padding: '10px',
+                  flex: 1,
+                  padding: '12px',
                   background: 'transparent',
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: '8px',
                   color: theme.colors.textSecondary,
                   fontSize: '14px',
-                  fontWeight: '500',
+                  fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
                   e.currentTarget.style.color = theme.colors.textPrimary
+                  e.currentTarget.style.borderColor = theme.colors.primary
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent'
                   e.currentTarget.style.color = theme.colors.textSecondary
+                  e.currentTarget.style.borderColor = theme.colors.border
                 }}
               >
                 Cancel
               </button>
+              
+              <button
+                onClick={handleDeleteEvent}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'transparent',
+                  border: `1px solid ${theme.colors.error}`,
+                  borderRadius: '8px',
+                  color: theme.colors.error,
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.error
+                  e.currentTarget.style.color = '#ffffff'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.error
+                }}
+              >
+                Delete
+              </button>
             </div>
-          </>
-        )}
-      </PageContainer>
-    )
-  }
+          </div>
+        </div>
+      )}
 
-export default CalendarPage
+      {/* Inject CSS for animations */}
+      <style>
+        {`
+          .animate-spin {
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </PageContainer>
+  )
+}
 
+export default CarrierCalendarPage

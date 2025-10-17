@@ -1,0 +1,24 @@
+{
+  "name": "Unit 1 – COMPLETE docs only",
+  "description": "Low-risk documentation files marked COMPLETE",
+  "includeGlobs": [
+    "**/COMPLETE*.md",
+    "**/*_COMPLETE.md"
+  ],
+  "excludeGlobs": [
+    "audit/**",
+    "backups/**",
+    "archive/**",
+    ".git/**",
+    "node_modules/**",
+    "web/node_modules/**",
+    "tools/**"
+  ],
+  "maxFiles": 10,
+  "dryRun": false,
+  "riskLevel": "zero",
+  "fileTypes": ["documentation"],
+  "expectedReferences": 0
+}
+
+

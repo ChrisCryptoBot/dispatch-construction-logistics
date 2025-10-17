@@ -40,11 +40,11 @@ export const lightTheme: Theme = {
     primaryLight: '#fee2e2',
     accent: '#7c2d12',
     
-    // Status - Vibrant with good contrast
-    success: '#059669',
-    warning: '#d97706',
-    error: '#dc2626',
-    info: '#2563eb',
+    // Status - Softer, easier on the eyes
+    success: '#22c55e',
+    warning: '#f4d03f',
+    error: '#f87171',
+    info: '#60a5fa',
     
     // Borders - Darker and more defined for better structure
     border: '#94a3b8',

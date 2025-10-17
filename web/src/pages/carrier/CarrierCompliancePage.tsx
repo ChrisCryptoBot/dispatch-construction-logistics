@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import PageContainer from '../../components/shared/PageContainer'
 import Card from '../../components/ui/Card'
@@ -20,6 +21,26 @@ interface ComplianceItem {
 
 const CompliancePage = () => {
   const { theme } = useTheme()
+  const navigate = useNavigate()
+  const location = useLocation()
+  
+  // Get vehicle filter from URL params
+  const [vehicleFilter, setVehicleFilter] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const vehicleId = urlParams.get('vehicle')
+    setVehicleFilter(vehicleId)
+  }, [location.search])
+  
+  // Smart navigation to fleet management
+  const navigateToFleet = (vehicleId?: string) => {
+    if (vehicleId) {
+      navigate(`/fleet?highlight=${vehicleId}`)
+    } else {
+      navigate('/fleet')
+    }
+  }
   
   const [items, setItems] = useState<ComplianceItem[]>([
     {
@@ -219,32 +240,71 @@ const CompliancePage = () => {
   }
 
   const headerAction = (
-    <button
-      onClick={() => {
-        // Trigger compliance check
-        alert('Running compliance check across all systems...')
-      }}
-      style={{
-        padding: '14px 28px',
-        background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
-        color: 'white',
-        borderRadius: '12px',
-        border: 'none',
-        fontSize: '15px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        boxShadow: `0 4px 12px ${theme.colors.primary}40`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-    >
-      <RefreshCw size={18} />
-      Run Compliance Check
-    </button>
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <button
+        onClick={() => navigateToFleet()}
+        style={{
+          padding: '12px 20px',
+          background: 'transparent',
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: '12px',
+          color: theme.colors.textSecondary,
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = theme.colors.backgroundCardHover
+          e.currentTarget.style.color = theme.colors.textPrimary
+          e.currentTarget.style.borderColor = theme.colors.primary
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.color = theme.colors.textSecondary
+          e.currentTarget.style.borderColor = theme.colors.border
+        }}
+      >
+        <Truck size={18} />
+        View Fleet Details
+      </button>
+      <button
+        onClick={() => {
+          // Trigger compliance check
+          alert('Running compliance check across all systems...')
+        }}
+        style={{
+          padding: '12px 20px',
+          background: 'transparent',
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: '12px',
+          color: theme.colors.textSecondary,
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = theme.colors.backgroundCardHover
+          e.currentTarget.style.color = theme.colors.textPrimary
+          e.currentTarget.style.borderColor = theme.colors.primary
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.color = theme.colors.textSecondary
+          e.currentTarget.style.borderColor = theme.colors.border
+        }}
+      >
+        <RefreshCw size={18} />
+        Run Compliance Check
+      </button>
+    </div>
   )
 
   return (
@@ -301,13 +361,13 @@ const CompliancePage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.success}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <CheckCircle size={28} color={theme.colors.success} />
+              <CheckCircle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -326,13 +386,13 @@ const CompliancePage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.warning}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <AlertTriangle size={28} color={theme.colors.warning} />
+              <AlertTriangle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -351,13 +411,13 @@ const CompliancePage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.error}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <XCircle size={28} color={theme.colors.error} />
+              <XCircle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -376,13 +436,13 @@ const CompliancePage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.error}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <AlertCircle size={28} color={theme.colors.error} />
+              <AlertCircle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>

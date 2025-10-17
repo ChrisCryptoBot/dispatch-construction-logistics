@@ -1,0 +1,77 @@
+{
+  "timestamp": "2025-01-16T16-00-00Z",
+  "unit": "Unit 3 - Optimized file duplicates precheck",
+  "config": {
+    "name": "Unit 3 – Optimized file duplicates",
+    "description": "INVESTIGATE ONLY - do not delete without approval",
+    "includeGlobs": ["**/*.optimized.js", "**/*.optimized.ts", "**/*.old", "**/*.bak", "**/*.copy"],
+    "excludeGlobs": ["backups/**", "archive/**", ".git/**", "node_modules/**", "web/node_modules/**", "tools/**"],
+    "maxFiles": 20,
+    "dryRun": true,
+    "riskLevel": "medium",
+    "fileTypes": ["code"],
+    "requiresApproval": true,
+    "action": "investigate_only"
+  },
+  "targets": [
+    "src/index.optimized.js",
+    "src/routes/customer.optimized.js",
+    "src/routes/marketplace.optimized.js"
+  ],
+  "references": {
+    "src/index.optimized.js": [
+      "audit/70_obsolete_candidates.md",
+      "audit/00_summary.md",
+      "FINAL_CHECKLIST_READY_TO_SHIP.md",
+      "BACKEND_OPTIMIZATION_COMPLETE_REPORT.md",
+      "BACKEND_DEPENDENCIES_INSTALL.md"
+    ],
+    "src/routes/customer.optimized.js": [
+      "audit/70_obsolete_candidates.md",
+      "audit/00_summary.md",
+      "BACKEND_OPTIMIZATION_COMPLETE_REPORT.md",
+      "src/index.optimized.js"
+    ],
+    "src/routes/marketplace.optimized.js": [
+      "audit/70_obsolete_candidates.md",
+      "audit/00_summary.md",
+      "BACKEND_OPTIMIZATION_COMPLETE_REPORT.md",
+      "src/index.optimized.js"
+    ]
+  },
+  "criticalReferences": {
+    "src/index.optimized.js": [
+      {
+        "file": "src/index.optimized.js",
+        "line": "109",
+        "type": "require",
+        "context": "const customerRouter = require('./routes/customer.optimized')"
+      },
+      {
+        "file": "src/index.optimized.js", 
+        "line": "102",
+        "type": "require",
+        "context": "const marketplaceRouter = require('./routes/marketplace.optimized')"
+      }
+    ]
+  },
+  "summary": {
+    "totalFiles": 3,
+    "filesWithReferences": 3,
+    "totalReferences": 11,
+    "criticalReferences": 2,
+    "safeToStage": false,
+    "scanAreas": ["src", "web/src", "prisma", "scripts", "package.json"],
+    "scanResults": {
+      "src": "2 active requires found",
+      "web/src": "0 references found",
+      "prisma": "0 references found", 
+      "scripts": "0 references found",
+      "package.json": "0 references found",
+      "documentation": "9 references found"
+    },
+    "riskAssessment": "HIGH - Active code dependencies found"
+  }
+}
+
+

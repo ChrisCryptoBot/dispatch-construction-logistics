@@ -1,0 +1,28 @@
+{
+  "name": "Unit 3 – Optimized file duplicates",
+  "description": "INVESTIGATE ONLY - do not delete without approval",
+  "includeGlobs": [
+    "**/*.optimized.js",
+    "**/*.optimized.ts",
+    "**/*.old",
+    "**/*.bak",
+    "**/*.copy"
+  ],
+  "excludeGlobs": [
+    "backups/**",
+    "archive/**",
+    ".git/**",
+    "node_modules/**",
+    "web/node_modules/**",
+    "tools/**"
+  ],
+  "maxFiles": 20,
+  "dryRun": true,
+  "riskLevel": "medium",
+  "fileTypes": ["code"],
+  "expectedReferences": "unknown",
+  "requiresApproval": true,
+  "action": "investigate_only"
+}
+
+

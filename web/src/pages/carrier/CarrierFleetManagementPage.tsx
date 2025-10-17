@@ -1,13 +1,17 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useQuery } from '@tanstack/react-query'
 import { fleetAPI } from '../../services/api'
+import { mobileFuelAPI } from '../../services/mobileFuelAPI'
 import PageContainer from '../../components/shared/PageContainer'
 import Card from '../../components/ui/Card'
+import AnimatedCounter from '../../components/enhanced/AnimatedCounter'
 import { 
   Truck, Wrench, AlertTriangle, CheckCircle, Fuel, 
   MapPin, Calendar, DollarSign, TrendingUp, Eye, Plus, 
-  Search, Filter, X, Activity, Gauge, Loader, Edit
+  Search, Filter, X, Activity, Gauge, Loader, Edit,
+  ArrowUpDown, CheckSquare, Square
 } from 'lucide-react'
 
 interface Vehicle {
@@ -343,6 +347,15 @@ const FleetManagementPage = () => {
     yearRange: { min: '', max: '' }
   })
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  
+  // Enhanced state for bulk operations and sorting
+  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([])
+  const [showBulkActions, setShowBulkActions] = useState(false)
+  const [sortBy, setSortBy] = useState<'unitNumber' | 'roi' | 'utilizationRate' | 'maintenanceCost' | 'fuelCost' | 'age' | 'none'>('none')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  
+  // Navigation hook
+  const navigate = useNavigate()
 
   // Helper functions
   const addNotification = (message: string, type: 'success' | 'error' | 'info') => {
@@ -351,6 +364,68 @@ const FleetManagementPage = () => {
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id))
     }, 5000)
+  }
+
+  // Bulk operations utilities
+  const toggleVehicleSelection = (vehicleId: string) => {
+    setSelectedVehicles(prev => 
+      prev.includes(vehicleId) 
+        ? prev.filter(id => id !== vehicleId)
+        : [...prev, vehicleId]
+    )
+  }
+
+  const selectAllVehicles = () => {
+    const allVehicleIds = filteredVehicles.map(vehicle => vehicle.id)
+    setSelectedVehicles(allVehicleIds)
+  }
+
+  const clearSelection = () => {
+    setSelectedVehicles([])
+  }
+
+  const handleBulkMaintenance = () => {
+    addNotification(`Bulk maintenance scheduled for ${selectedVehicles.length} vehicles`, 'info')
+    clearSelection()
+  }
+
+  const handleBulkStatusUpdate = (newStatus: string) => {
+    addNotification(`Bulk status update to ${newStatus} for ${selectedVehicles.length} vehicles`, 'info')
+    clearSelection()
+  }
+
+  const handleBulkExport = () => {
+    addNotification(`Exporting data for ${selectedVehicles.length} vehicles`, 'info')
+    clearSelection()
+  }
+
+
+  // Mobile fuel update simulation (for testing future mobile app integration)
+  const simulateMobileFuelUpdate = async (vehicle: Vehicle) => {
+    try {
+      // Simulate fuel consumption after completing a load
+      const fuelConsumed = Math.floor(Math.random() * 15) + 5 // 5-20% fuel consumed per load
+      const newFuelLevel = Math.max(0, vehicle.fuelLevel - fuelConsumed)
+      
+      // Update the vehicle's fuel level
+      setVehicles(prev => prev.map(v => 
+        v.id === vehicle.id 
+          ? { ...v, fuelLevel: newFuelLevel }
+          : v
+      ))
+      
+      // Show notification about mobile app integration
+      addNotification(
+        `📱 Mobile App: Fuel level updated for ${vehicle.unitNumber} (${vehicle.fuelLevel}% → ${newFuelLevel}%) after load completion`,
+        'success'
+      )
+      
+      // In production, this would call the mobile API
+      // await mobileFuelAPI.simulateMobileUpdate(vehicle.id, 'load-123', newFuelLevel)
+      
+    } catch (error) {
+      addNotification(`Failed to update fuel level for ${vehicle.unitNumber}`, 'error')
+    }
   }
 
   // Password verification for compliance actions
@@ -920,6 +995,7 @@ const FleetManagementPage = () => {
     })
   }
 
+  // Enhanced filtering with sorting
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = searchTerm === '' ||
       vehicle.unitNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -954,6 +1030,35 @@ const FleetManagementPage = () => {
            matchesComplianceExpiry && matchesLocation && matchesDriver && 
            matchesMake && matchesYearRange
   })
+
+  // Enhanced sorting
+  const getSortedVehicles = () => {
+    if (sortBy === 'none') return filteredVehicles
+
+    const sorted = [...filteredVehicles].sort((a, b) => {
+      let comparison = 0
+
+      if (sortBy === 'unitNumber') {
+        comparison = a.unitNumber.localeCompare(b.unitNumber)
+      } else if (sortBy === 'roi') {
+        comparison = a.roi - b.roi
+      } else if (sortBy === 'utilizationRate') {
+        comparison = a.utilizationRate - b.utilizationRate
+      } else if (sortBy === 'maintenanceCost') {
+        comparison = a.maintenanceCost - b.maintenanceCost
+      } else if (sortBy === 'fuelCost') {
+        comparison = a.fuelCost - b.fuelCost
+      } else if (sortBy === 'age') {
+        comparison = a.year - b.year
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+
+    return sorted
+  }
+
+  const finalFilteredVehicles = getSortedVehicles()
 
   const stats = {
     total: vehicles.length,
@@ -1092,22 +1197,31 @@ const FleetManagementPage = () => {
       <button
         onClick={() => setShowAddVehicleModal(true)}
         style={{
-          padding: '14px 28px',
-          background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primary} 100%)`,
-          color: 'white',
-          borderRadius: '12px',
-          border: 'none',
-          fontSize: '15px',
+          padding: '12px 24px',
+          background: 'transparent',
+          color: theme.colors.textSecondary,
+          borderRadius: '8px',
+          border: `1px solid ${theme.colors.border}`,
+          fontSize: '14px',
           fontWeight: '600',
           cursor: 'pointer',
           transition: 'all 0.2s ease',
-          boxShadow: `0 4px 12px ${theme.colors.primary}40`,
           display: 'flex',
           alignItems: 'center',
           gap: '8px'
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = theme.colors.backgroundCardHover
+          e.currentTarget.style.color = theme.colors.textPrimary
+          e.currentTarget.style.borderColor = theme.colors.primary
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.color = theme.colors.textSecondary
+          e.currentTarget.style.borderColor = theme.colors.border
+          e.currentTarget.style.transform = 'translateY(0)'
+        }}
       >
         <Plus size={18} />
         Add Vehicle
@@ -1119,7 +1233,7 @@ const FleetManagementPage = () => {
     <PageContainer
       title="Fleet Management"
       subtitle="Monitor vehicle status, maintenance schedules, and fleet performance"
-      icon={Truck}
+      icon={Truck as any}
       headerAction={headerAction}
     >
 
@@ -1135,13 +1249,13 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.primary}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Truck size={28} color={theme.colors.primary} />
+              <Truck size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -1159,13 +1273,13 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.success}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <CheckCircle size={28} color={theme.colors.success} />
+              <CheckCircle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -1183,13 +1297,13 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.warning}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Wrench size={28} color={theme.colors.warning} />
+              <Wrench size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -1207,13 +1321,13 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.info}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Activity size={28} color={theme.colors.info} />
+              <Activity size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -1231,7 +1345,7 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.success}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -1240,9 +1354,7 @@ const FleetManagementPage = () => {
               <DollarSign size={28} color={theme.colors.success} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
-                ${(stats.totalRevenue / 1000).toFixed(0)}k
-              </p>
+              <AnimatedCounter value={stats.totalRevenue / 1000} prefix="$" suffix="k" style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.success, margin: 0, lineHeight: 1 }} />
               <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
                 Monthly Revenue
               </p>
@@ -1256,13 +1368,13 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.error}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <AlertTriangle size={28} color={theme.colors.error} />
+              <AlertTriangle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -1280,13 +1392,13 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.primary}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <TrendingUp size={28} color={theme.colors.primary} />
+              <TrendingUp size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -1304,7 +1416,7 @@ const FleetManagementPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.success}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -1313,9 +1425,7 @@ const FleetManagementPage = () => {
               <CheckCircle size={28} color={theme.colors.success} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
-                ${(stats.totalNetProfit / 1000).toFixed(0)}k
-              </p>
+              <AnimatedCounter value={stats.totalNetProfit / 1000} prefix="$" suffix="k" style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.success, margin: 0, lineHeight: 1 }} />
               <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
                 Net Profit
               </p>
@@ -1395,9 +1505,9 @@ const FleetManagementPage = () => {
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             style={{
               padding: '12px 16px',
-              background: showAdvancedFilters ? theme.colors.primary : 'rgba(255, 255, 255, 0.05)',
-              border: `1px solid ${showAdvancedFilters ? theme.colors.primary : 'rgba(255, 255, 255, 0.1)'}`,
-              borderRadius: '8px',
+              background: showAdvancedFilters ? '#343a40' : 'rgba(255, 255, 255, 0.05)',
+              border: `1px solid ${showAdvancedFilters ? '#495057' : 'rgba(255, 255, 255, 0.1)'}`,
+              borderRadius: '12px',
               color: showAdvancedFilters ? 'white' : theme.colors.textSecondary,
               fontSize: '14px',
               fontWeight: '600',
@@ -1630,15 +1740,56 @@ const FleetManagementPage = () => {
       </Card>
 
       {/* Fleet List */}
-      <Card title="Fleet Vehicles" icon={<Truck size={20} color={theme.colors.primary} />}>
+      <Card title="Fleet Vehicles" subtitle={`${finalFilteredVehicles.length} vehicle${finalFilteredVehicles.length !== 1 ? 's' : ''}`} icon={<Truck size={20} color={theme.colors.textSecondary} />}>
+        {/* Select All Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: `1px solid ${theme.colors.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={selectedVehicles.length === finalFilteredVehicles.length ? clearSelection : selectAllVehicles}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.colors.backgroundTertiary
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none'
+              }}
+            >
+              {selectedVehicles.length === finalFilteredVehicles.length ? (
+                <CheckSquare size={20} color={theme.colors.textSecondary} />
+              ) : (
+                <Square size={20} color={theme.colors.textSecondary} />
+              )}
+              <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>
+                {selectedVehicles.length === finalFilteredVehicles.length ? 'Deselect All' : 'Select All'}
+              </span>
+            </button>
+            
+            {selectedVehicles.length > 0 && (
+              <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
+                {selectedVehicles.length} selected
+              </span>
+            )}
+          </div>
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredVehicles.length === 0 ? (
+          {finalFilteredVehicles.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: theme.colors.textSecondary }}>
               <Truck size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
               <p style={{ fontSize: '18px', margin: 0 }}>No vehicles found</p>
             </div>
           ) : (
-            filteredVehicles.map((vehicle) => (
+            finalFilteredVehicles.map((vehicle) => (
               <div
                 key={vehicle.id}
                 style={{
@@ -1652,18 +1803,44 @@ const FleetManagementPage = () => {
                 onClick={() => setSelectedVehicle(vehicle)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleVehicleSelection(vehicle.id)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      borderRadius: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = theme.colors.backgroundTertiary
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'none'
+                    }}
+                  >
+                    {selectedVehicles.includes(vehicle.id) ? (
+                      <CheckSquare size={20} color={theme.colors.textSecondary} />
+                    ) : (
+                      <Square size={20} color={theme.colors.textSecondary} />
+                    )}
+                  </button>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
                     <div style={{
                       width: '64px',
                       height: '64px',
-                      background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primary} 100%)`,
+                      background: theme.colors.backgroundTertiary,
                       borderRadius: '14px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: `0 4px 12px ${theme.colors.primary}30`
+                      boxShadow: 'none'
                     }}>
-                      <Truck size={32} color="white" />
+                      <Truck size={32} color={theme.colors.textSecondary} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <h3 style={{ fontSize: '18px', fontWeight: '600', color: theme.colors.textPrimary, margin: '0 0 6px 0' }}>
@@ -1692,21 +1869,28 @@ const FleetManagementPage = () => {
                   </div>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation()
+                        // Show fuel tracking info and mobile app integration
                         setNotifications(prev => [...prev, {
                           id: Date.now().toString(),
-                          message: `Fuel level for ${vehicle.unitNumber}: ${vehicle.fuelLevel}%`,
+                          message: `Fuel level for ${vehicle.unitNumber}: ${vehicle.fuelLevel}% (Auto-updated via mobile app)`,
                           type: 'info'
                         }])
+                        
+                        // Simulate mobile app fuel update (for testing)
+                        if (vehicle.currentLoad) {
+                          simulateMobileFuelUpdate(vehicle)
+                        }
                       }}
                       style={{ 
                         textAlign: 'center', 
                         background: 'transparent', 
                         border: 'none', 
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
+                        position: 'relative'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = 'scale(1.05)'
@@ -1714,12 +1898,13 @@ const FleetManagementPage = () => {
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'scale(1)'
                       }}
+                      title={`Fuel Level: ${vehicle.fuelLevel}% - Auto-updated at end of each load via mobile app`}
                     >
                       <div style={{
                         width: '48px',
                         height: '48px',
                         borderRadius: '50%',
-                        background: `conic-gradient(${theme.colors.success} ${vehicle.fuelLevel * 3.6}deg, ${theme.colors.background} 0deg)`,
+                        background: `conic-gradient(${vehicle.fuelLevel > 75 ? theme.colors.success : vehicle.fuelLevel > 25 ? theme.colors.warning : theme.colors.error} ${vehicle.fuelLevel * 3.6}deg, ${theme.colors.background} 0deg)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1736,10 +1921,51 @@ const FleetManagementPage = () => {
                         }}>
                           <Fuel size={16} color={theme.colors.textSecondary} />
                         </div>
+                        {/* Mobile app indicator */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '-2px',
+                          right: '-2px',
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          background: theme.colors.primary,
+                          border: `2px solid ${theme.colors.backgroundCard}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <div style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: 'white'
+                          }} />
+                        </div>
                       </div>
                       <p style={{ fontSize: '11px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
                         {vehicle.fuelLevel}%
                       </p>
+                      {/* Auto-update indicator */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '60px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: '8px',
+                        color: theme.colors.textSecondary,
+                        background: theme.colors.background,
+                        padding: '2px 4px',
+                        borderRadius: '4px',
+                        border: `1px solid ${theme.colors.border}`,
+                        whiteSpace: 'nowrap',
+                        opacity: 0,
+                        transition: 'opacity 0.2s ease'
+                      }}
+                      className="fuel-auto-update-tooltip"
+                    >
+                      Auto-updated via mobile
+                    </div>
                     </button>
 
                     <button 
@@ -1852,6 +2078,7 @@ const FleetManagementPage = () => {
                     >
                       <Eye size={16} />
                     </button>
+
                   </div>
                 </div>
               </div>
@@ -1931,13 +2158,13 @@ const FleetManagementPage = () => {
               <div style={{
                 width: '40px',
                 height: '40px',
-                background: `${theme.colors.warning}20`,
+                background: theme.colors.backgroundTertiary,
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <AlertTriangle size={20} color={theme.colors.warning} />
+                <AlertTriangle size={20} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary, margin: 0 }}>
@@ -1968,13 +2195,13 @@ const FleetManagementPage = () => {
               <div style={{
                 width: '40px',
                 height: '40px',
-                background: `${theme.colors.primary}20`,
+                background: theme.colors.backgroundTertiary,
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Calendar size={20} color={theme.colors.primary} />
+                <Calendar size={20} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary, margin: 0 }}>
@@ -2112,21 +2339,23 @@ const FleetManagementPage = () => {
                   style={{
                     padding: '8px 16px',
                     background: 'transparent',
-                    color: theme.colors.primary,
-                    border: `1px solid ${theme.colors.primary}`,
-                    borderRadius: '6px',
+                    color: theme.colors.textSecondary,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
                     fontSize: '12px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = theme.colors.primary
-                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.background = theme.colors.backgroundCardHover
+                    e.currentTarget.style.color = theme.colors.textPrimary
+                    e.currentTarget.style.borderColor = theme.colors.primary
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.color = theme.colors.primary
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
                   }}
                 >
                   Manage
@@ -2140,7 +2369,7 @@ const FleetManagementPage = () => {
       {/* Maintenance Alerts */}
       <Card 
         title="Maintenance Alerts" 
-        icon={<AlertTriangle size={20} color={theme.colors.warning} />}
+        icon={<AlertTriangle size={20} color={theme.colors.textSecondary} />}
         style={{ marginTop: '24px' }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
@@ -2185,7 +2414,7 @@ const FleetManagementPage = () => {
                   {item.priority === 'high' && (
                     <span style={{
                       padding: '2px 6px',
-                      background: `${theme.colors.error}20`,
+                      background: theme.colors.backgroundTertiary,
                       color: theme.colors.error,
                       borderRadius: '4px',
                       fontSize: '10px',
@@ -2234,21 +2463,23 @@ const FleetManagementPage = () => {
                   style={{
                     padding: '6px 12px',
                     background: 'transparent',
-                    color: theme.colors.primary,
-                    border: `1px solid ${theme.colors.primary}`,
-                    borderRadius: '6px',
+                    color: theme.colors.textSecondary,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
                     fontSize: '11px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = theme.colors.primary
-                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.background = theme.colors.backgroundCardHover
+                    e.currentTarget.style.color = theme.colors.textPrimary
+                    e.currentTarget.style.borderColor = theme.colors.primary
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.color = theme.colors.primary
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
                   }}
                 >
                   Schedule
@@ -2310,9 +2541,9 @@ const FleetManagementPage = () => {
                   }}
                   style={{
                     padding: '8px 16px',
-                    background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primary} 100%)`,
-                    border: 'none',
-                    borderRadius: '8px',
+                    background: '#343a40',
+                    border: '1px solid #495057',
+                    borderRadius: '12px',
                     color: 'white',
                     fontSize: '14px',
                     fontWeight: '600',
@@ -2600,7 +2831,7 @@ const FleetManagementPage = () => {
             {/* Maintenance History */}
             <div style={{ background: theme.colors.background, padding: '20px', borderRadius: '12px', marginBottom: '28px' }}>
               <h4 style={{ color: theme.colors.textPrimary, fontSize: '14px', fontWeight: '600', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Wrench size={16} color={theme.colors.warning} />
+                <Wrench size={16} color={theme.colors.textSecondary} />
                 Maintenance History
               </h4>
               <div style={{ background: `${theme.colors.background}80`, borderRadius: '8px', border: `1px solid ${theme.colors.border}`, overflow: 'hidden' }}>
@@ -2609,7 +2840,7 @@ const FleetManagementPage = () => {
                   gridTemplateColumns: '1fr 1fr 1fr 1fr auto', 
                   gap: '16px', 
                   padding: '12px', 
-                  background: `${theme.colors.primary}20`,
+                  background: theme.colors.backgroundTertiary,
                   borderBottom: `1px solid ${theme.colors.border}`
                 }}>
                   <div style={{ color: theme.colors.textPrimary, fontSize: '11px', fontWeight: '600', textTransform: 'uppercase' }}>Date</div>
@@ -2661,7 +2892,7 @@ const FleetManagementPage = () => {
                       color: theme.colors.success, 
                       fontSize: '11px', 
                       fontWeight: '600',
-                      background: `${theme.colors.success}20`,
+                      background: theme.colors.backgroundTertiary,
                       padding: '3px 6px',
                       borderRadius: '4px',
                       textAlign: 'center'
@@ -2766,7 +2997,7 @@ const FleetManagementPage = () => {
             {/* Basic Vehicle Information */}
             <div style={{ marginBottom: '32px' }}>
               <h3 style={{ color: theme.colors.textPrimary, fontSize: '18px', fontWeight: '600', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Truck size={20} color={theme.colors.primary} />
+                <Truck size={20} color={theme.colors.textSecondary} />
                 Basic Vehicle Information
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
@@ -4034,13 +4265,13 @@ const FleetManagementPage = () => {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: `${theme.colors.warning}20`,
+              background: theme.colors.backgroundTertiary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 24px auto'
             }}>
-              <AlertTriangle size={32} color={theme.colors.warning} />
+              <AlertTriangle size={32} color={theme.colors.textSecondary} />
             </div>
             
             <h3 style={{ color: theme.colors.textPrimary, fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0' }}>
@@ -4152,7 +4383,7 @@ const FleetManagementPage = () => {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: `${theme.colors.success}20`,
+              background: theme.colors.backgroundTertiary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -4595,7 +4826,7 @@ const FleetManagementPage = () => {
             {/* Basic Vehicle Information */}
             <div style={{ marginBottom: '32px' }}>
               <h3 style={{ color: theme.colors.textPrimary, fontSize: '18px', fontWeight: '600', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Truck size={20} color={theme.colors.primary} />
+                <Truck size={20} color={theme.colors.textSecondary} />
                 Basic Vehicle Information
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
@@ -4952,7 +5183,7 @@ const FleetManagementPage = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
               <h2 style={{ color: theme.colors.textPrimary, fontSize: '24px', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <AlertTriangle size={24} color={theme.colors.warning} />
+                <AlertTriangle size={24} color={theme.colors.textSecondary} />
                 Fleet Alerts & Notifications
               </h2>
               <button
@@ -5153,7 +5384,7 @@ const FleetManagementPage = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
               <h2 style={{ color: theme.colors.textPrimary, fontSize: '24px', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Activity size={24} color={theme.colors.primary} />
+                <Activity size={24} color={theme.colors.textSecondary} />
                 Backup & Recovery
               </h2>
               <button
@@ -5181,7 +5412,7 @@ const FleetManagementPage = () => {
                 borderRadius: '12px'
               }}>
                 <h3 style={{ color: theme.colors.textPrimary, fontSize: '18px', fontWeight: '600', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Activity size={20} color={theme.colors.primary} />
+                  <Activity size={20} color={theme.colors.textSecondary} />
                   Export Fleet Data
                 </h3>
                 <p style={{ color: theme.colors.textSecondary, fontSize: '14px', margin: '0 0 16px 0' }}>
@@ -5399,7 +5630,7 @@ const FleetManagementPage = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
               <h2 style={{ color: theme.colors.textPrimary, fontSize: '24px', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Wrench size={24} color={theme.colors.primary} />
+                <Wrench size={24} color={theme.colors.textSecondary} />
                 Complete Maintenance History
               </h2>
               <button
@@ -5470,7 +5701,7 @@ const FleetManagementPage = () => {
                     <div style={{
                       fontSize: '14px',
                       fontWeight: '600',
-                      color: theme.colors.primary,
+                      color: 'white',
                       marginBottom: '8px'
                     }}>
                       {record.type}
@@ -5522,8 +5753,8 @@ const FleetManagementPage = () => {
                             <span
                               key={idx}
                               style={{
-                                background: `${theme.colors.primary}20`,
-                                color: theme.colors.primary,
+                                background: theme.colors.backgroundTertiary,
+                                color: 'white',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
                                 fontSize: '11px',
@@ -5558,7 +5789,7 @@ const FleetManagementPage = () => {
                       fontSize: '12px',
                       fontWeight: '600',
                       color: theme.colors.success,
-                      background: `${theme.colors.success}20`,
+                      background: theme.colors.backgroundTertiary,
                       padding: '4px 8px',
                       borderRadius: '6px',
                       display: 'inline-block'

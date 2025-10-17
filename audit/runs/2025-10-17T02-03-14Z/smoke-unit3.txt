@@ -1,0 +1,69 @@
+===== HEALTH PROBES =====
+
+== http://127.0.0.1:3000/health ==
+Status: 200
+Headers: {"content-security-policy":"default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests","cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"same-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=15552000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","vary":"Origin, Accept-Encoding","access-control-allow-credentials":"true","content-type":"application/json; charset=utf-8","content-length":"141","etag":"W/\"8d-FTGw+HMEKtWVo0Ew9k4iSE6hjwE\"","date":"Fri, 17 Oct 2025 02:03:14 GMT","connection":"keep-alive","keep-alive":"timeout=65"}
+Body:
+{"status":"healthy","timestamp":"2025-10-17T02:03:14.787Z","version":"1.0.0","service":"Dispatch Construction Logistics API","env":"staging"}
+
+== http://127.0.0.1:3000/healthz ==
+Status: 404
+Headers: {"content-security-policy":"default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests","cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"same-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=15552000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","vary":"Origin, Accept-Encoding","access-control-allow-credentials":"true","content-type":"application/json; charset=utf-8","content-length":"67","etag":"W/\"43-bt58CjzNEmiY3vdb7Nw3/RxZC9M\"","date":"Fri, 17 Oct 2025 02:03:14 GMT","connection":"keep-alive","keep-alive":"timeout=65"}
+Body:
+{"error":"Endpoint not found","code":"NOT_FOUND","path":"/healthz"}
+
+== http://127.0.0.1:3000/ ==
+Status: 200
+Headers: {"content-security-policy":"default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests","cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"same-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=15552000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","vary":"Origin, Accept-Encoding","access-control-allow-credentials":"true","content-type":"application/json; charset=utf-8","content-length":"1246","etag":"W/\"4de-b5imcCrckohOKQ3Ay0UMYPgVtqE\"","date":"Fri, 17 Oct 2025 02:03:14 GMT","connection":"keep-alive","keep-alive":"timeout=65"}
+Body:
+{"message":"Dispatch Construction Logistics API","version":"1.0.0","features":{"optimized":false,"compression":true,"metrics":true,"requestLogging":true},"endpoints":{"health":"/health","metrics":"/metrics","auth":{"register":"POST /api/auth/register","login":"POST /api/auth/login","me":"GET /api/auth/me","refresh":"POST /api/auth/refresh"},"organizations":{"create":"POST /api/organizations","get":"GET /api/organizations/:id","update":"PATCH /api/organizations/:id","list":"GET /api/organizations"},"users":{"create":"POST /api/users","get":"GET /api/users/:id","update":"PATCH /api/users/:id","list":"GET /api/users"},"loads":{"create":"POST /api/loads","get":"GET /api/loads/:id","update":"PATCH /api/loads/:id/status","list":"GET /api/loads","assign":"POST /api/loads/:id/assign"},"dispatch":{"assign":"POST /api/dispatch/assign","suggestions":"GET /api/dispatch/suggestions/:commodity","validate":"POST /api/dispatch/validate","equipment":"GET /api/dispatch/equipment-types"},"marketplace":{"loadBoard":"GET /api/marketplace/loads","expressInterest":"POST /api/marketplace/:id/interest","assignCarrier":"POST /api/marketplace/:id/assign","acceptLoad":"PATCH /api/marketplace/:id/accept","rejectLoad":"PATCH /api/marketplace/:id/reject"}}}
+
+===== /metrics =====
+Status: 200
+
+===== node test-smoke-unit3.js =====
+🧪 Starting Unit 3 Consolidation Smoke Tests
+============================================================
+Base URL: http://localhost:3000
+Timeout: 10000ms
+============================================================
+
+🔍 Running: Server Boot Test
+   Description: Verify server starts without errors
+   ✅ PASSED - Server is running and responding
+
+🔍 Running: Health Endpoint Test
+   Description: Verify health endpoint responds correctly
+   ✅ PASSED - Status 200 as expected
+
+🔍 Running: Root Endpoint Test
+   Description: Verify root endpoint returns API information
+   ✅ PASSED - Status 200 as expected
+
+🔍 Running: Metrics Endpoint Test
+   Description: Verify metrics endpoint (if enabled)
+   ✅ PASSED - Status 200 as expected
+
+🔍 Running: Customer My Loads Test
+   Description: Verify optimized customer my-loads endpoint
+   ✅ PASSED - Status 401 as expected
+
+🔍 Running: Marketplace Loads Test
+   Description: Verify marketplace loads endpoint
+   ✅ PASSED - Status 401 as expected
+
+🔍 Running: Marketplace Bid Test
+   Description: Verify optimized marketplace bid endpoint
+   ✅ PASSED - Status 401 as expected
+
+============================================================
+📊 SMOKE TEST SUMMARY
+============================================================
+✅ Passed: 7
+❌ Failed: 0
+⏭️  Skipped: 0
+📈 Total: 7
+📊 Success Rate: 100%
+
+============================================================
+📄 Test results saved to: audit/runs/2025-01-16T16-15-00Z/smoke-unit3.txt

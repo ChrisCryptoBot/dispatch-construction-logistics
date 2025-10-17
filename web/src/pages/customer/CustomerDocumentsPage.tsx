@@ -159,17 +159,27 @@ const DocumentsPage = () => {
               alignItems: 'center',
               gap: theme.spacing.xs,
               padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-              background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`,
-              color: 'white',
-              border: 'none',
+              background: 'transparent',
+              color: theme.colors.textSecondary,
+              border: `1px solid ${theme.colors.border}`,
               borderRadius: theme.borderRadius.md,
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+              e.currentTarget.style.borderColor = theme.colors.primary
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+              e.currentTarget.style.borderColor = theme.colors.border
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
           >
             <Upload size={18} />
             Upload Document
@@ -187,10 +197,10 @@ const DocumentsPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
               <div style={{ 
                 padding: theme.spacing.sm,
-                background: `${theme.colors.primary}20`,
+                background: theme.colors.backgroundTertiary,
                 borderRadius: theme.borderRadius.md
               }}>
-                <FileText size={20} color={theme.colors.primary} />
+                <FileText size={20} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: theme.colors.textPrimary }}>
@@ -205,10 +215,10 @@ const DocumentsPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
               <div style={{ 
                 padding: theme.spacing.sm,
-                background: `${theme.colors.warning}20`,
+                background: theme.colors.backgroundTertiary,
                 borderRadius: theme.borderRadius.md
               }}>
-                <Clock size={20} color={theme.colors.warning} />
+                <Clock size={20} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: theme.colors.textPrimary }}>
@@ -223,10 +233,10 @@ const DocumentsPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
               <div style={{ 
                 padding: theme.spacing.sm,
-                background: `${theme.colors.success}20`,
+                background: theme.colors.backgroundTertiary,
                 borderRadius: theme.borderRadius.md
               }}>
-                <CheckCircle size={20} color={theme.colors.success} />
+                <CheckCircle size={20} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: theme.colors.textPrimary }}>
@@ -241,10 +251,10 @@ const DocumentsPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
               <div style={{ 
                 padding: theme.spacing.sm,
-                background: `${theme.colors.error}20`,
+                background: theme.colors.backgroundTertiary,
                 borderRadius: theme.borderRadius.md
               }}>
-                <AlertTriangle size={20} color={theme.colors.error} />
+                <AlertTriangle size={20} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: theme.colors.textPrimary }}>
@@ -562,13 +572,24 @@ const DocumentsPage = () => {
                 style={{
                   flex: 1,
                   padding: theme.spacing.md,
-                  background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`,
-                  color: 'white',
-                  border: 'none',
+                  background: 'transparent',
+                  color: theme.colors.textSecondary,
+                  border: `1px solid ${theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                  e.currentTarget.style.color = theme.colors.textPrimary
+                  e.currentTarget.style.borderColor = theme.colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.textSecondary
+                  e.currentTarget.style.borderColor = theme.colors.border
                 }}
               >
                 OK
@@ -577,13 +598,24 @@ const DocumentsPage = () => {
                 onClick={() => setShowUploadModal(false)}
                 style={{
                   padding: theme.spacing.md,
-                  background: theme.colors.backgroundSecondary,
-                  color: theme.colors.textPrimary,
+                  background: 'transparent',
+                  color: theme.colors.textSecondary,
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                  e.currentTarget.style.color = theme.colors.textPrimary
+                  e.currentTarget.style.borderColor = theme.colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.textSecondary
+                  e.currentTarget.style.borderColor = theme.colors.border
                 }}
               >
                 Cancel

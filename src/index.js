@@ -1,6 +1,21 @@
 // 🔑 Load env FIRST — before any other imports
 require('dotenv').config();
 
+/**
+ * CANONICAL ENTRY POINT (Unit 3 Cleanup - Frozen)
+ * 
+ * After Unit 3 consolidation, this file now permanently delegates to the
+ * canonical consolidated server (index.canonical.js) which merges all
+ * optimizations and original functionality with feature flag controls.
+ * 
+ * The *.optimized.js files have been archived and are no longer in use.
+ */
+console.log('🔄 Using canonical consolidated server');
+module.exports = require('./index.canonical');
+
+// Legacy fallback code below (kept for reference, never executed)
+if (false) {
+  // Original optimized entry point
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -222,4 +237,5 @@ process.on('SIGTERM', () => {
 });
 
 module.exports = app;
+}
 

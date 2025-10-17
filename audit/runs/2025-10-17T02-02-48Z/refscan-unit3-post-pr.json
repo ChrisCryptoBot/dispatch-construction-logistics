@@ -1,0 +1,145 @@
+{
+  "timestamp": "2025-10-17T02:02:48.370Z",
+  "targetFiles": [
+    "src/index.optimized.js",
+    "src/routes/customer.optimized.js",
+    "src/routes/marketplace.optimized.js"
+  ],
+  "scannedFiles": 79,
+  "references": [
+    {
+      "file": "tools\\refscan-unit3-cleanup.js",
+      "matches": [
+        {
+          "line": 12,
+          "content": "'src/index.optimized.js',",
+          "pattern": "src/index.optimized.js"
+        },
+        {
+          "line": 12,
+          "content": "'src/index.optimized.js',",
+          "pattern": "src/index.optimized.js"
+        },
+        {
+          "line": 12,
+          "content": "'src/index.optimized.js',",
+          "pattern": "index.optimized.js"
+        },
+        {
+          "line": 12,
+          "content": "'src/index.optimized.js',",
+          "pattern": "index.optimized"
+        },
+        {
+          "line": 13,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "src/routes/customer.optimized.js"
+        },
+        {
+          "line": 13,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "src/routes/customer.optimized.js"
+        },
+        {
+          "line": 13,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "customer.optimized.js"
+        },
+        {
+          "line": 13,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "customer.optimized"
+        },
+        {
+          "line": 14,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "src/routes/marketplace.optimized.js"
+        },
+        {
+          "line": 14,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "src/routes/marketplace.optimized.js"
+        },
+        {
+          "line": 14,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "marketplace.optimized.js"
+        },
+        {
+          "line": 14,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "marketplace.optimized"
+        }
+      ]
+    },
+    {
+      "file": "tools\\stage-move-unit3.js",
+      "matches": [
+        {
+          "line": 14,
+          "content": "'src/index.optimized.js',",
+          "pattern": "src/index.optimized.js"
+        },
+        {
+          "line": 14,
+          "content": "'src/index.optimized.js',",
+          "pattern": "src/index.optimized.js"
+        },
+        {
+          "line": 14,
+          "content": "'src/index.optimized.js',",
+          "pattern": "index.optimized.js"
+        },
+        {
+          "line": 14,
+          "content": "'src/index.optimized.js',",
+          "pattern": "index.optimized"
+        },
+        {
+          "line": 15,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "src/routes/customer.optimized.js"
+        },
+        {
+          "line": 15,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "src/routes/customer.optimized.js"
+        },
+        {
+          "line": 15,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "customer.optimized.js"
+        },
+        {
+          "line": 15,
+          "content": "'src/routes/customer.optimized.js',",
+          "pattern": "customer.optimized"
+        },
+        {
+          "line": 16,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "src/routes/marketplace.optimized.js"
+        },
+        {
+          "line": 16,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "src/routes/marketplace.optimized.js"
+        },
+        {
+          "line": 16,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "marketplace.optimized.js"
+        },
+        {
+          "line": 16,
+          "content": "'src/routes/marketplace.optimized.js'",
+          "pattern": "marketplace.optimized"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalReferences": 24,
+    "filesWithReferences": 2
+  }
+}

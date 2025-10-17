@@ -3,6 +3,7 @@ const { prisma } = require('../db/prisma');
 const { CacheKeys, CacheTTL, get, set } = require('../config/redis');
 const { cacheMiddleware } = require('../middleware/cache');
 const { parsePagination, createPaginationMeta, parseSorting } = require('../utils/pagination');
+const { authenticateJWT } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -405,6 +406,178 @@ router.patch('/:id/reject', async (req, res) => {
     res.status(500).json({
       error: 'Internal server error rejecting load',
       code: 'REJECTION_ERROR'
+    });
+  }
+});
+
+// ============================================================================
+// OPTIMIZED LOAD BOARD FEATURES (Added from optimized version)
+// ============================================================================
+
+// Safe whitelist for field selection
+const SUMMARY_FIELDS = [
+  'id', 'commodity', 'equipmentType', 'haulType',
+  'rate', 'rateMode', 'units', 'grossRevenue', 'miles',
+  'pickupDate', 'deliveryDate', 'status', 'updatedAt',
+  'createdAt'
+];
+
+const parseFields = (fieldsParam) => {
+  if (!fieldsParam) return SUMMARY_FIELDS;
+  const requested = fieldsParam.split(',').map(s => s.trim());
+  return requested.filter(f => SUMMARY_FIELDS.includes(f));
+};
+
+// Helper to extract city/state from origin/destination JSON
+const transformLoadSummary = (load) => ({
+  ...load,
+  originCity: load.origin?.city,
+  originState: load.origin?.state,
+  destCity: load.destination?.city,
+  destState: load.destination?.state,
+  // Remove full address objects for security (city-only on load board)
+  origin: undefined,
+  destination: undefined
+});
+
+/**
+ * POST /marketplace/bid
+ * Optimized bid submission with idempotency and enhanced validation
+ * 
+ * Body:
+ * - loadId: Load ID to bid on
+ * - rate: Bid rate
+ * - rateMode: 'per_mile' | 'flat_rate'
+ * - notes: Optional bid notes
+ * - idempotencyKey: Optional idempotency key
+ */
+router.post('/bid', authenticateJWT, async (req, res) => {
+  try {
+    const { loadId, rate, rateMode, notes, idempotencyKey } = req.body;
+    const carrierId = req.user.id;
+
+    // Validate required fields
+    if (!loadId || !rate || !rateMode) {
+      return res.status(400).json({
+        error: 'Missing required fields: loadId, rate, rateMode',
+        code: 'VALIDATION_ERROR'
+      });
+    }
+
+    // Validate rate mode
+    if (!['per_mile', 'flat_rate'].includes(rateMode)) {
+      return res.status(400).json({
+        error: 'Invalid rateMode. Must be "per_mile" or "flat_rate"',
+        code: 'INVALID_RATE_MODE'
+      });
+    }
+
+    // Check if load exists and is available for bidding
+    const load = await prisma.load.findUnique({
+      where: { id: loadId },
+      select: {
+        id: true,
+        status: true,
+        shipperId: true,
+        commodity: true,
+        equipmentType: true,
+        pickupLocation: true,
+        deliveryLocation: true
+      }
+    });
+
+    if (!load) {
+      return res.status(404).json({
+        error: 'Load not found',
+        code: 'LOAD_NOT_FOUND'
+      });
+    }
+
+    if (load.status !== 'POSTED') {
+      return res.status(400).json({
+        error: 'Load is not available for bidding',
+        code: 'LOAD_NOT_AVAILABLE'
+      });
+    }
+
+    // Check for existing bid (idempotency)
+    let existingBid = null;
+    if (idempotencyKey) {
+      existingBid = await prisma.bid.findFirst({
+        where: {
+          loadId,
+          carrierId,
+          idempotencyKey
+        }
+      });
+    }
+
+    if (existingBid) {
+      return res.json({
+        bidId: existingBid.id,
+        status: 'duplicate',
+        message: 'Bid already submitted with this idempotency key',
+        timestamp: existingBid.submittedAt
+      });
+    }
+
+    // Generate crypto-based bid ID
+    const crypto = require('crypto');
+    const bidId = crypto.randomUUID();
+
+    // Create bid
+    const bid = await prisma.bid.create({
+      data: {
+        id: bidId,
+        loadId,
+        carrierId,
+        rate: parseFloat(rate),
+        rateMode,
+        notes: notes || null,
+        idempotencyKey: idempotencyKey || null,
+        status: 'SUBMITTED',
+        submittedAt: new Date()
+      },
+      include: {
+        carrier: {
+          select: {
+            id: true,
+            name: true,
+            rating: true
+          }
+        },
+        load: {
+          select: {
+            id: true,
+            commodity: true,
+            equipmentType: true,
+            pickupLocation: true,
+            deliveryLocation: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json({
+      bidId: bid.id,
+      status: 'submitted',
+      message: 'Bid submitted successfully',
+      timestamp: bid.submittedAt,
+      bid: {
+        id: bid.id,
+        rate: bid.rate,
+        rateMode: bid.rateMode,
+        notes: bid.notes,
+        carrier: bid.carrier,
+        load: bid.load
+      }
+    });
+
+  } catch (error) {
+    console.error('Error submitting bid:', error);
+    res.status(500).json({
+      error: 'Internal server error submitting bid',
+      code: 'BID_SUBMISSION_ERROR'
     });
   }
 });

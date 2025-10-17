@@ -22,7 +22,7 @@ export const useAnimatedCounter = (
 
       // Spring easing function (ease-out-cubic)
       const eased = 1 - Math.pow(1 - progress, 3)
-      const newValue = Math.floor(eased * targetValue)
+      const newValue = Math.round((eased * targetValue) * 100) / 100
 
       setCurrentValue(newValue)
 
@@ -57,8 +57,8 @@ export const useAnimatedCurrency = (
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(animatedValue)
 }
 

@@ -1,0 +1,192 @@
+{
+  "timestamp": "2025-01-16T16-00-00Z",
+  "unit": "Unit 3 - Dependency Impact Analysis",
+  "analysisType": "pre-cleanup dependency mapping",
+  "files": {
+    "src/index.optimized.js": {
+      "type": "main_server_entry",
+      "status": "🚫 HOLD - ACTIVE SERVER ENTRY POINT",
+      "dependencies": {
+        "imports": [
+          "src/routes/marketplace.optimized.js",
+          "src/routes/customer.optimized.js"
+        ],
+        "importedBy": [],
+        "sharedSchemas": [],
+        "sharedImports": [
+          "express",
+          "cors", 
+          "helmet",
+          "compression",
+          "./middleware/errorHandler",
+          "./middleware/rateLimit"
+        ]
+      },
+      "impact": {
+        "deletionRisk": "CRITICAL",
+        "breakingChanges": "Server would not start",
+        "affectedSystems": ["Backend API", "All routes"],
+        "rollbackComplexity": "HIGH"
+      }
+    },
+    "src/routes/customer.optimized.js": {
+      "type": "api_route_module",
+      "status": "🚫 HOLD - ACTIVE ROUTE DEPENDENCY",
+      "dependencies": {
+        "imports": [
+          "express",
+          "../db/prisma",
+          "../middleware/validate",
+          "zod"
+        ],
+        "importedBy": ["src/index.optimized.js"],
+        "sharedSchemas": ["customer_loads_schema", "pagination_schema"],
+        "sharedImports": ["prisma", "validate", "zod"]
+      },
+      "impact": {
+        "deletionRisk": "HIGH",
+        "breakingChanges": "Customer API endpoints would fail",
+        "affectedSystems": ["Customer Portal", "Load Management"],
+        "rollbackComplexity": "MEDIUM"
+      },
+      "relationship": {
+        "duplicateOf": "src/routes/customer.js",
+        "relationshipType": "optimized_version",
+        "differences": [
+          "Single query optimization (no N+1)",
+          "Cursor pagination",
+          "Field selection",
+          "Proper Prisma includes"
+        ]
+      }
+    },
+    "src/routes/marketplace.optimized.js": {
+      "type": "api_route_module", 
+      "status": "🚫 HOLD - ACTIVE ROUTE DEPENDENCY",
+      "dependencies": {
+        "imports": [
+          "express",
+          "crypto",
+          "../db/prisma",
+          "../middleware/validate",
+          "../middleware/idempotency",
+          "zod"
+        ],
+        "importedBy": ["src/index.optimized.js"],
+        "sharedSchemas": ["bid_schema", "load_schema", "pagination_schema"],
+        "sharedImports": ["prisma", "validate", "zod", "crypto"]
+      },
+      "impact": {
+        "deletionRisk": "HIGH",
+        "breakingChanges": "Marketplace API endpoints would fail",
+        "affectedSystems": ["Load Board", "Bid Management"],
+        "rollbackComplexity": "MEDIUM"
+      },
+      "relationship": {
+        "duplicateOf": "src/routes/marketplace.js",
+        "relationshipType": "optimized_version",
+        "differences": [
+          "Field selection via ?fields=",
+          "Cursor-based pagination",
+          "Incremental polling via ?since=",
+          "ETag caching (304 responses)",
+          "Compressed payloads"
+        ]
+      }
+    }
+  },
+  "dependencyMatrix": {
+    "circularDependencies": [],
+    "sharedDependencies": [
+      {
+        "dependency": "prisma",
+        "usedBy": ["customer.optimized.js", "marketplace.optimized.js"],
+        "impact": "Database operations"
+      },
+      {
+        "dependency": "validate middleware",
+        "usedBy": ["customer.optimized.js", "marketplace.optimized.js"],
+        "impact": "Request validation"
+      },
+      {
+        "dependency": "zod",
+        "usedBy": ["customer.optimized.js", "marketplace.optimized.js"],
+        "impact": "Schema validation"
+      }
+    ],
+    "criticalPaths": [
+      {
+        "path": "src/index.optimized.js → src/routes/marketplace.optimized.js",
+        "impact": "Marketplace API unavailable"
+      },
+      {
+        "path": "src/index.optimized.js → src/routes/customer.optimized.js", 
+        "impact": "Customer API unavailable"
+      }
+    ]
+  },
+  "conflictAnalysis": {
+    "duplicateFiles": [
+      {
+        "optimized": "src/routes/customer.optimized.js",
+        "original": "src/routes/customer.js",
+        "conflictType": "feature_duplication",
+        "resolution": "Choose one version, migrate features"
+      },
+      {
+        "optimized": "src/routes/marketplace.optimized.js",
+        "original": "src/routes/marketplace.js", 
+        "conflictType": "feature_duplication",
+        "resolution": "Choose one version, migrate features"
+      },
+      {
+        "optimized": "src/index.optimized.js",
+        "original": "src/index.js",
+        "conflictType": "entry_point_duplication",
+        "resolution": "Choose one entry point, update package.json"
+      }
+    ],
+    "schemaConflicts": [],
+    "importConflicts": [],
+    "namingConflicts": []
+  },
+  "riskAssessment": {
+    "overallRisk": "CRITICAL",
+    "riskFactors": [
+      "Active server entry point (index.optimized.js)",
+      "Active route dependencies",
+      "No fallback mechanisms",
+      "Production code references"
+    ],
+    "impactScope": [
+      "Complete backend API failure",
+      "Customer portal unavailable",
+      "Marketplace functionality broken",
+      "Load management system down"
+    ]
+  },
+  "recommendations": [
+    {
+      "action": "🚫 DO NOT DELETE",
+      "reason": "Active production dependencies",
+      "priority": "CRITICAL"
+    },
+    {
+      "action": "MERGE OPTIMIZATIONS",
+      "reason": "Integrate optimized features into original files",
+      "priority": "HIGH"
+    },
+    {
+      "action": "UPDATE PACKAGE.JSON",
+      "reason": "Standardize on single entry point",
+      "priority": "MEDIUM"
+    },
+    {
+      "action": "MIGRATION PLAN",
+      "reason": "Create safe migration strategy",
+      "priority": "HIGH"
+    }
+  ]
+}
+
+

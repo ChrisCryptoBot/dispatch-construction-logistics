@@ -7,12 +7,10 @@ import {
   Truck,
   Package,
   Users,
-  MapPin,
+  Navigation,
   FileText,
   DollarSign,
-  Settings,
-  BarChart3,
-  Calendar,
+  CreditCard,
   Shield,
   ChevronLeft,
   ChevronRight,
@@ -46,16 +44,13 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
     { name: 'My Loads', path: '/my-loads', icon: <Layers size={20} /> },
     { name: 'Drivers', path: '/drivers', icon: <Users size={20} /> },
     { name: 'Fleet', path: '/fleet', icon: <Truck size={20} /> },
-    { name: 'Dispatch', path: '/dispatch', icon: <MapPin size={20} /> },
+    { name: 'Dispatch Command Center', path: '/dispatch', icon: <Navigation size={20} /> },
     { name: 'Scale Tickets', path: '/scale-tickets', icon: <Scale size={20} /> },
     { name: 'BOL Templates', path: '/bol-templates', icon: <ClipboardList size={20} /> },
     { name: 'Documents', path: '/documents', icon: <FileText size={20} /> },
-    { name: 'Factoring', path: '/factoring', icon: <DollarSign size={20} /> },
+    { name: 'Factoring', path: '/factoring', icon: <CreditCard size={20} /> },
     { name: 'Invoices', path: '/invoices', icon: <Building2 size={20} /> },
     { name: 'Compliance', path: '/compliance', icon: <Shield size={20} /> },
-    { name: 'Calendar', path: '/calendar', icon: <Calendar size={20} /> },
-    { name: 'Analytics', path: '/analytics', icon: <BarChart3 size={20} /> },
-    { name: 'Settings', path: '/settings', icon: <Settings size={20} /> },
   ]
 
   const isActive = (path: string) => location.pathname === path
@@ -90,12 +85,78 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
         }}
       >
         {!isCollapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Logo variant="dark" size="md" />
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%'
+          }}>
+            <div style={{
+              fontFamily: '"Rajdhani", "Exo 2", "Orbitron", sans-serif',
+              fontWeight: '600',
+              fontSize: '24px',
+              color: 'white',
+              letterSpacing: '3px',
+              lineHeight: '1',
+              transform: 'skewX(-18deg)',
+              transformOrigin: 'center center',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              cursor: 'pointer',
+              textAlign: 'center',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'skewX(-18deg) translateX(6px)'
+              e.currentTarget.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)'
+              e.currentTarget.style.letterSpacing = '4px'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'skewX(-18deg)'
+              e.currentTarget.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)'
+              e.currentTarget.style.letterSpacing = '3px'
+            }}
+            >
+              SUPERIOR ONE
+            </div>
           </div>
         )}
         {isCollapsed && (
-          <Logo variant="dark" size="sm" />
+          <div style={{
+            fontFamily: '"Rajdhani", "Exo 2", "Orbitron", sans-serif',
+            fontWeight: '600',
+            fontSize: '26px',
+            color: 'white',
+            letterSpacing: '2px',
+            lineHeight: '1',
+            textAlign: 'center',
+            transform: 'skewX(-18deg)',
+            transformOrigin: 'center',
+            whiteSpace: 'nowrap',
+            width: '60px',
+            height: '60px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            cursor: 'pointer',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'skewX(-18deg) translateX(3px)'
+            e.currentTarget.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)'
+            e.currentTarget.style.letterSpacing = '3px'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'skewX(-18deg)'
+            e.currentTarget.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)'
+            e.currentTarget.style.letterSpacing = '2px'
+          }}
+          >
+            S1
+          </div>
         )}
       </div>
 

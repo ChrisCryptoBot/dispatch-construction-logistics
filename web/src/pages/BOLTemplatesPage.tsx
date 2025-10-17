@@ -6,7 +6,8 @@ import BOLTemplate from '../components/documents/BOLTemplate'
 import { 
   FileText, Download, Upload, Printer, Smartphone, 
   Edit, Save, X, Eye, CheckCircle, Clock, AlertCircle,
-  Building2, Truck, MapPin, Calendar, User, Phone, Package
+  Building2, Truck, MapPin, Calendar, User, Phone, Package,
+  ArrowUpDown, CheckSquare, Square
 } from 'lucide-react'
 
 interface BOLTemplate {
@@ -104,6 +105,18 @@ const BOLTemplatesPage = () => {
   const [editingTemplate, setEditingTemplate] = useState<BOLTemplate | null>(null)
   const [editingBOL, setEditingBOL] = useState<BOLInstance | null>(null)
   const [viewingBOL, setViewingBOL] = useState<BOLInstance | null>(null)
+  
+  // Enhanced search, filter, and sort state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'pickup_signed' | 'delivery_signed' | 'completed'>('all')
+  const [dateRange, setDateRange] = useState<{start: string, end: string}>({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  })
+  const [sortBy, setSortBy] = useState<'date' | 'loadId' | 'status' | 'carrier' | 'commodity'>('date')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [selectedBOLs, setSelectedBOLs] = useState<string[]>([])
+  const [showBulkActions, setShowBulkActions] = useState(false)
 
   // Mock BOL Templates
   const [bolTemplates, setBolTemplates] = useState<BOLTemplate[]>([
@@ -425,56 +438,179 @@ const BOLTemplatesPage = () => {
     completed: { color: theme.colors.success, label: 'Completed', icon: CheckCircle }
   }
 
+  // Enhanced filtering and sorting logic for BOL instances
+  const filteredAndSortedBOLs = bolInstances.filter(bol => {
+    // Status filter
+    const statusMatch = statusFilter === 'all' || bol.status === statusFilter
+    
+    // Search filter
+    const searchMatch = !searchTerm || 
+      bol.loadId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bol.poNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bol.commodity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bol.carrierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bol.shipperName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bol.consigneeName.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Date range filter
+    const bolDate = new Date(bol.date)
+    const startDate = new Date(dateRange.start)
+    const endDate = new Date(dateRange.end)
+    const dateMatch = bolDate >= startDate && bolDate <= endDate
+    
+    return statusMatch && searchMatch && dateMatch
+  }).sort((a, b) => {
+    // Sorting logic
+    let comparison = 0
+    switch (sortBy) {
+      case 'date':
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
+        break
+      case 'loadId':
+        comparison = a.loadId.localeCompare(b.loadId)
+        break
+      case 'status':
+        comparison = a.status.localeCompare(b.status)
+        break
+      case 'carrier':
+        comparison = a.carrierName.localeCompare(b.carrierName)
+        break
+      case 'commodity':
+        comparison = a.commodity.localeCompare(b.commodity)
+        break
+      default:
+        comparison = 0
+    }
+    return sortDirection === 'asc' ? comparison : -comparison
+  })
+  
+  // Bulk operations helper functions
+  const toggleBOLSelection = (bolId: string) => {
+    if (selectedBOLs.includes(bolId)) {
+      setSelectedBOLs(prev => prev.filter(id => id !== bolId))
+    } else {
+      setSelectedBOLs(prev => [...prev, bolId])
+    }
+  }
+  
+  const selectAllBOLs = () => {
+    setSelectedBOLs(filteredAndSortedBOLs.map(bol => bol.id))
+  }
+  
+  const clearSelection = () => {
+    setSelectedBOLs([])
+  }
+  
+  const handleBulkExport = (format: 'csv' | 'pdf') => {
+    const selectedBOLData = bolInstances.filter(b => selectedBOLs.includes(b.id))
+    
+    if (format === 'csv') {
+      const csvContent = [
+        'Load ID,PO Number,Date,Commodity,Shipper,Carrier,Consignee,Status,Quantity,Weight',
+        ...selectedBOLData.map(b => 
+          `${b.loadId},${b.poNumber},${b.date},${b.commodity},${b.shipperName},${b.carrierName},${b.consigneeName},${b.status},${b.quantity} ${b.quantityUnit},${b.weight} ${b.weightUnit}`
+        )
+      ].join('\n')
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `bol-export-${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      window.URL.revokeObjectURL(url)
+      alert(`✅ ${selectedBOLData.length} BOLs exported to CSV`)
+    } else {
+      alert(`PDF export for ${selectedBOLData.length} BOLs would be implemented here`)
+    }
+  }
+  
+  const handleBulkDelete = () => {
+    const draftsToDelete = selectedBOLs.filter(id => {
+      const bol = bolInstances.find(b => b.id === id)
+      return bol && bol.status === 'draft'
+    })
+    
+    if (draftsToDelete.length === 0) {
+      alert('⚠️ Only draft BOLs can be deleted')
+      return
+    }
+    
+    if (confirm(`Are you sure you want to delete ${draftsToDelete.length} draft BOL(s)?`)) {
+      setBolInstances(prev => prev.filter(b => !draftsToDelete.includes(b.id)))
+      setSelectedBOLs([])
+      alert(`✅ ${draftsToDelete.length} draft BOL(s) deleted`)
+    }
+  }
+  
   const stats = {
     totalTemplates: bolTemplates.length,
     totalBOLs: bolInstances.length,
     signedBOLs: bolInstances.filter(b => b.status !== 'draft').length,
-    completedBOLs: bolInstances.filter(b => b.status === 'completed').length
+    completedBOLs: bolInstances.filter(b => b.status === 'completed').length,
+    filteredCount: filteredAndSortedBOLs.length
   }
 
   return (
     <PageContainer
       title="BOL Templates & Management"
       subtitle="Create, manage, and track Bills of Lading"
-      icon={FileText}
+      icon={FileText as any}
     >
       {/* Tabs */}
       <div style={{
-        background: theme.colors.backgroundCard,
-        borderRadius: '12px',
-        padding: '8px',
-        marginBottom: '24px',
         display: 'flex',
-        gap: '8px',
-        border: `1px solid ${theme.colors.border}`
+        gap: '8px'
       }}>
         <button
           onClick={() => setActiveTab('templates')}
           style={{
-            padding: '10px 18px',
-            backgroundColor: activeTab === 'templates' ? theme.colors.primary : 'transparent',
-            color: activeTab === 'templates' ? 'white' : theme.colors.textSecondary,
-            borderRadius: '8px',
-            border: 'none',
-            fontSize: '14px',
-            fontWeight: '600',
+            padding: '12px 24px',
+            background: 'transparent',
+            color: activeTab === 'templates' ? theme.colors.textPrimary : theme.colors.textSecondary,
+            border: activeTab === 'templates' ? `1px solid ${theme.colors.border}` : '1px solid transparent',
+            borderBottom: 'none',
+            borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
             transition: 'all 0.2s ease',
+            position: 'relative',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
+          }}
+          onMouseEnter={(e) => {
+            if (activeTab !== 'templates') {
+              e.currentTarget.style.color = theme.colors.textPrimary
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.borderColor = theme.colors.border
+            } else {
+              e.currentTarget.style.borderColor = theme.colors.primary
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (activeTab !== 'templates') {
+              e.currentTarget.style.color = theme.colors.textSecondary
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = 'transparent'
+            } else {
+              e.currentTarget.style.borderColor = theme.colors.border
+            }
           }}
         >
           <FileText size={16} />
           Templates
           <span style={{
-            backgroundColor: activeTab === 'templates' ? 'rgba(255,255,255,0.2)' : theme.colors.primary,
-            color: 'white',
-            fontSize: '11px',
-            fontWeight: '700',
-            padding: '2px 6px',
+            background: activeTab === 'templates' ? theme.colors.backgroundTertiary : theme.colors.backgroundTertiary,
+            color: activeTab === 'templates' ? theme.colors.textPrimary : theme.colors.textSecondary,
+            fontSize: '12px',
+            fontWeight: 'bold',
+            padding: '2px 8px',
             borderRadius: '10px',
-            marginLeft: '4px'
+            minWidth: '20px',
+            textAlign: 'center',
+            border: `1px solid ${theme.colors.border}`
           }}>
             {bolTemplates.length}
           </span>
@@ -482,35 +618,64 @@ const BOLTemplatesPage = () => {
         <button
           onClick={() => setActiveTab('instances')}
           style={{
-            padding: '10px 18px',
-            backgroundColor: activeTab === 'instances' ? theme.colors.primary : 'transparent',
-            color: activeTab === 'instances' ? 'white' : theme.colors.textSecondary,
-            borderRadius: '8px',
-            border: 'none',
-            fontSize: '14px',
-            fontWeight: '600',
+            padding: '12px 24px',
+            background: 'transparent',
+            color: activeTab === 'instances' ? theme.colors.textPrimary : theme.colors.textSecondary,
+            border: activeTab === 'instances' ? `1px solid ${theme.colors.border}` : '1px solid transparent',
+            borderBottom: 'none',
+            borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
             transition: 'all 0.2s ease',
+            position: 'relative',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
+          }}
+          onMouseEnter={(e) => {
+            if (activeTab !== 'instances') {
+              e.currentTarget.style.color = theme.colors.textPrimary
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.borderColor = theme.colors.border
+            } else {
+              e.currentTarget.style.borderColor = theme.colors.primary
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (activeTab !== 'instances') {
+              e.currentTarget.style.color = theme.colors.textSecondary
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = 'transparent'
+            } else {
+              e.currentTarget.style.borderColor = theme.colors.border
+            }
           }}
         >
           <Package size={16} />
           BOL Instances
           <span style={{
-            backgroundColor: activeTab === 'instances' ? 'rgba(255,255,255,0.2)' : theme.colors.primary,
-            color: 'white',
-            fontSize: '11px',
-            fontWeight: '700',
-            padding: '2px 6px',
+            background: activeTab === 'instances' ? theme.colors.backgroundTertiary : theme.colors.backgroundTertiary,
+            color: activeTab === 'instances' ? theme.colors.textPrimary : theme.colors.textSecondary,
+            fontSize: '12px',
+            fontWeight: 'bold',
+            padding: '2px 8px',
             borderRadius: '10px',
-            marginLeft: '4px'
+            minWidth: '20px',
+            textAlign: 'center',
+            border: `1px solid ${theme.colors.border}`
           }}>
             {bolInstances.length}
           </span>
         </button>
       </div>
+      {/* Subtle line beneath tabs */}
+      <div style={{
+        width: '100%',
+        height: '1px',
+        background: theme.colors.border,
+        marginBottom: '24px'
+      }}></div>
 
       {activeTab === 'templates' ? (
         <>
@@ -526,13 +691,13 @@ const BOLTemplatesPage = () => {
                 <div style={{
                   width: '56px',
                   height: '56px',
-                  background: `${theme.colors.primary}20`,
+                  background: theme.colors.backgroundTertiary,
                   borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <FileText size={28} color={theme.colors.primary} />
+                  <FileText size={28} color={theme.colors.textSecondary} />
                 </div>
                 <div>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -550,13 +715,13 @@ const BOLTemplatesPage = () => {
                 <div style={{
                   width: '56px',
                   height: '56px',
-                  background: `${theme.colors.info}20`,
+                  background: theme.colors.backgroundTertiary,
                   borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <Printer size={28} color={theme.colors.info} />
+                  <Printer size={28} color={theme.colors.textSecondary} />
                 </div>
                 <div>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -574,13 +739,13 @@ const BOLTemplatesPage = () => {
                 <div style={{
                   width: '56px',
                   height: '56px',
-                  background: `${theme.colors.success}20`,
+                  background: theme.colors.backgroundTertiary,
                   borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <Smartphone size={28} color={theme.colors.success} />
+                  <Smartphone size={28} color={theme.colors.textSecondary} />
                 </div>
                 <div>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -613,17 +778,27 @@ const BOLTemplatesPage = () => {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '14px 28px',
-                background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`,
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
+                background: 'transparent',
+                color: theme.colors.textSecondary,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
                 fontSize: '15px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.colors.backgroundCardHover
+                e.currentTarget.style.color = theme.colors.textPrimary
+                e.currentTarget.style.borderColor = theme.colors.primary
+                e.currentTarget.style.transform = 'translateY(-1px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = theme.colors.textSecondary
+                e.currentTarget.style.borderColor = theme.colors.border
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
             >
               <FileText size={18} />
               Create BOL Template
@@ -760,14 +935,24 @@ const BOLTemplatesPage = () => {
                         justifyContent: 'center',
                         gap: '6px',
                         padding: '12px 16px',
-                        background: theme.colors.backgroundSecondary,
-                        color: theme.colors.textPrimary,
+                        background: 'transparent',
+                        color: theme.colors.textSecondary,
                         border: `1px solid ${theme.colors.border}`,
                         borderRadius: '8px',
                         fontSize: '13px',
                         fontWeight: '600',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = theme.colors.backgroundCardHover
+                        e.currentTarget.style.color = theme.colors.textPrimary
+                        e.currentTarget.style.borderColor = theme.colors.primary
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = theme.colors.textSecondary
+                        e.currentTarget.style.borderColor = theme.colors.border
                       }}
                     >
                       <Edit size={16} />
@@ -840,14 +1025,24 @@ const BOLTemplatesPage = () => {
                         justifyContent: 'center',
                         gap: '6px',
                         padding: '12px 16px',
-                        background: theme.colors.backgroundSecondary,
-                        color: theme.colors.textPrimary,
+                        background: 'transparent',
+                        color: theme.colors.textSecondary,
                         border: `1px solid ${theme.colors.border}`,
                         borderRadius: '8px',
                         fontSize: '13px',
                         fontWeight: '600',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = theme.colors.backgroundCardHover
+                        e.currentTarget.style.color = theme.colors.textPrimary
+                        e.currentTarget.style.borderColor = theme.colors.primary
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = theme.colors.textSecondary
+                        e.currentTarget.style.borderColor = theme.colors.border
                       }}
                     >
                       <Eye size={16} />
@@ -863,14 +1058,24 @@ const BOLTemplatesPage = () => {
                           justifyContent: 'center',
                           gap: '6px',
                           padding: '12px 16px',
-                          background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`,
-                          color: 'white',
-                          border: 'none',
+                          background: 'transparent',
+                          color: theme.colors.textSecondary,
+                          border: `1px solid ${theme.colors.border}`,
                           borderRadius: '8px',
                           fontSize: '13px',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = theme.colors.backgroundCardHover
+                          e.currentTarget.style.color = theme.colors.textPrimary
+                          e.currentTarget.style.borderColor = theme.colors.primary
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = theme.colors.textSecondary
+                          e.currentTarget.style.borderColor = theme.colors.border
                         }}
                       >
                         <Printer size={16} />
@@ -885,14 +1090,24 @@ const BOLTemplatesPage = () => {
                           justifyContent: 'center',
                           gap: '6px',
                           padding: '12px 16px',
-                          background: `linear-gradient(135deg, ${theme.colors.success}, #16a34a)`,
-                          color: 'white',
-                          border: 'none',
+                          background: 'transparent',
+                          color: theme.colors.textSecondary,
+                          border: `1px solid ${theme.colors.border}`,
                           borderRadius: '8px',
                           fontSize: '13px',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = theme.colors.backgroundCardHover
+                          e.currentTarget.style.color = theme.colors.textPrimary
+                          e.currentTarget.style.borderColor = theme.colors.primary
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = theme.colors.textSecondary
+                          e.currentTarget.style.borderColor = theme.colors.border
                         }}
                       >
                         <Smartphone size={16} />
@@ -919,13 +1134,13 @@ const BOLTemplatesPage = () => {
                 <div style={{
                   width: '56px',
                   height: '56px',
-                  background: `${theme.colors.primary}20`,
+                  background: theme.colors.backgroundTertiary,
                   borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <Package size={28} color={theme.colors.primary} />
+                  <Package size={28} color={theme.colors.textSecondary} />
                 </div>
                 <div>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -943,13 +1158,13 @@ const BOLTemplatesPage = () => {
                 <div style={{
                   width: '56px',
                   height: '56px',
-                  background: `${theme.colors.info}20`,
+                  background: theme.colors.backgroundTertiary,
                   borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <CheckCircle size={28} color={theme.colors.info} />
+                  <CheckCircle size={28} color={theme.colors.textSecondary} />
                 </div>
                 <div>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -967,13 +1182,13 @@ const BOLTemplatesPage = () => {
                 <div style={{
                   width: '56px',
                   height: '56px',
-                  background: `${theme.colors.success}20`,
+                  background: theme.colors.backgroundTertiary,
                   borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <CheckCircle size={28} color={theme.colors.success} />
+                  <CheckCircle size={28} color={theme.colors.textSecondary} />
                 </div>
                 <div>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -985,6 +1200,271 @@ const BOLTemplatesPage = () => {
                 </div>
               </div>
             </Card>
+          </div>
+
+          {/* Advanced Search and Filter Section */}
+          <div style={{
+            background: theme.colors.backgroundCard,
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            border: `1px solid ${theme.colors.border}`,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '16px',
+              marginBottom: '20px'
+            }}>
+              {/* Search Bar */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: theme.colors.textPrimary,
+                  marginBottom: '8px'
+                }}>
+                  Search BOLs
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search by Load ID, PO, Commodity, Carrier..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: theme.colors.inputBg,
+                    border: `2px solid ${theme.colors.inputBorder}`,
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    color: theme.colors.textPrimary,
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = theme.colors.primary}
+                  onBlur={(e) => e.currentTarget.style.borderColor = theme.colors.inputBorder}
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: theme.colors.textPrimary,
+                  marginBottom: '8px'
+                }}>
+                  Status
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: theme.colors.inputBg,
+                    border: `2px solid ${theme.colors.inputBorder}`,
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    color: theme.colors.textPrimary,
+                    outline: 'none'
+                  }}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="draft">Draft</option>
+                  <option value="pickup_signed">Pickup Signed</option>
+                  <option value="delivery_signed">Delivery Signed</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              {/* Sort By */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: theme.colors.textPrimary,
+                  marginBottom: '8px'
+                }}>
+                  Sort By
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: theme.colors.inputBg,
+                      border: `2px solid ${theme.colors.inputBorder}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      color: theme.colors.textPrimary,
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="date">Date</option>
+                    <option value="loadId">Load ID</option>
+                    <option value="status">Status</option>
+                    <option value="carrier">Carrier</option>
+                    <option value="commodity">Commodity</option>
+                  </select>
+                  <button
+                    onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    style={{
+                      padding: '12px',
+                      background: theme.colors.backgroundHover,
+                      border: `2px solid ${theme.colors.inputBorder}`,
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
+                  >
+                    <ArrowUpDown size={16} color={theme.colors.textSecondary} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Date Range */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: theme.colors.textPrimary,
+                  marginBottom: '8px'
+                }}>
+                  Date Range
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="date"
+                    value={dateRange.start}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: theme.colors.inputBg,
+                      border: `2px solid ${theme.colors.inputBorder}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      color: theme.colors.textPrimary,
+                      outline: 'none'
+                    }}
+                  />
+                  <input
+                    type="date"
+                    value={dateRange.end}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: theme.colors.inputBg,
+                      border: `2px solid ${theme.colors.inputBorder}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      color: theme.colors.textPrimary,
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Filter Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginBottom: '16px'
+            }}>
+              {[
+                { label: 'Today', action: () => {
+                  const today = new Date().toISOString().split('T')[0]
+                  setDateRange({ start: today, end: today })
+                }},
+                { label: 'This Week', action: () => {
+                  const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                  const today = new Date().toISOString().split('T')[0]
+                  setDateRange({ start: weekStart, end: today })
+                }},
+                { label: 'This Month', action: () => {
+                  const monthStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                  const today = new Date().toISOString().split('T')[0]
+                  setDateRange({ start: monthStart, end: today })
+                }},
+                { label: 'Pending Signatures', action: () => setStatusFilter('pickup_signed') },
+                { label: 'Completed', action: () => setStatusFilter('completed') },
+                { label: 'Clear All', action: () => {
+                  setSearchTerm('')
+                  setStatusFilter('all')
+                  setDateRange({
+                    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    end: new Date().toISOString().split('T')[0]
+                  })
+                  setSortBy('date')
+                  setSortDirection('desc')
+                }}
+              ].map((filter, index) => (
+                <button
+                  key={index}
+                  onClick={filter.action}
+                  style={{
+                    padding: '8px 16px',
+                    background: theme.colors.backgroundHover,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    color: theme.colors.textSecondary,
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = theme.colors.primary
+                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.borderColor = theme.colors.primary
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = theme.colors.backgroundHover
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
+                  }}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Results Info */}
+            <div style={{
+              padding: '12px',
+              background: `${theme.colors.primary}10`,
+              borderRadius: '8px',
+              border: `1px solid ${theme.colors.primary}30`
+            }}>
+              <p style={{
+                fontSize: '13px',
+                color: theme.colors.textSecondary,
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <FileText size={16} color={theme.colors.primary} />
+                <strong>Showing {filteredAndSortedBOLs.length} of {bolInstances.length} BOLs</strong>
+                {searchTerm && ` • Search: "${searchTerm}"`}
+                {statusFilter !== 'all' && ` • Status: ${statusConfig[statusFilter].label}`}
+              </p>
+            </div>
           </div>
 
           {/* Create BOL Button */}
@@ -1041,33 +1521,276 @@ const BOLTemplatesPage = () => {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '14px 28px',
-                background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`,
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
+                background: 'transparent',
+                color: theme.colors.textSecondary,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
                 fontSize: '15px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.colors.backgroundCardHover
+                e.currentTarget.style.color = theme.colors.textPrimary
+                e.currentTarget.style.borderColor = theme.colors.primary
+                e.currentTarget.style.transform = 'translateY(-1px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = theme.colors.textSecondary
+                e.currentTarget.style.borderColor = theme.colors.border
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
             >
               <Package size={18} />
               Create BOL
             </button>
           </div>
 
-          {/* BOL Instances List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {bolInstances.map(bol => {
+          {/* BOL Instances List with Bulk Actions Header */}
+          <div style={{
+            background: theme.colors.backgroundCard,
+            borderRadius: '16px',
+            padding: '28px',
+            border: `1px solid ${theme.colors.border}`,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          }}>
+            {/* List Header with Bulk Actions */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px'
+            }}>
+              <h2 style={{
+                fontSize: '22px',
+                fontWeight: '700',
+                color: theme.colors.textPrimary,
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <Package size={22} color={theme.colors.primary} />
+                BOL Instances ({filteredAndSortedBOLs.length})
+              </h2>
+              
+              {/* Bulk Actions */}
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {selectedBOLs.length > 0 && (
+                  <>
+                    <span style={{
+                      fontSize: '14px',
+                      color: theme.colors.textSecondary,
+                      fontWeight: '600'
+                    }}>
+                      {selectedBOLs.length} selected
+                    </span>
+                    <button
+                      onClick={() => handleBulkExport('csv')}
+                      style={{
+                        padding: '10px 16px',
+                        background: theme.colors.primary,
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                      <Download size={16} />
+                      Export CSV
+                    </button>
+                    <button
+                      onClick={() => handleBulkExport('pdf')}
+                      style={{
+                        padding: '10px 16px',
+                        background: theme.colors.success,
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                      <FileText size={16} />
+                      Export PDF
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      style={{
+                        padding: '10px 16px',
+                        background: 'transparent',
+                        color: theme.colors.error,
+                        border: `2px solid ${theme.colors.error}`,
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = theme.colors.error
+                        e.currentTarget.style.color = 'white'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = theme.colors.error
+                      }}
+                    >
+                      <X size={16} />
+                      Delete Drafts
+                    </button>
+                    <button
+                      onClick={clearSelection}
+                      style={{
+                        padding: '10px 16px',
+                        background: 'transparent',
+                        color: theme.colors.textSecondary,
+                        border: `2px solid ${theme.colors.border}`,
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = theme.colors.primary
+                        e.currentTarget.style.color = theme.colors.primary
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = theme.colors.border
+                        e.currentTarget.style.color = theme.colors.textSecondary
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </>
+                )}
+                
+                {/* Select All / Deselect All */}
+                <button
+                  onClick={() => {
+                    if (selectedBOLs.length === filteredAndSortedBOLs.length) {
+                      clearSelection()
+                    } else {
+                      selectAllBOLs()
+                    }
+                  }}
+                  style={{
+                    padding: '10px 16px',
+                    background: 'transparent',
+                    color: theme.colors.textSecondary,
+                    border: `2px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = theme.colors.primary
+                    e.currentTarget.style.color = theme.colors.primary
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = theme.colors.border
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                  }}
+                >
+                  {selectedBOLs.length === filteredAndSortedBOLs.length && filteredAndSortedBOLs.length > 0 ? (
+                    <>
+                      <Square size={16} />
+                      Deselect All
+                    </>
+                  ) : (
+                    <>
+                      <CheckSquare size={16} />
+                      Select All
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {filteredAndSortedBOLs.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: theme.colors.textSecondary
+                }}>
+                  <Package size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                  <p style={{ fontSize: '18px', margin: 0 }}>No BOLs found matching your filters</p>
+                  <button
+                    onClick={() => {
+                      setSearchTerm('')
+                      setStatusFilter('all')
+                      setDateRange({
+                        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        end: new Date().toISOString().split('T')[0]
+                      })
+                    }}
+                    style={{
+                      marginTop: '16px',
+                      padding: '10px 20px',
+                      background: theme.colors.primary,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              ) : (
+                filteredAndSortedBOLs.map(bol => {
               const StatusIcon = statusConfig[bol.status].icon
 
               return (
                 <Card key={bol.id}>
                   <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                    {/* Bulk Selection Checkbox */}
+                    <div style={{ display: 'flex', alignItems: 'start', paddingTop: '20px' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedBOLs.includes(bol.id)}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          toggleBOLSelection(bol.id)
+                        }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          cursor: 'pointer',
+                          accentColor: theme.colors.primary
+                        }}
+                      />
+                    </div>
+                    
                     {/* Main Info */}
-                    <div style={{ flex: '1 1 400px' }}>
+                    <div style={{ flex: '1 1 380px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
                         <div>
                           <div style={{
@@ -1264,13 +1987,24 @@ const BOLTemplatesPage = () => {
                             justifyContent: 'center',
                             gap: '6px',
                             padding: '12px 16px',
-                            background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`,
-                            color: 'white',
-                            border: 'none',
+                            background: 'transparent',
+                            color: theme.colors.textSecondary,
+                            border: `1px solid ${theme.colors.border}`,
                             borderRadius: '8px',
                             fontSize: '13px',
                             fontWeight: '600',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = theme.colors.backgroundCardHover
+                            e.currentTarget.style.color = theme.colors.textPrimary
+                            e.currentTarget.style.borderColor = theme.colors.primary
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = theme.colors.textSecondary
+                            e.currentTarget.style.borderColor = theme.colors.border
                           }}
                         >
                           <Eye size={16} />
@@ -1286,13 +2020,24 @@ const BOLTemplatesPage = () => {
                               justifyContent: 'center',
                               gap: '6px',
                               padding: '12px 16px',
-                              background: `linear-gradient(135deg, ${theme.colors.warning}, #d97706)`,
-                              color: 'white',
-                              border: 'none',
+                              background: 'transparent',
+                              color: theme.colors.textSecondary,
+                              border: `1px solid ${theme.colors.border}`,
                               borderRadius: '8px',
                               fontSize: '13px',
                               fontWeight: '600',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = theme.colors.backgroundCardHover
+                              e.currentTarget.style.color = theme.colors.textPrimary
+                              e.currentTarget.style.borderColor = theme.colors.primary
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent'
+                              e.currentTarget.style.color = theme.colors.textSecondary
+                              e.currentTarget.style.borderColor = theme.colors.border
                             }}
                           >
                             <User size={16} />
@@ -1309,13 +2054,24 @@ const BOLTemplatesPage = () => {
                               justifyContent: 'center',
                               gap: '6px',
                               padding: '12px 16px',
-                              background: `linear-gradient(135deg, ${theme.colors.info}, #0284c7)`,
-                              color: 'white',
-                              border: 'none',
+                              background: 'transparent',
+                              color: theme.colors.textSecondary,
+                              border: `1px solid ${theme.colors.border}`,
                               borderRadius: '8px',
                               fontSize: '13px',
                               fontWeight: '600',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = theme.colors.backgroundCardHover
+                              e.currentTarget.style.color = theme.colors.textPrimary
+                              e.currentTarget.style.borderColor = theme.colors.primary
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent'
+                              e.currentTarget.style.color = theme.colors.textSecondary
+                              e.currentTarget.style.borderColor = theme.colors.border
                             }}
                           >
                             <Building2 size={16} />
@@ -1368,13 +2124,24 @@ const BOLTemplatesPage = () => {
                             justifyContent: 'center',
                             gap: '6px',
                             padding: '12px 16px',
-                            background: theme.colors.backgroundSecondary,
-                            color: theme.colors.textPrimary,
+                            background: 'transparent',
+                            color: theme.colors.textSecondary,
                             border: `1px solid ${theme.colors.border}`,
                             borderRadius: '8px',
                             fontSize: '13px',
                             fontWeight: '600',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = theme.colors.backgroundCardHover
+                            e.currentTarget.style.color = theme.colors.textPrimary
+                            e.currentTarget.style.borderColor = theme.colors.primary
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = theme.colors.textSecondary
+                            e.currentTarget.style.borderColor = theme.colors.border
                           }}
                         >
                           <Download size={16} />
@@ -1385,7 +2152,9 @@ const BOLTemplatesPage = () => {
                   </div>
                 </Card>
               )
-            })}
+            })
+              )}
+            </div>
           </div>
         </>
       )}
