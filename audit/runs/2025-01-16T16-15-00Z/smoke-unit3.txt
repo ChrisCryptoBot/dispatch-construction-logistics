@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-17T02:03:15.012Z",
+  "timestamp": "2025-10-17T03:17:16.774Z",
   "baseUrl": "http://localhost:3000",
   "summary": {
     "total": 7,
@@ -13,14 +13,14 @@
       "name": "Server Boot Test",
       "status": "PASSED",
       "message": "Server is running and responding",
-      "timestamp": "2025-10-17T02:03:14.942Z",
-      "duration": 40
+      "timestamp": "2025-10-17T03:17:16.688Z",
+      "duration": 47
     },
     {
       "name": "Health Endpoint Test",
       "status": "PASSED",
       "message": "Status 200 as expected",
-      "timestamp": "2025-10-17T02:03:14.984Z",
+      "timestamp": "2025-10-17T03:17:16.737Z",
       "duration": 3,
       "statusCode": 200,
       "responseTime": "unknown"
@@ -29,8 +29,8 @@
       "name": "Root Endpoint Test",
       "status": "PASSED",
       "message": "Status 200 as expected",
-      "timestamp": "2025-10-17T02:03:14.987Z",
-      "duration": 9,
+      "timestamp": "2025-10-17T03:17:16.740Z",
+      "duration": 12,
       "statusCode": 200,
       "responseTime": "unknown"
     },
@@ -38,8 +38,8 @@
       "name": "Metrics Endpoint Test",
       "status": "PASSED",
       "message": "Status 200 as expected",
-      "timestamp": "2025-10-17T02:03:14.996Z",
-      "duration": 3,
+      "timestamp": "2025-10-17T03:17:16.752Z",
+      "duration": 4,
       "statusCode": 200,
       "responseTime": "unknown"
     },
@@ -47,8 +47,8 @@
       "name": "Customer My Loads Test",
       "status": "PASSED",
       "message": "Status 401 as expected",
-      "timestamp": "2025-10-17T02:03:14.999Z",
-      "duration": 6,
+      "timestamp": "2025-10-17T03:17:16.756Z",
+      "duration": 9,
       "statusCode": 401,
       "responseTime": "unknown"
     },
@@ -56,8 +56,8 @@
       "name": "Marketplace Loads Test",
       "status": "PASSED",
       "message": "Status 401 as expected",
-      "timestamp": "2025-10-17T02:03:15.005Z",
-      "duration": 2,
+      "timestamp": "2025-10-17T03:17:16.765Z",
+      "duration": 4,
       "statusCode": 401,
       "responseTime": "unknown"
     },
@@ -65,8 +65,8 @@
       "name": "Marketplace Bid Test",
       "status": "PASSED",
       "message": "Status 401 as expected",
-      "timestamp": "2025-10-17T02:03:15.007Z",
-      "duration": 4,
+      "timestamp": "2025-10-17T03:17:16.769Z",
+      "duration": 3,
       "statusCode": 401,
       "responseTime": "unknown"
     }
