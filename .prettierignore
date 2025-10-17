@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+coverage
+archive
+backups
+audit
+*.log
+.env
+.env.*
+!.env.example
+package-lock.json
+web/dist
+web/build
+
