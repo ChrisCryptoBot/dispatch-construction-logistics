@@ -1,0 +1,144 @@
+{
+  "timestamp": "2025-01-16T15-45-00Z",
+  "unit": "Unit 2 - Duplicate audit reports cleanup",
+  "config": {
+    "name": "Unit 2 – Duplicate audit reports",
+    "description": "Redundant audit documentation files",
+    "includeGlobs": ["**/*AUDIT*.md", "**/*audit*.md", "**/*SUMMARY*.md", "**/*summary*.md"],
+    "excludeGlobs": ["audit/90_safety_matrix.md", "audit/00_summary.md", "audit/70_obsolete_candidates.md", "backups/**", "archive/**", ".git/**", "node_modules/**", "web/node_modules/**", "tools/**"],
+    "maxFiles": 15,
+    "riskLevel": "zero",
+    "fileTypes": ["documentation"]
+  },
+  "results": {
+    "totalFiles": 15,
+    "stagedFiles": 15,
+    "failedFiles": 0,
+    "stagedLocation": "archive/staged/2025-01-16T15-45-00Z/unit2/",
+    "backupLocation": "backups/2025-01-16T15-45-00Z/unit2/"
+  },
+  "stagedFiles": [
+    {
+      "originalPath": "BUTTON_AUDIT_EXECUTIVE_SUMMARY.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/BUTTON_AUDIT_EXECUTIVE_SUMMARY.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/BUTTON_AUDIT_EXECUTIVE_SUMMARY.md",
+      "size": 15847,
+      "status": "staged"
+    },
+    {
+      "originalPath": "COMPREHENSIVE_AUDIT_FINAL_REPORT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/COMPREHENSIVE_AUDIT_FINAL_REPORT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/COMPREHENSIVE_AUDIT_FINAL_REPORT.md",
+      "size": 12450,
+      "status": "staged"
+    },
+    {
+      "originalPath": "FINAL_AUDIT_SUMMARY.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/FINAL_AUDIT_SUMMARY.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/FINAL_AUDIT_SUMMARY.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "BUTTON_FUNCTIONALITY_AUDIT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/BUTTON_FUNCTIONALITY_AUDIT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/BUTTON_FUNCTIONALITY_AUDIT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "PLATFORM_FILE_STRUCTURE_AUDIT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/PLATFORM_FILE_STRUCTURE_AUDIT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/PLATFORM_FILE_STRUCTURE_AUDIT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "PRE_LAUNCH_READINESS_AUDIT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/PRE_LAUNCH_READINESS_AUDIT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/PRE_LAUNCH_READINESS_AUDIT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "BUTTON_AUDIT_QUICK_REFERENCE.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/BUTTON_AUDIT_QUICK_REFERENCE.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/BUTTON_AUDIT_QUICK_REFERENCE.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "COMPREHENSIVE_FRONTEND_AUDIT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/COMPREHENSIVE_FRONTEND_AUDIT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/COMPREHENSIVE_FRONTEND_AUDIT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "SIDEBAR_AUDIT_REPORT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/SIDEBAR_AUDIT_REPORT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/SIDEBAR_AUDIT_REPORT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "CUSTOMER_SIDEBAR_COMPLETE_AUDIT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/CUSTOMER_SIDEBAR_COMPLETE_AUDIT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/CUSTOMER_SIDEBAR_COMPLETE_AUDIT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "MOCK_DATA_AUDIT_AND_INTEGRATION_PLAN.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/MOCK_DATA_AUDIT_AND_INTEGRATION_PLAN.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/MOCK_DATA_AUDIT_AND_INTEGRATION_PLAN.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "LOAD_POSTING_WIZARD_DEEP_AUDIT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/LOAD_POSTING_WIZARD_DEEP_AUDIT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/LOAD_POSTING_WIZARD_DEEP_AUDIT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "LOAD_TRACKING_AUDIT_REPORT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/LOAD_TRACKING_AUDIT_REPORT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/LOAD_TRACKING_AUDIT_REPORT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "LOAD_POSTING_WORKFLOW_AUDIT_REPORT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/LOAD_POSTING_WORKFLOW_AUDIT_REPORT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/LOAD_POSTING_WORKFLOW_AUDIT_REPORT.md",
+      "size": 0,
+      "status": "staged"
+    },
+    {
+      "originalPath": "CARRIER_ONBOARDING_AUDIT_REPORT.md",
+      "stagedPath": "archive/staged/2025-01-16T15-45-00Z/unit2/CARRIER_ONBOARDING_AUDIT_REPORT.md",
+      "backupPath": "backups/2025-01-16T15-45-00Z/unit2/CARRIER_ONBOARDING_AUDIT_REPORT.md",
+      "size": 0,
+      "status": "staged"
+    }
+  ],
+  "verification": {
+    "originalFilesRemoved": true,
+    "stagedFilesExist": true,
+    "backupFilesExist": true,
+    "rollbackAvailable": true
+  },
+  "summary": {
+    "operation": "Unit 2 cleanup - Duplicate audit reports",
+    "riskLevel": "zero",
+    "filesProcessed": 15,
+    "filesStaged": 15,
+    "filesFailed": 0,
+    "totalSizeBytes": 28297,
+    "success": true
+  }
+}
+
+

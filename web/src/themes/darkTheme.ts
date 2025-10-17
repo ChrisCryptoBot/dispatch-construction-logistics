@@ -40,11 +40,11 @@ export const darkTheme: Theme = {
     primaryLight: '#fee2e2',
     accent: '#fca5a5',
     
-    // Status - Adjusted for dark mode
-    success: '#10b981',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
+    // Status - Softer, easier on the eyes
+    success: '#22c55e',
+    warning: '#f4d03f',
+    error: '#f87171',
+    info: '#60a5fa',
     
     // Borders - Lighter for dark mode
     border: '#64748b',

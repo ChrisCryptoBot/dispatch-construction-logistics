@@ -1,6 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext-fixed'
-import type { Load } from '../../types'
+import { useTheme } from '../../contexts/ThemeContext'
+import PageContainer from '../../components/shared/PageContainer'
+import Card from '../../components/ui/Card'
+import { Users } from 'lucide-react'
+// Load interface for load assignment
+interface Load {
+  id: string
+  loadNumber: string
+  pickupLocation: string
+  deliveryLocation: string
+  pickupDate: string
+  deliveryDate: string
+  equipmentType: string
+  weight: string
+  rate: string
+  status: string
+  customerName: string
+  driverId: string | null
+  driverName: string | null
+  driverPhone: string | null
+  driverAcceptanceStatus: string | null
+  driverAssignedAt: string | null
+  driverAcceptedAt: string | null
+  driverAcceptanceExpiry: string | null
+  smsVerificationSent: boolean
+  smsVerificationCode: string | null
+  smsVerifiedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
 
 interface Driver {
   id: string
@@ -18,6 +47,7 @@ interface Driver {
 
 const DriverManagementPage = () => {
   const { user, organization } = useAuth()
+  const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState<'drivers' | 'load-assignment' | 'verification'>('drivers')
   
   // Notification State
@@ -295,10 +325,10 @@ const DriverManagementPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return '#10B981'
-      case 'PENDING': return '#F59E0B'
-      case 'SUSPENDED': return '#EF4444'
-      default: return '#6B7280'
+      case 'ACTIVE': return '#10B981' // Green for active
+      case 'PENDING': return '#F59E0B' // Yellow for pending
+      case 'SUSPENDED': return '#EF4444' // Red for suspended
+      default: return '#9CA3AF'
     }
   }
 
@@ -312,35 +342,44 @@ const DriverManagementPage = () => {
   }
 
   const tabs = [
-    { id: 'drivers', label: 'Driver Management', icon: 'fas fa-users', count: drivers.length },
-    { id: 'load-assignment', label: 'Load Assignment', icon: 'fas fa-truck', count: pendingLoads.length, badge: 'PENDING' },
-    { id: 'verification', label: 'Driver Verification', icon: 'fas fa-shield-alt', count: drivers.filter(d => !d.verified).length, badge: 'NEW' }
+    { id: 'drivers', label: 'Driver Management', count: drivers.length },
+    { id: 'load-assignment', label: 'Load Assignment', count: pendingLoads.length, badge: 'PENDING' },
+    { id: 'verification', label: 'Driver Verification', count: drivers.filter(d => !d.verified).length, badge: 'NEW' }
   ]
 
   const renderDriverManagement = () => (
     <>
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Drivers', value: drivers.length, color: '#667eea' },
-          { label: 'Active Drivers', value: drivers.filter(d => d.status === 'ACTIVE').length, color: '#10B981' },
-          { label: 'Pending Verification', value: drivers.filter(d => d.status === 'PENDING').length, color: '#F59E0B' },
-          { label: 'Verified Drivers', value: drivers.filter(d => d.verified).length, color: '#8B5CF6' }
+          { label: 'Total Drivers', value: drivers.length, icon: 'fas fa-users' },
+          { label: 'Active Drivers', value: drivers.filter(d => d.status === 'ACTIVE').length, icon: 'fas fa-user-check' },
+          { label: 'Pending Verification', value: drivers.filter(d => d.status === 'PENDING').length, icon: 'fas fa-user-clock' },
+          { label: 'Verified Drivers', value: drivers.filter(d => d.verified).length, icon: 'fas fa-user-shield' }
         ].map((stat, index) => (
-          <div key={index} style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: stat.color, marginBottom: '4px' }}>
-              {stat.value}
+          <Card key={index} padding="24px">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: theme.colors.backgroundTertiary,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <i className={stat.icon} style={{ fontSize: '28px', color: theme.colors.textSecondary }}></i>
+              </div>
+              <div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                  {stat.value}
+                </p>
+                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                  {stat.label}
+                </p>
+              </div>
             </div>
-            <div style={{ fontSize: '14px', color: '#9CA3AF' }}>
-              {stat.label}
-            </div>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -358,7 +397,7 @@ const DriverManagementPage = () => {
             left: '12px',
             top: '50%',
             transform: 'translateY(-50%)',
-            color: '#9CA3AF',
+            color: theme.colors.textSecondary,
             fontSize: '14px'
           }}></i>
           <input
@@ -369,21 +408,24 @@ const DriverManagementPage = () => {
             style={{
               width: '100%',
               padding: '12px 12px 12px 40px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: '#FFFFFF',
+              background: theme.colors.backgroundCard,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: '12px',
+              color: theme.colors.textPrimary,
               fontSize: '14px',
+              fontWeight: '500',
               outline: 'none',
               transition: 'all 0.2s ease'
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = '#667eea'
-              e.target.style.background = 'rgba(255, 255, 255, 0.08)'
+              e.target.style.borderColor = theme.colors.primary
+              e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              e.target.style.background = theme.colors.backgroundCardHover
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-              e.target.style.background = 'rgba(255, 255, 255, 0.05)'
+              e.target.style.borderColor = theme.colors.border
+              e.target.style.boxShadow = 'none'
+              e.target.style.background = theme.colors.backgroundCard
             }}
           />
         </div>
@@ -393,14 +435,30 @@ const DriverManagementPage = () => {
           onChange={(e) => setStatusFilter(e.target.value)}
           style={{
             padding: '12px 16px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            color: '#FFFFFF',
+            background: theme.colors.backgroundCard,
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: '12px',
+            color: theme.colors.textPrimary,
             fontSize: '14px',
+            fontWeight: '500',
             outline: 'none',
             cursor: 'pointer',
-            minWidth: '150px'
+            minWidth: '150px',
+            transition: 'all 0.2s ease',
+            appearance: 'none',
+            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${theme.colors.textSecondary}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            backgroundSize: '16px',
+            paddingRight: '40px'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = theme.colors.primary
+            e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = theme.colors.border
+            e.target.style.boxShadow = 'none'
           }}
         >
           <option value="ALL">All Status</option>
@@ -511,22 +569,25 @@ const DriverManagementPage = () => {
               <button 
                 onClick={() => handleEditDriver(driver)}
                 style={{
-                  background: 'rgba(102, 126, 234, 0.1)',
-                  border: '1px solid rgba(102, 126, 234, 0.3)',
-                  color: '#667eea',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  color: theme.colors.textSecondary,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '8px',
                   fontSize: '12px',
+                  fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                  e.currentTarget.style.color = theme.colors.textPrimary
+                  e.currentTarget.style.borderColor = theme.colors.primary
                 }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'
-                  e.currentTarget.style.transform = 'translateY(0)'
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.textSecondary
+                  e.currentTarget.style.borderColor = theme.colors.border
                 }}
               >
                 Edit
@@ -535,22 +596,25 @@ const DriverManagementPage = () => {
                 <button 
                   onClick={() => handleVerifyDriver(driver)}
                   style={{
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    color: '#10B981',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    color: theme.colors.textSecondary,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
                     fontSize: '12px',
+                    fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'
-                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = theme.colors.backgroundCardHover
+                    e.currentTarget.style.color = theme.colors.textPrimary
+                    e.currentTarget.style.borderColor = theme.colors.primary
                   }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'
-                    e.currentTarget.style.transform = 'translateY(0)'
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
                   }}
                 >
                   Verify
@@ -559,22 +623,25 @@ const DriverManagementPage = () => {
                 <button 
                   onClick={() => handleVerifyDriver(driver)}
                   style={{
-                    background: 'rgba(102, 126, 234, 0.1)',
-                    border: '1px solid rgba(102, 126, 234, 0.3)',
-                    color: '#667eea',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    color: theme.colors.textSecondary,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
                     fontSize: '12px',
+                    fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)'
-                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = theme.colors.backgroundCardHover
+                    e.currentTarget.style.color = theme.colors.textPrimary
+                    e.currentTarget.style.borderColor = theme.colors.primary
                   }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'
-                    e.currentTarget.style.transform = 'translateY(0)'
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
                   }}
                 >
                   Re-verify
@@ -602,27 +669,36 @@ const DriverManagementPage = () => {
   const renderLoadAssignment = () => (
     <>
       {/* Load Assignment Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
         {[
-          { label: 'Available Loads', value: availableLoads.length, color: '#667eea' },
-          { label: 'Pending Acceptance', value: pendingLoads.length, color: '#F59E0B' },
-          { label: 'Assigned Today', value: 5, color: '#10B981' },
-          { label: 'Completion Rate', value: '94%', color: '#8B5CF6' }
+          { label: 'Available Loads', value: availableLoads.length, icon: 'fas fa-truck' },
+          { label: 'Pending Acceptance', value: pendingLoads.length, icon: 'fas fa-clock' },
+          { label: 'Assigned Today', value: 5, icon: 'fas fa-check-circle' },
+          { label: 'Completion Rate', value: '94%', icon: 'fas fa-percentage' }
         ].map((stat, index) => (
-          <div key={index} style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: stat.color, marginBottom: '4px' }}>
-              {stat.value}
+          <Card key={index} padding="24px">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: theme.colors.backgroundTertiary,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <i className={stat.icon} style={{ fontSize: '28px', color: theme.colors.textSecondary }}></i>
+              </div>
+              <div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                  {stat.value}
+                </p>
+                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                  {stat.label}
+                </p>
+              </div>
             </div>
-            <div style={{ fontSize: '14px', color: '#9CA3AF' }}>
-              {stat.label}
-            </div>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -732,22 +808,25 @@ const DriverManagementPage = () => {
               <button 
                 onClick={() => handleAssignDriver(load)}
                 style={{
-                  background: 'rgba(220, 38, 38, 0.1)',
-                  border: '1px solid rgba(220, 38, 38, 0.3)',
-                  color: '#dc2626',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  color: theme.colors.textSecondary,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '8px',
                   fontSize: '12px',
+                  fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(220, 38, 38, 0.2)'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                  e.currentTarget.style.color = theme.colors.textPrimary
+                  e.currentTarget.style.borderColor = theme.colors.primary
                 }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'rgba(220, 38, 38, 0.1)'
-                  e.currentTarget.style.transform = 'translateY(0)'
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.textSecondary
+                  e.currentTarget.style.borderColor = theme.colors.border
                 }}
               >
                 Assign Driver
@@ -774,27 +853,36 @@ const DriverManagementPage = () => {
   const renderDriverVerification = () => (
     <>
       {/* Verification Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
         {[
-          { label: 'Pending Verification', value: drivers.filter(d => !d.verified).length, color: '#F59E0B' },
-          { label: 'Verified Drivers', value: drivers.filter(d => d.verified).length, color: '#10B981' },
-          { label: 'Verification Rate', value: '67%', color: '#667eea' },
-          { label: 'Avg. Process Time', value: '2.3 days', color: '#8B5CF6' }
+          { label: 'Pending Verification', value: drivers.filter(d => !d.verified).length, icon: 'fas fa-user-clock' },
+          { label: 'Verified Drivers', value: drivers.filter(d => d.verified).length, icon: 'fas fa-user-check' },
+          { label: 'Verification Rate', value: '67%', icon: 'fas fa-percentage' },
+          { label: 'Avg. Process Time', value: '2.3 days', icon: 'fas fa-clock' }
         ].map((stat, index) => (
-          <div key={index} style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: stat.color, marginBottom: '4px' }}>
-              {stat.value}
+          <Card key={index} padding="24px">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: theme.colors.backgroundTertiary,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <i className={stat.icon} style={{ fontSize: '28px', color: theme.colors.textSecondary }}></i>
+              </div>
+              <div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                  {stat.value}
+                </p>
+                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                  {stat.label}
+                </p>
+              </div>
             </div>
-            <div style={{ fontSize: '14px', color: '#9CA3AF' }}>
-              {stat.label}
-            </div>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -811,14 +899,30 @@ const DriverManagementPage = () => {
           onChange={(e) => setVerificationFilter(e.target.value)}
           style={{
             padding: '12px 16px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            color: '#FFFFFF',
+            background: theme.colors.backgroundCard,
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: '12px',
+            color: theme.colors.textPrimary,
             fontSize: '14px',
+            fontWeight: '500',
             outline: 'none',
             cursor: 'pointer',
-            minWidth: '200px'
+            minWidth: '200px',
+            transition: 'all 0.2s ease',
+            appearance: 'none',
+            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${theme.colors.textSecondary}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            backgroundSize: '16px',
+            paddingRight: '40px'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = theme.colors.primary
+            e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = theme.colors.border
+            e.target.style.boxShadow = 'none'
           }}
         >
           <option value="ALL">All Verification Status</option>
@@ -910,9 +1014,9 @@ const DriverManagementPage = () => {
 
             {/* Documents */}
             <div style={{ display: 'flex', gap: '8px' }}>
-              <i className="fas fa-id-card" style={{ color: driver.verified ? '#10B981' : '#6B7280' }}></i>
-              <i className="fas fa-file-medical" style={{ color: driver.verified ? '#10B981' : '#6B7280' }}></i>
-              <i className="fas fa-shield-alt" style={{ color: driver.verified ? '#10B981' : '#6B7280' }}></i>
+              <i className="fas fa-id-card" style={{ color: '#9CA3AF' }}></i>
+              <i className="fas fa-file-medical" style={{ color: '#9CA3AF' }}></i>
+              <i className="fas fa-shield-alt" style={{ color: '#9CA3AF' }}></i>
             </div>
 
             {/* Last Check */}
@@ -926,22 +1030,25 @@ const DriverManagementPage = () => {
                 <button 
                   onClick={() => handleStartVerification(driver)}
                   style={{
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    color: '#10B981',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    color: theme.colors.textSecondary,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
                     fontSize: '12px',
+                    fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'
-                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = theme.colors.backgroundCardHover
+                    e.currentTarget.style.color = theme.colors.textPrimary
+                    e.currentTarget.style.borderColor = theme.colors.primary
                   }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'
-                    e.currentTarget.style.transform = 'translateY(0)'
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
                   }}
                 >
                   Start Verification
@@ -950,22 +1057,25 @@ const DriverManagementPage = () => {
                 <button 
                   onClick={() => handleStartVerification(driver)}
                   style={{
-                    background: 'rgba(102, 126, 234, 0.1)',
-                    border: '1px solid rgba(102, 126, 234, 0.3)',
-                    color: '#667eea',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    color: theme.colors.textSecondary,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '8px',
                     fontSize: '12px',
+                    fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)'
-                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = theme.colors.backgroundCardHover
+                    e.currentTarget.style.color = theme.colors.textPrimary
+                    e.currentTarget.style.borderColor = theme.colors.primary
                   }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'
-                    e.currentTarget.style.transform = 'translateY(0)'
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = theme.colors.textSecondary
+                    e.currentTarget.style.borderColor = theme.colors.border
                   }}
                 >
                   Re-verify
@@ -978,8 +1088,63 @@ const DriverManagementPage = () => {
     </>
   )
 
+  const headerAction = (
+    <button
+      onClick={() => setShowAddDriver(true)}
+      style={{
+        padding: '12px 20px',
+        background: 'transparent',
+        color: theme.colors.textSecondary,
+        border: `1px solid ${theme.colors.border}`,
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        transition: 'all 0.2s ease'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = theme.colors.backgroundCardHover
+        e.currentTarget.style.color = theme.colors.textPrimary
+        e.currentTarget.style.borderColor = theme.colors.primary
+        e.currentTarget.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.color = theme.colors.textSecondary
+        e.currentTarget.style.borderColor = theme.colors.border
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
+    >
+      <i className="fas fa-plus" style={{ fontSize: '12px' }}></i>
+      Add Driver
+    </button>
+  )
+
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <PageContainer
+      title="Driver Operations"
+      subtitle="Manage drivers, assign loads, and verify credentials all in one place"
+      icon={Users as any}
+      headerAction={headerAction}
+    >
+      {/* Custom styles for dropdown options */}
+      <style>{`
+        select option {
+          background-color: ${theme.colors.backgroundCard} !important;
+          color: ${theme.colors.textPrimary} !important;
+          padding: 8px 12px;
+        }
+        select option:hover {
+          background-color: ${theme.colors.backgroundCardHover} !important;
+        }
+        select option:checked {
+          background-color: ${theme.colors.primary}20 !important;
+          color: ${theme.colors.primary} !important;
+        }
+      `}</style>
       {/* Notification System */}
       <div style={{
         position: 'fixed',
@@ -1020,73 +1185,6 @@ const DriverManagementPage = () => {
           </div>
         ))}
       </div>
-      {/* Header - Gold Standard */}
-      <div style={{ 
-        background: 'rgba(255, 255, 255, 0.03)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '12px',
-        padding: '24px',
-        marginBottom: '32px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              background: 'rgba(220, 38, 38, 0.1)',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <i className="fas fa-users" style={{ fontSize: '20px', color: '#dc2626' }}></i>
-            </div>
-            <div>
-              <h1 style={{ 
-                fontSize: '28px', 
-                fontWeight: '700', 
-                color: '#FFFFFF', 
-                margin: '0 0 4px 0',
-                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              }}>
-                Driver Operations
-              </h1>
-              <p style={{ color: '#9CA3AF', fontSize: '16px', margin: '0' }}>
-                Manage drivers, assign loads, and verify credentials all in one place
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowAddDriver(true)}
-            style={{
-              background: '#dc2626',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '12px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(220, 38, 38, 0.4)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(220, 38, 38, 0.3)'
-            }}
-          >
-            <i className="fas fa-plus" style={{ fontSize: '12px' }}></i>
-            Add Driver
-          </button>
-        </div>
-      </div>
 
       {/* Tab Navigation */}
       <div style={{ 
@@ -1104,55 +1202,63 @@ const DriverManagementPage = () => {
               alignItems: 'center',
               gap: '12px',
               padding: '16px 24px',
-              background: activeTab === tab.id ? 'rgba(220, 38, 38, 0.1)' : 'transparent',
-              border: 'none',
-              borderBottom: activeTab === tab.id ? '2px solid #dc2626' : '2px solid transparent',
-              color: activeTab === tab.id ? '#FFFFFF' : '#9CA3AF',
+              background: activeTab === tab.id ? 'transparent' : 'transparent',
+              border: activeTab === tab.id ? `1px solid ${theme.colors.border}` : `1px solid transparent`,
+              borderBottom: 'none',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === tab.id ? theme.colors.textPrimary : theme.colors.textSecondary,
               fontSize: '16px',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               position: 'relative'
             }}
-            onMouseOver={(e) => {
+            onMouseEnter={(e) => {
               if (activeTab !== tab.id) {
-                e.currentTarget.style.color = '#FFFFFF'
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.color = theme.colors.textPrimary
+                e.currentTarget.style.background = theme.colors.backgroundCardHover
+                e.currentTarget.style.borderColor = theme.colors.border
+              } else {
+                e.currentTarget.style.borderColor = theme.colors.primary
               }
             }}
-            onMouseOut={(e) => {
+            onMouseLeave={(e) => {
               if (activeTab !== tab.id) {
-                e.currentTarget.style.color = '#9CA3AF'
+                e.currentTarget.style.color = theme.colors.textSecondary
                 e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.borderColor = 'transparent'
+              } else {
+                e.currentTarget.style.borderColor = theme.colors.border
               }
             }}
           >
-            <i className={tab.icon} style={{ fontSize: '16px' }}></i>
             <span>{tab.label}</span>
             {tab.count > 0 && (
               <span style={{
-                background: activeTab === tab.id ? 'rgba(220, 38, 38, 0.2)' : '#dc2626',
-                color: 'white',
+                background: activeTab === tab.id ? theme.colors.backgroundTertiary : theme.colors.backgroundTertiary,
+                color: activeTab === tab.id ? theme.colors.textPrimary : theme.colors.textSecondary,
                 fontSize: '12px',
                 fontWeight: 'bold',
                 padding: '2px 8px',
                 borderRadius: '10px',
                 minWidth: '20px',
-                textAlign: 'center'
+                textAlign: 'center',
+                border: `1px solid ${theme.colors.border}`
               }}>
                 {tab.count}
               </span>
             )}
             {tab.badge && (
               <span style={{
-                background: tab.badge === 'PENDING' ? '#f59e0b' : tab.badge === 'NEW' ? '#10b981' : '#ef4444',
-                color: 'white',
+                background: tab.badge === 'PENDING' ? `${theme.colors.warning}20` : tab.badge === 'NEW' ? `${theme.colors.success}20` : `${theme.colors.error}20`,
+                color: tab.badge === 'PENDING' ? theme.colors.warning : tab.badge === 'NEW' ? theme.colors.success : theme.colors.error,
                 fontSize: '10px',
                 fontWeight: 'bold',
                 padding: '2px 6px',
                 borderRadius: '8px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em'
+                letterSpacing: '0.05em',
+                border: `1px solid ${tab.badge === 'PENDING' ? theme.colors.warning : tab.badge === 'NEW' ? theme.colors.success : theme.colors.error}30`
               }}>
                 {tab.badge}
               </span>
@@ -1350,9 +1456,9 @@ const DriverManagementPage = () => {
                   style={{
                     flex: 1,
                     padding: '12px 24px',
-                    background: '#dc2626',
-                    border: 'none',
-                    borderRadius: '8px',
+                    background: '#343a40',
+                    border: '1px solid #495057',
+                    borderRadius: '12px',
                     color: '#FFFFFF',
                     fontSize: '14px',
                     fontWeight: '600',
@@ -1560,9 +1666,9 @@ const DriverManagementPage = () => {
                   style={{
                     flex: 1,
                     padding: '12px 24px',
-                    background: '#dc2626',
-                    border: 'none',
-                    borderRadius: '8px',
+                    background: '#343a40',
+                    border: '1px solid #495057',
+                    borderRadius: '12px',
                     color: '#FFFFFF',
                     fontSize: '14px',
                     fontWeight: '600',
@@ -1828,7 +1934,7 @@ const DriverManagementPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }
 

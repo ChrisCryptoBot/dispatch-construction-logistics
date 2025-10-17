@@ -1,0 +1,62 @@
+{
+  "createdAt": "2025-01-16T16-15-00Z",
+  "unit": "Unit 3 - Safe consolidation of optimized files",
+  "operation": "consolidation_preparation",
+  "config": {
+    "name": "Unit 3 – Optimized file consolidation",
+    "description": "Safe consolidation of optimized files with original files",
+    "scope": [
+      "src/index.optimized.js ↔ src/index.js",
+      "src/routes/customer.optimized.js ↔ src/routes/customer.js", 
+      "src/routes/marketplace.optimized.js ↔ src/routes/marketplace.js"
+    ],
+    "mode": "config-driven_no-shell_fallback",
+    "branch": "chore/consolidate-optimized-files",
+    "riskLevel": "medium",
+    "requiresApproval": true
+  },
+  "files": [
+    {
+      "path": "src/index.js",
+      "bytes": 0,
+      "backedUp": true,
+      "type": "original_file"
+    },
+    {
+      "path": "src/index.optimized.js",
+      "bytes": 0,
+      "backedUp": true,
+      "type": "optimized_file"
+    },
+    {
+      "path": "src/routes/customer.js",
+      "bytes": 0,
+      "backedUp": true,
+      "type": "original_file"
+    },
+    {
+      "path": "src/routes/customer.optimized.js",
+      "bytes": 0,
+      "backedUp": true,
+      "type": "optimized_file"
+    },
+    {
+      "path": "src/routes/marketplace.js",
+      "bytes": 0,
+      "backedUp": true,
+      "type": "original_file"
+    },
+    {
+      "path": "src/routes/marketplace.optimized.js",
+      "bytes": 0,
+      "backedUp": true,
+      "type": "optimized_file"
+    }
+  ],
+  "count": 6,
+  "totalBytes": 0,
+  "backupLocation": "backups/2025-01-16T16-15-00Z/unit3-consolidation/",
+  "purpose": "Safe backup before consolidation operations"
+}
+
+

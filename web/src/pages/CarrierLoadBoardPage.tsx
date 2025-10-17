@@ -1,14 +1,17 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import PageContainer from '../components/shared/PageContainer'
 import Card from '../components/ui/Card'
 import { formatNumber, formatCurrency, formatCompactCurrency, formatPercentage } from '../utils/formatters';
+import { US_STATES } from '../constants/states'
+import AnimatedCounter from '../components/enhanced/AnimatedCounter'
 
 import { 
   Truck, Package, MapPin, DollarSign, Clock, TrendingUp, 
   AlertCircle, CheckCircle, Filter, Search, Eye, 
-  Calendar, Navigation, Zap, Star, Loader, Send, X, Building
+  Calendar, Navigation, Zap, Star, Loader, Send, X, Building,
+  Heart, ArrowUpDown, Crosshair, Check, XCircle, MapPinned
 } from 'lucide-react'
 
 // Load Board Listing Interface - Shows limited info for security
@@ -52,6 +55,16 @@ interface LoadBoardListing {
   deliveryContact?: { name: string; phone: string }
 }
 
+type SortOption = 'distance' | 'revenue' | 'date' | 'rate' | 'none'
+type BidStatus = 'pending' | 'accepted' | 'rejected' | 'none'
+
+interface CarrierLocation {
+  city: string
+  state: string
+  lat?: number
+  lng?: number
+}
+
 const CarrierLoadBoardPage = () => {
   const navigate = useNavigate()
   const { theme } = useTheme()
@@ -61,6 +74,31 @@ const CarrierLoadBoardPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEquipment, setFilterEquipment] = useState('all')
   const [filterPriority, setFilterPriority] = useState('all')
+  
+  // Location Filters
+  const [pickupCity, setPickupCity] = useState('')
+  const [pickupState, setPickupState] = useState('')
+  const [deliveryCity, setDeliveryCity] = useState('')
+  const [deliveryState, setDeliveryState] = useState('')
+  
+  // Date Filters
+  const [pickupDateFrom, setPickupDateFrom] = useState('')
+  const [pickupDateTo, setPickupDateTo] = useState('')
+  
+  // NEW: Sorting
+  const [sortBy, setSortBy] = useState<SortOption>('none')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  
+  // NEW: Distance Filter
+  const [carrierLocation, setCarrierLocation] = useState<CarrierLocation>({ city: 'Dallas', state: 'TX' })
+  const [maxDistance, setMaxDistance] = useState<number>(0) // 0 = no filter
+  
+  // NEW: Favorites (stored in localStorage)
+  const [favorites, setFavorites] = useState<string[]>([])
+  
+  // NEW: Bid Status Tracking (stored in localStorage)
+  const [bidStatuses, setBidStatuses] = useState<Record<string, BidStatus>>({})
+  
   const [selectedLoad, setSelectedLoad] = useState<LoadBoardListing | null>(null)
   const [showBidModal, setShowBidModal] = useState(false)
   const [bidAmount, setBidAmount] = useState('')
@@ -203,13 +241,279 @@ const CarrierLoadBoardPage = () => {
       fullDeliveryAddress: '555 Riverside Project, Austin, TX 78702',
       pickupContact: { name: 'Pit Manager', phone: '(512) 555-0999' },
       deliveryContact: { name: 'Project Manager', phone: '(512) 555-0555' }
+    },
+    {
+      id: 'LT-2025-0006',
+      contractDate: '2025-10-10',
+      customer: 'Phoenix Mega Development',
+      commodity: 'Crushed Granite',
+      equipment: 'End Dump',
+      pickupCity: 'Phoenix',
+      pickupState: 'AZ',
+      pickupDate: '2025-10-18',
+      pickupETA: '7:00 AM - 9:00 AM',
+      deliveryCity: 'Scottsdale',
+      deliveryState: 'AZ',
+      deliveryDate: '2025-10-18',
+      deliveryETA: '11:00 AM - 1:00 PM',
+      rateMode: 'PER_TON',
+      rate: 85,
+      units: 20,
+      estimatedRevenue: 1700,
+      mileage: 25,
+      requirements: ['Scale Ticket Required', 'DOT Compliant'],
+      priority: 'high',
+      quickPayEligible: true,
+      fullPickupAddress: '456 Quarry Rd, Phoenix, AZ 85001',
+      fullDeliveryAddress: '789 Luxury Resort Site, Scottsdale, AZ 85251',
+      pickupContact: { name: 'Quarry Supervisor', phone: '(602) 555-0123' },
+      deliveryContact: { name: 'Site Manager', phone: '(480) 555-0456' }
+    },
+    {
+      id: 'LT-2025-0007',
+      contractDate: '2025-10-09',
+      customer: 'LA Metro Construction',
+      commodity: 'Ready-Mix Concrete',
+      equipment: 'Mixer',
+      pickupCity: 'Los Angeles',
+      pickupState: 'CA',
+      pickupDate: '2025-10-16',
+      pickupETA: '5:00 AM - 7:00 AM',
+      deliveryCity: 'Santa Monica',
+      deliveryState: 'CA',
+      deliveryDate: '2025-10-16',
+      deliveryETA: '8:00 AM - 10:00 AM',
+      rateMode: 'PER_YARD',
+      rate: 220,
+      units: 10,
+      estimatedRevenue: 2200,
+      mileage: 18,
+      requirements: ['Time Sensitive (90min limit)', 'Early Morning Pour'],
+      priority: 'high',
+      quickPayEligible: true,
+      fullPickupAddress: '123 Concrete Plant, Los Angeles, CA 90001',
+      fullDeliveryAddress: '456 Beachfront Project, Santa Monica, CA 90401',
+      pickupContact: { name: 'Batch Operator', phone: '(213) 555-0111' },
+      deliveryContact: { name: 'Pour Coordinator', phone: '(310) 555-0222' }
+    },
+    {
+      id: 'LT-2025-0008',
+      contractDate: '2025-10-08',
+      customer: 'Miami Beach Developers',
+      commodity: 'Sand',
+      equipment: 'End Dump',
+      pickupCity: 'Miami',
+      pickupState: 'FL',
+      pickupDate: '2025-10-14',
+      pickupETA: '8:00 AM - 10:00 AM',
+      deliveryCity: 'Fort Lauderdale',
+      deliveryState: 'FL',
+      deliveryDate: '2025-10-14',
+      deliveryETA: '12:00 PM - 2:00 PM',
+      rateMode: 'PER_TON',
+      rate: 42,
+      units: 18,
+      estimatedRevenue: 756,
+      mileage: 30,
+      requirements: ['Scale Ticket Required', 'Tarp Required'],
+      priority: 'medium',
+      quickPayEligible: false,
+      fullPickupAddress: '789 Sand Pit Rd, Miami, FL 33101',
+      fullDeliveryAddress: '321 Beach Resort Site, Fort Lauderdale, FL 33301',
+      pickupContact: { name: 'Pit Manager', phone: '(305) 555-0789' },
+      deliveryContact: { name: 'Project Manager', phone: '(954) 555-0321' }
+    },
+    {
+      id: 'LT-2025-0009',
+      contractDate: '2025-10-11',
+      customer: 'Seattle Infrastructure Group',
+      commodity: 'Asphalt',
+      equipment: 'End Dump',
+      pickupCity: 'Seattle',
+      pickupState: 'WA',
+      pickupDate: '2025-10-19',
+      pickupETA: '6:00 AM - 8:00 AM',
+      deliveryCity: 'Tacoma',
+      deliveryState: 'WA',
+      deliveryDate: '2025-10-19',
+      deliveryETA: '10:00 AM - 12:00 PM',
+      rateMode: 'PER_TON',
+      rate: 68,
+      units: 24,
+      estimatedRevenue: 1632,
+      mileage: 34,
+      requirements: ['Hot Load', 'DOT Compliant'],
+      priority: 'high',
+      quickPayEligible: true,
+      fullPickupAddress: '456 Asphalt Plant, Seattle, WA 98101',
+      fullDeliveryAddress: '789 Highway Project, Tacoma, WA 98401',
+      pickupContact: { name: 'Plant Manager', phone: '(206) 555-0456' },
+      deliveryContact: { name: 'Paving Crew Lead', phone: '(253) 555-0789' }
+    },
+    {
+      id: 'LT-2025-0010',
+      contractDate: '2025-10-10',
+      customer: 'Denver Mountain Builders',
+      commodity: 'Gravel',
+      equipment: 'End Dump',
+      pickupCity: 'Denver',
+      pickupState: 'CO',
+      pickupDate: '2025-10-17',
+      pickupETA: '7:00 AM - 9:00 AM',
+      deliveryCity: 'Boulder',
+      deliveryState: 'CO',
+      deliveryDate: '2025-10-17',
+      deliveryETA: '11:00 AM - 1:00 PM',
+      rateMode: 'PER_TON',
+      rate: 55,
+      units: 20,
+      estimatedRevenue: 1100,
+      mileage: 28,
+      requirements: ['Scale Ticket Required'],
+      priority: 'medium',
+      quickPayEligible: false,
+      fullPickupAddress: '123 Gravel Pit, Denver, CO 80201',
+      fullDeliveryAddress: '456 Mountain Lodge Site, Boulder, CO 80301',
+      pickupContact: { name: 'Pit Supervisor', phone: '(303) 555-0123' },
+      deliveryContact: { name: 'Site Foreman', phone: '(303) 555-0456' }
+    },
+    {
+      id: 'LT-2025-0011',
+      contractDate: '2025-10-09',
+      customer: 'Atlanta Metro Transit',
+      commodity: 'Concrete (5000 PSI)',
+      equipment: 'Mixer',
+      pickupCity: 'Atlanta',
+      pickupState: 'GA',
+      pickupDate: '2025-10-15',
+      pickupETA: '5:30 AM - 7:30 AM',
+      deliveryCity: 'Marietta',
+      deliveryState: 'GA',
+      deliveryDate: '2025-10-15',
+      deliveryETA: '9:00 AM - 11:00 AM',
+      rateMode: 'PER_YARD',
+      rate: 210,
+      units: 15,
+      estimatedRevenue: 3150,
+      mileage: 22,
+      requirements: ['Time Sensitive (90min limit)', 'Transit Project'],
+      priority: 'high',
+      quickPayEligible: true,
+      fullPickupAddress: '789 Concrete Plant, Atlanta, GA 30301',
+      fullDeliveryAddress: '321 Transit Station Site, Marietta, GA 30060',
+      pickupContact: { name: 'Plant Operator', phone: '(404) 555-0789' },
+      deliveryContact: { name: 'Transit Project Manager', phone: '(770) 555-0321' }
+    },
+    {
+      id: 'LT-2025-0012',
+      contractDate: '2025-10-12',
+      customer: 'Chicago Skyline Development',
+      commodity: 'Crushed Stone',
+      equipment: 'End Dump',
+      pickupCity: 'Chicago',
+      pickupState: 'IL',
+      pickupDate: '2025-10-20',
+      pickupETA: '6:00 AM - 8:00 AM',
+      deliveryCity: 'Naperville',
+      deliveryState: 'IL',
+      deliveryDate: '2025-10-20',
+      deliveryETA: '10:00 AM - 12:00 PM',
+      rateMode: 'PER_TON',
+      rate: 72,
+      units: 22,
+      estimatedRevenue: 1584,
+      mileage: 29,
+      requirements: ['Scale Ticket Required', 'DOT Compliant'],
+      priority: 'medium',
+      quickPayEligible: true,
+      fullPickupAddress: '456 Quarry Dr, Chicago, IL 60601',
+      fullDeliveryAddress: '789 Tower Site, Naperville, IL 60540',
+      pickupContact: { name: 'Quarry Manager', phone: '(312) 555-0456' },
+      deliveryContact: { name: 'Construction Manager', phone: '(630) 555-0789' }
     }
   ]
 
-  React.useEffect(() => {
-    // Load data
+  // Load favorites and bid statuses from localStorage
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('carrier_favorites')
+    if (savedFavorites) {
+      try {
+        setFavorites(JSON.parse(savedFavorites))
+      } catch (e) {
+        console.error('Error loading favorites:', e)
+      }
+    }
+
+    const savedBidStatuses = localStorage.getItem('carrier_bid_statuses')
+    if (savedBidStatuses) {
+      try {
+        setBidStatuses(JSON.parse(savedBidStatuses))
+      } catch (e) {
+        console.error('Error loading bid statuses:', e)
+      }
+    }
+
+    const savedCarrierLocation = localStorage.getItem('carrier_location')
+    if (savedCarrierLocation) {
+      try {
+        setCarrierLocation(JSON.parse(savedCarrierLocation))
+      } catch (e) {
+        console.error('Error loading carrier location:', e)
+      }
+    }
+  }, [])
+
+  // Load data
+  useEffect(() => {
     setLoads(mockLoads)
   }, [])
+
+  // Save favorites to localStorage
+  useEffect(() => {
+    localStorage.setItem('carrier_favorites', JSON.stringify(favorites))
+  }, [favorites])
+
+  // Save bid statuses to localStorage
+  useEffect(() => {
+    localStorage.setItem('carrier_bid_statuses', JSON.stringify(bidStatuses))
+  }, [bidStatuses])
+
+  // Save carrier location to localStorage
+  useEffect(() => {
+    localStorage.setItem('carrier_location', JSON.stringify(carrierLocation))
+  }, [carrierLocation])
+
+  // Utility: Calculate distance between two points (simple approximation)
+  const calculateDistance = (load: LoadBoardListing): number => {
+    // Simple approximation - in real app, use actual geocoding
+    // For now, we'll use the mileage from carrier location to pickup as rough estimate
+    // This is a placeholder - real implementation would geocode carrier location and pickup
+    return load.mileage
+  }
+
+  // Utility: Toggle favorite
+  const toggleFavorite = (loadId: string) => {
+    setFavorites(prev => {
+      if (prev.includes(loadId)) {
+        return prev.filter(id => id !== loadId)
+      } else {
+        return [...prev, loadId]
+      }
+    })
+  }
+
+  // Utility: Get bid status for a load
+  const getBidStatus = (loadId: string): BidStatus => {
+    return bidStatuses[loadId] || 'none'
+  }
+
+  // Utility: Update bid status
+  const updateBidStatus = (loadId: string, status: BidStatus) => {
+    setBidStatuses(prev => ({
+      ...prev,
+      [loadId]: status
+    }))
+  }
 
   const handleSubmitBid = async () => {
     if (!selectedLoad) return
@@ -225,6 +529,9 @@ const CarrierLoadBoardPage = () => {
         bidAmount: bidAmount || 'Posted Rate',
         notes: bidNotes
       })
+      
+      // Mark bid as pending
+      updateBidStatus(selectedLoad.id, 'pending')
       
       alert(
         `✅ BID SUBMITTED SUCCESSFULLY!\n\n` +
@@ -254,19 +561,62 @@ const CarrierLoadBoardPage = () => {
     }
   }
 
-  const filteredLoads = mockLoads.filter(load => {
-    const matchesSearch = searchTerm === '' || 
-      load.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      load.commodity.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      load.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      load.pickupCity.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      load.deliveryCity.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesEquipment = filterEquipment === 'all' || load.equipment === filterEquipment
-    const matchesPriority = filterPriority === 'all' || load.priority === filterPriority
-    
-    return matchesSearch && matchesEquipment && matchesPriority
-  })
+  // Filter and sort loads
+  const filteredLoads = mockLoads
+    .filter(load => {
+      const matchesSearch = searchTerm === '' || 
+        load.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        load.commodity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        load.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        load.pickupCity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        load.deliveryCity.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesEquipment = filterEquipment === 'all' || load.equipment === filterEquipment
+      const matchesPriority = filterPriority === 'all' || load.priority === filterPriority
+      
+      // Location filters
+      const matchesPickupCity = pickupCity === '' || 
+        load.pickupCity.toLowerCase().includes(pickupCity.toLowerCase())
+      const matchesPickupState = pickupState === '' || 
+        load.pickupState.toLowerCase() === pickupState.toLowerCase()
+      const matchesDeliveryCity = deliveryCity === '' || 
+        load.deliveryCity.toLowerCase().includes(deliveryCity.toLowerCase())
+      const matchesDeliveryState = deliveryState === '' || 
+        load.deliveryState.toLowerCase() === deliveryState.toLowerCase()
+      
+      // Date filters
+      const loadPickupDate = new Date(load.pickupDate)
+      const matchesDateFrom = pickupDateFrom === '' || 
+        loadPickupDate >= new Date(pickupDateFrom)
+      const matchesDateTo = pickupDateTo === '' || 
+        loadPickupDate <= new Date(pickupDateTo)
+      
+      // Distance filter
+      const distance = calculateDistance(load)
+      const matchesDistance = maxDistance === 0 || distance <= maxDistance
+      
+      return matchesSearch && matchesEquipment && matchesPriority && 
+             matchesPickupCity && matchesPickupState && 
+             matchesDeliveryCity && matchesDeliveryState &&
+             matchesDateFrom && matchesDateTo && matchesDistance
+    })
+    .sort((a, b) => {
+      if (sortBy === 'none') return 0
+      
+      let comparison = 0
+      
+      if (sortBy === 'distance') {
+        comparison = calculateDistance(a) - calculateDistance(b)
+      } else if (sortBy === 'revenue') {
+        comparison = a.estimatedRevenue - b.estimatedRevenue
+      } else if (sortBy === 'date') {
+        comparison = new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime()
+      } else if (sortBy === 'rate') {
+        comparison = a.rate - b.rate
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
 
   const stats = {
     total: mockLoads.length,
@@ -290,13 +640,13 @@ const CarrierLoadBoardPage = () => {
   }
 
   return (
-    <PageContainer title="Load Board" subtitle="Available loads from customers - Submit bids to win freight">
+    <PageContainer title="Load Board" subtitle="Available loads from customers - Submit bids to win freight" icon={Package as any}>
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
         <Card padding="24px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '12px', backgroundColor: `${theme.colors.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Package size={28} color={theme.colors.primary} />
+            <div style={{ width: '56px', height: '56px', borderRadius: '12px', backgroundColor: theme.colors.backgroundTertiary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={28} color={theme.colors.textSecondary} />
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '0 0 4px 0', fontWeight: '600' }}>AVAILABLE LOADS</p>
@@ -312,15 +662,17 @@ const CarrierLoadBoardPage = () => {
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '0 0 4px 0', fontWeight: '600' }}>TOTAL REVENUE</p>
-              <p style={{ fontSize: '36px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0 }}>${(stats.totalRevenue / 1000).toFixed(1)}k</p>
+              <p style={{ fontSize: '36px', fontWeight: '700', color: theme.colors.success, margin: 0 }}>
+                <AnimatedCounter value={stats.totalRevenue} format="currency" />
+              </p>
             </div>
           </div>
         </Card>
 
         <Card padding="24px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '12px', backgroundColor: `${theme.colors.warning}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={28} color={theme.colors.warning} />
+            <div style={{ width: '56px', height: '56px', borderRadius: '12px', backgroundColor: theme.colors.backgroundTertiary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Zap size={28} color={theme.colors.textSecondary} />
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '0 0 4px 0', fontWeight: '600' }}>QUICKPAY</p>
@@ -331,8 +683,8 @@ const CarrierLoadBoardPage = () => {
 
         <Card padding="24px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '12px', backgroundColor: `${theme.colors.error}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Star size={28} color={theme.colors.error} />
+            <div style={{ width: '56px', height: '56px', borderRadius: '12px', backgroundColor: theme.colors.backgroundTertiary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Star size={28} color={theme.colors.textSecondary} />
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '0 0 4px 0', fontWeight: '600' }}>HOT LOADS</p>
@@ -379,7 +731,7 @@ const CarrierLoadBoardPage = () => {
             onChange={(e) => setFilterEquipment(e.target.value)}
             style={{
               padding: '12px 16px',
-              background: theme.colors.backgroundCard,
+              background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
               border: `1px solid ${theme.colors.border}`,
               borderRadius: '8px',
               color: theme.colors.textPrimary,
@@ -398,11 +750,11 @@ const CarrierLoadBoardPage = () => {
               e.target.style.boxShadow = 'none'
             }}
           >
-            <option value="all" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>All Equipment</option>
-            <option value="End Dump" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>End Dump</option>
-            <option value="Mixer" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Mixer</option>
-            <option value="Flatbed" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Flatbed</option>
-            <option value="Lowboy" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Lowboy</option>
+            <option value="all" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>All Equipment</option>
+            <option value="End Dump" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>End Dump</option>
+            <option value="Mixer" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Mixer</option>
+            <option value="Flatbed" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Flatbed</option>
+            <option value="Lowboy" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Lowboy</option>
           </select>
 
           <select
@@ -410,7 +762,7 @@ const CarrierLoadBoardPage = () => {
             onChange={(e) => setFilterPriority(e.target.value)}
             style={{
               padding: '12px 16px',
-              background: theme.colors.backgroundCard,
+              background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
               border: `1px solid ${theme.colors.border}`,
               borderRadius: '8px',
               color: theme.colors.textPrimary,
@@ -429,11 +781,411 @@ const CarrierLoadBoardPage = () => {
               e.target.style.boxShadow = 'none'
             }}
           >
-            <option value="all" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>All Priority</option>
-            <option value="high" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>High Priority</option>
-            <option value="medium" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Medium Priority</option>
-            <option value="low" style={{ background: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Low Priority</option>
+            <option value="all" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>All Priority</option>
+            <option value="high" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>High Priority</option>
+            <option value="medium" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Medium Priority</option>
+            <option value="low" style={{ background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Low Priority</option>
           </select>
+        </div>
+
+        {/* Sorting & Distance Controls */}
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${theme.colors.border}` }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <ArrowUpDown size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Sort By
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            >
+              <option value="none">None</option>
+              <option value="distance">Distance (miles)</option>
+              <option value="revenue">Revenue</option>
+              <option value="date">Pickup Date</option>
+              <option value="rate">Rate</option>
+            </select>
+          </div>
+
+          <div style={{ flex: '0 0 120px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Direction
+            </label>
+            <select
+              value={sortDirection}
+              onChange={(e) => setSortDirection(e.target.value as 'asc' | 'desc')}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            >
+              <option value="asc">Low → High</option>
+              <option value="desc">High → Low</option>
+            </select>
+          </div>
+
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Crosshair size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Max Distance (miles)
+            </label>
+            <input
+              type="number"
+              placeholder="No limit"
+              value={maxDistance || ''}
+              onChange={(e) => setMaxDistance(parseInt(e.target.value) || 0)}
+              min="0"
+              step="50"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            />
+          </div>
+
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <MapPinned size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Your Location
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="City"
+                value={carrierLocation.city}
+                onChange={(e) => setCarrierLocation(prev => ({ ...prev, city: e.target.value }))}
+                style={{
+                  flex: 2,
+                  padding: '10px 12px',
+                  background: theme.colors.background,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '8px',
+                  color: theme.colors.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = theme.colors.primary
+                  e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = theme.colors.border
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+              <input
+                type="text"
+                placeholder="ST"
+                value={carrierLocation.state}
+                onChange={(e) => setCarrierLocation(prev => ({ ...prev, state: e.target.value.toUpperCase() }))}
+                maxLength={2}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  background: theme.colors.background,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '8px',
+                  color: theme.colors.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none',
+                  textTransform: 'uppercase'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = theme.colors.primary
+                  e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = theme.colors.border
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Location & Date Filters */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${theme.colors.border}` }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <MapPin size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Pickup City
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Austin, Phoenix..."
+              value={pickupCity}
+              onChange={(e) => setPickupCity(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Pickup State
+            </label>
+            <select
+              value={pickupState}
+              onChange={(e) => setPickupState(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            >
+              <option value="">All States</option>
+              {US_STATES.map(state => (
+                <option key={state.code} value={state.code}>{state.name} ({state.code})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Navigation size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Delivery City
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Dallas, Miami..."
+              value={deliveryCity}
+              onChange={(e) => setDeliveryCity(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Delivery State
+            </label>
+            <select
+              value={deliveryState}
+              onChange={(e) => setDeliveryState(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            >
+              <option value="">All States</option>
+              {US_STATES.map(state => (
+                <option key={state.code} value={state.code}>{state.name} ({state.code})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Calendar size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              Pickup Date From
+            </label>
+            <input
+              type="date"
+              value={pickupDateFrom}
+              onChange={(e) => setPickupDateFrom(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Pickup Date To
+            </label>
+            <input
+              type="date"
+              value={pickupDateTo}
+              onChange={(e) => setPickupDateTo(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textPrimary,
+                fontSize: '14px',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.colors.primary
+                e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.colors.border
+                e.target.style.boxShadow = 'none'
+              }}
+            />
+          </div>
+
+          {/* Clear Filters Button */}
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setFilterEquipment('all')
+                setFilterPriority('all')
+                setPickupCity('')
+                setPickupState('')
+                setDeliveryCity('')
+                setDeliveryState('')
+                setPickupDateFrom('')
+                setPickupDateTo('')
+                setSortBy('none')
+                setSortDirection('desc')
+                setMaxDistance(0)
+              }}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                background: theme.colors.backgroundCard,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textSecondary,
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.colors.primary
+                e.currentTarget.style.color = '#FFFFFF'
+                e.currentTarget.style.borderColor = theme.colors.primary
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = theme.colors.backgroundCard
+                e.currentTarget.style.color = theme.colors.textSecondary
+                e.currentTarget.style.borderColor = theme.colors.border
+              }}
+            >
+              <X size={16} style={{ display: 'inline', marginRight: '6px' }} />
+              Clear All Filters
+            </button>
+          </div>
         </div>
       </Card>
 
@@ -454,7 +1206,7 @@ const CarrierLoadBoardPage = () => {
               <div
                 key={load.id}
                 style={{
-                  background: theme.colors.backgroundCard,
+                  background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
                   borderRadius: '12px',
                   padding: '24px',
                   border: `2px solid ${load.priority === 'high' ? theme.colors.error : theme.colors.border}`,
@@ -476,6 +1228,60 @@ const CarrierLoadBoardPage = () => {
                       <span style={{ fontSize: '20px', fontWeight: '700', color: theme.colors.textPrimary }}>
                         {load.id}
                       </span>
+                      
+                      {/* Bid Status Badge */}
+                      {getBidStatus(load.id) === 'pending' && (
+                        <span style={{
+                          padding: '4px 12px',
+                          background: `${theme.colors.info}20`,
+                          color: theme.colors.info,
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <Clock size={12} />
+                          BID PENDING
+                        </span>
+                      )}
+                      {getBidStatus(load.id) === 'accepted' && (
+                        <span style={{
+                          padding: '4px 12px',
+                          background: `${theme.colors.success}20`,
+                          color: theme.colors.success,
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <Check size={12} />
+                          BID ACCEPTED
+                        </span>
+                      )}
+                      {getBidStatus(load.id) === 'rejected' && (
+                        <span style={{
+                          padding: '4px 12px',
+                          background: `${theme.colors.error}20`,
+                          color: theme.colors.error,
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <XCircle size={12} />
+                          BID REJECTED
+                        </span>
+                      )}
+                      
                       {load.priority === 'high' && (
                         <span style={{
                           padding: '4px 12px',
@@ -519,13 +1325,48 @@ const CarrierLoadBoardPage = () => {
                     </p>
                   </div>
 
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '28px', fontWeight: '700', color: theme.colors.success, margin: '0 0 4px 0' }}>
-                      ${formatNumber(load.estimatedRevenue)}
-                    </p>
-                    <p style={{ fontSize: '13px', color: theme.colors.textSecondary, margin: 0 }}>
-                      ${load.rate}{getRateModeDisplay(load.rateMode)}
-                    </p>
+                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ minWidth: '140px', marginRight: '8px', textAlign: 'right' }}>
+                      <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.success, margin: '0 0 4px 0', lineHeight: '1.1', wordBreak: 'break-word', whiteSpace: 'nowrap' }}>
+                        ${formatNumber(load.estimatedRevenue)}
+                      </p>
+                      <p style={{ fontSize: '13px', color: theme.colors.textSecondary, margin: 0, lineHeight: '1.2', whiteSpace: 'nowrap' }}>
+                        ${load.rate}{getRateModeDisplay(load.rateMode)}
+                      </p>
+                    </div>
+                    
+                    {/* Favorite Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(load.id)
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = theme.colors.backgroundCardHover
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'none'
+                      }}
+                      title={favorites.includes(load.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Heart 
+                        size={24} 
+                        color={theme.colors.textSecondary}
+                        fill={favorites.includes(load.id) ? theme.colors.textSecondary : 'none'}
+                        strokeWidth={favorites.includes(load.id) ? 0 : 2}
+                      />
+                    </button>
                   </div>
                 </div>
 
@@ -542,7 +1383,7 @@ const CarrierLoadBoardPage = () => {
                 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <MapPin size={16} color={theme.colors.success} />
+                      <MapPin size={16} color={theme.colors.textSecondary} />
                       <span style={{ fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, textTransform: 'uppercase' }}>
                         Pickup
                       </span>
@@ -563,7 +1404,7 @@ const CarrierLoadBoardPage = () => {
                   </div>
 
                   <div style={{ textAlign: 'center' }}>
-                    <Navigation size={20} color={theme.colors.primary} />
+                    <Navigation size={20} color={theme.colors.textSecondary} />
                     <p style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary, margin: '4px 0 0 0' }}>
                       {load.mileage} mi
                     </p>
@@ -571,7 +1412,7 @@ const CarrierLoadBoardPage = () => {
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <MapPin size={16} color={theme.colors.error} />
+                      <MapPin size={16} color={theme.colors.textSecondary} />
                       <span style={{ fontSize: '12px', fontWeight: '600', color: theme.colors.textSecondary, textTransform: 'uppercase' }}>
                         Delivery
                       </span>
@@ -596,17 +1437,17 @@ const CarrierLoadBoardPage = () => {
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' }}>
                   <div style={{
                     padding: '6px 12px',
-                    background: `${theme.colors.info}20`,
-                    border: `1px solid ${theme.colors.info}`,
+                    background: theme.colors.backgroundTertiary,
+                    border: `1px solid ${theme.colors.border}`,
                     borderRadius: '6px',
                     fontSize: '13px',
                     fontWeight: '600',
-                    color: theme.colors.info,
+                    color: theme.colors.textSecondary,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px'
                   }}>
-                    <Truck size={14} />
+                    <Truck size={14} color={theme.colors.textSecondary} />
                     {load.equipment}
                   </div>
 
@@ -615,8 +1456,8 @@ const CarrierLoadBoardPage = () => {
                       key={idx}
                       style={{
                         padding: '6px 12px',
-                        background: `${theme.colors.warning}15`,
-                        border: `1px solid ${theme.colors.warning}30`,
+                        background: theme.colors.backgroundTertiary,
+                        border: `1px solid ${theme.colors.border}`,
                         color: theme.colors.textSecondary,
                         borderRadius: '6px',
                         fontSize: '12px',
@@ -625,7 +1466,7 @@ const CarrierLoadBoardPage = () => {
                         gap: '4px'
                       }}
                     >
-                      <AlertCircle size={12} />
+                      <AlertCircle size={12} color={theme.colors.textSecondary} />
                       {req}
                     </span>
                   ))}
@@ -633,38 +1474,77 @@ const CarrierLoadBoardPage = () => {
 
                 {/* Action Button */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button
-                    onClick={() => {
-                      setSelectedLoad(load)
-                      setShowBidModal(true)
-                    }}
-                    style={{
+                  {getBidStatus(load.id) === 'none' ? (
+                    <button
+                      onClick={() => {
+                        setSelectedLoad(load)
+                        setShowBidModal(true)
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        background: 'transparent',
+                        color: theme.colors.textSecondary,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = theme.colors.backgroundCardHover
+                        e.currentTarget.style.color = theme.colors.textPrimary
+                        e.currentTarget.style.borderColor = theme.colors.primary
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = theme.colors.textSecondary
+                        e.currentTarget.style.borderColor = theme.colors.border
+                      }}
+                    >
+                      <Send size={16} />
+                      Submit Bid
+                    </button>
+                  ) : (
+                    <div style={{
                       padding: '12px 24px',
-                      background: `linear-gradient(135deg, ${theme.colors.primary} 0%, #b91c1c 100%)`,
-                      color: 'white',
-                      border: 'none',
+                      background: theme.colors.backgroundCardHover,
+                      border: `2px solid ${
+                        getBidStatus(load.id) === 'pending' ? theme.colors.info :
+                        getBidStatus(load.id) === 'accepted' ? theme.colors.success :
+                        theme.colors.error
+                      }`,
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
-                      cursor: 'pointer',
+                      color: theme.colors.textSecondary,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      transition: 'all 0.2s ease',
-                      boxShadow: `0 4px 12px ${theme.colors.primary}40`
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)'
-                      e.currentTarget.style.boxShadow = `0 6px 16px ${theme.colors.primary}60`
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = `0 4px 12px ${theme.colors.primary}40`
-                    }}
-                  >
-                    <Send size={16} />
-                    Submit Bid
-                  </button>
+                      gap: '8px'
+                    }}>
+                      {getBidStatus(load.id) === 'pending' && (
+                        <>
+                          <Clock size={16} color={theme.colors.textSecondary} />
+                          Awaiting Response
+                        </>
+                      )}
+                      {getBidStatus(load.id) === 'accepted' && (
+                        <>
+                          <CheckCircle size={16} color={theme.colors.success} />
+                          Bid Accepted
+                        </>
+                      )}
+                      {getBidStatus(load.id) === 'rejected' && (
+                        <>
+                          <XCircle size={16} color={theme.colors.error} />
+                          Bid Rejected
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -694,7 +1574,7 @@ const CarrierLoadBoardPage = () => {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: theme.colors.backgroundCard,
+              background: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
               borderRadius: '16px',
               maxWidth: '700px',
               width: '100%',

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { scaleTicketsAPI } from '../services/api'
-import { Upload, Scale, CheckCircle, AlertTriangle, Clock, Eye, FileText, X, Camera, RefreshCw, Check, AlertCircle, ChevronDown, ChevronUp, Trash2, Edit2, Save, Loader } from 'lucide-react'
+import { Upload, Scale, CheckCircle, AlertTriangle, Clock, Eye, FileText, X, Camera, RefreshCw, Check, AlertCircle, ChevronDown, ChevronUp, Trash2, Edit2, Save, Loader, ArrowUpDown, MapPin, User, Square, CheckSquare } from 'lucide-react'
 import { formatNumber, formatCurrency, formatCompactCurrency, formatPercentage } from '../utils/formatters';
 
 interface OCRField {
@@ -51,6 +51,17 @@ const ScaleTicketsPage = () => {
   const [uploadingFile, setUploadingFile] = useState<File | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [expandedTickets, setExpandedTickets] = useState<Set<string>>(new Set())
+  
+  // Enhanced analytics state
+  const [dateRange, setDateRange] = useState<{start: string, end: string}>({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  })
+  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([])
+  const [showBulkActions, setShowBulkActions] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortBy, setSortBy] = useState<'date' | 'weight' | 'status' | 'confidence' | 'driver'>('date')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
     // Initialize with mock tickets showing various states
@@ -307,14 +318,123 @@ const ScaleTicketsPage = () => {
     })
   }
 
-  const filteredTickets = filterStatus === 'all' 
-    ? tickets 
-    : tickets.filter(t => t.status === filterStatus)
+  // Enhanced filtering logic
+  const filteredTickets = tickets.filter(ticket => {
+    // Status filter
+    const statusMatch = filterStatus === 'all' || ticket.status === filterStatus
+    
+    // Search filter
+    const searchMatch = !searchTerm || 
+      ticket.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.driver.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.commodity.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Date range filter
+    const ticketDate = new Date(ticket.date)
+    const startDate = new Date(dateRange.start)
+    const endDate = new Date(dateRange.end)
+    const dateMatch = ticketDate >= startDate && ticketDate <= endDate
+    
+    return statusMatch && searchMatch && dateMatch
+  }).sort((a, b) => {
+    // Sorting logic
+    let comparison = 0
+    switch (sortBy) {
+      case 'date':
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
+        break
+      case 'weight':
+        comparison = a.netWeight - b.netWeight
+        break
+      case 'status':
+        comparison = a.status.localeCompare(b.status)
+        break
+      case 'confidence':
+        const aConfidence = a.ocrData ? Object.values(a.ocrData).reduce((sum, field) => sum + field.confidence, 0) / Object.keys(a.ocrData).length : 0
+        const bConfidence = b.ocrData ? Object.values(b.ocrData).reduce((sum, field) => sum + field.confidence, 0) / Object.keys(b.ocrData).length : 0
+        comparison = aConfidence - bConfidence
+        break
+      case 'driver':
+        comparison = a.driver.localeCompare(b.driver)
+        break
+      default:
+        comparison = 0
+    }
+    return sortDirection === 'asc' ? comparison : -comparison
+  })
 
   const totalTonnage = tickets.filter(t => t.status === 'verified' || t.status === 'ocr_complete').reduce((sum, ticket) => sum + ticket.netWeight, 0)
   const processedTickets = tickets.filter(t => t.status === 'verified' || t.status === 'ocr_complete').length
   const pendingTickets = tickets.filter(t => t.status === 'pending' || t.status === 'processing').length
   const mismatchTickets = tickets.filter(t => t.status === 'mismatch_alert').length
+  
+  // Date range filtering for enhanced analytics
+  const filteredTicketsByDate = tickets.filter(ticket => {
+    const ticketDate = new Date(ticket.date)
+    const startDate = new Date(dateRange.start)
+    const endDate = new Date(dateRange.end)
+    return ticketDate >= startDate && ticketDate <= endDate
+  })
+  
+  // Enhanced analytics calculations
+  const analytics = {
+    totalTonnage,
+    processedTickets,
+    pendingTickets,
+    mismatchTickets,
+    dailyTonnage: filteredTicketsByDate.reduce((sum, ticket) => sum + ticket.netWeight, 0),
+    weeklyTonnage: filteredTicketsByDate.reduce((sum, ticket) => sum + ticket.netWeight, 0),
+    monthlyTonnage: filteredTicketsByDate.reduce((sum, ticket) => sum + ticket.netWeight, 0),
+    averageProcessingTime: 2.3, // Mock data
+    ocrAccuracyRate: Math.round((processedTickets / tickets.length) * 100),
+    topCommodities: getTopCommodities(filteredTicketsByDate),
+    topDrivers: getTopDrivers(filteredTicketsByDate),
+    averageConfidence: getAverageConfidence(tickets)
+  }
+  
+  // Helper functions for analytics
+  function getTopCommodities(tickets: ScaleTicket[]) {
+    const commodityMap = new Map<string, {tons: number, count: number}>()
+    tickets.forEach(ticket => {
+      const existing = commodityMap.get(ticket.commodity) || {tons: 0, count: 0}
+      commodityMap.set(ticket.commodity, {
+        tons: existing.tons + ticket.netWeight,
+        count: existing.count + 1
+      })
+    })
+    return Array.from(commodityMap.entries())
+      .map(([name, data]) => ({name, ...data}))
+      .sort((a, b) => b.tons - a.tons)
+      .slice(0, 5)
+  }
+  
+  function getTopDrivers(tickets: ScaleTicket[]) {
+    const driverMap = new Map<string, {tickets: number, accuracy: number}>()
+    tickets.forEach(ticket => {
+      const existing = driverMap.get(ticket.driver) || {tickets: 0, accuracy: 0}
+      const accuracy = ticket.hasMismatch ? 85 : 95 // Mock accuracy
+      driverMap.set(ticket.driver, {
+        tickets: existing.tickets + 1,
+        accuracy: (existing.accuracy * existing.tickets + accuracy) / (existing.tickets + 1)
+      })
+    })
+    return Array.from(driverMap.entries())
+      .map(([driver, data]) => ({driver, ...data}))
+      .sort((a, b) => b.accuracy - a.accuracy)
+      .slice(0, 5)
+  }
+  
+  function getAverageConfidence(tickets: ScaleTicket[]) {
+    const confidenceValues = tickets
+      .filter(t => t.ocrData)
+      .map(t => Object.values(t.ocrData!)
+        .map(field => field.confidence)
+        .reduce((sum, conf) => sum + conf, 0) / Object.keys(t.ocrData!).length)
+    return confidenceValues.length > 0 
+      ? Math.round(confidenceValues.reduce((sum, conf) => sum + conf, 0) / confidenceValues.length)
+      : 0
+  }
 
   return (
     <div style={{
@@ -366,21 +486,30 @@ const ScaleTicketsPage = () => {
             onClick={() => setShowUploadModal(true)}
             style={{
               padding: '14px 28px',
-              background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
-              color: 'white',
-              borderRadius: '12px',
-              border: 'none',
+              background: 'transparent',
+              color: theme.colors.textSecondary,
+              borderRadius: '8px',
+              border: `1px solid ${theme.colors.border}`,
               fontSize: '15px',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              boxShadow: `0 4px 12px ${theme.colors.primary}40`,
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.backgroundCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+              e.currentTarget.style.borderColor = theme.colors.primary
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+              e.currentTarget.style.borderColor = theme.colors.border
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
           >
             <Upload size={18} />
             Upload Scale Ticket
@@ -425,9 +554,9 @@ const ScaleTicketsPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: `0 4px 16px ${theme.colors.primary}30`
+                boxShadow: 'none'
               }}>
-                <Scale size={26} color={theme.colors.primary} />
+                <Scale size={26} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
@@ -470,9 +599,9 @@ const ScaleTicketsPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: `0 4px 16px ${theme.colors.success}30`
+                boxShadow: 'none'
               }}>
-                <CheckCircle size={26} color={theme.colors.success} />
+                <CheckCircle size={26} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
@@ -515,9 +644,9 @@ const ScaleTicketsPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: `0 4px 16px ${theme.colors.warning}30`
+                boxShadow: 'none'
               }}>
-                <Clock size={26} color={theme.colors.warning} />
+                <Clock size={26} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
@@ -560,9 +689,9 @@ const ScaleTicketsPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: `0 4px 16px ${theme.colors.error}30`
+                boxShadow: 'none'
               }}>
-                <AlertTriangle size={26} color={theme.colors.error} />
+                <AlertTriangle size={26} color={theme.colors.textSecondary} />
               </div>
               <div>
                 <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
@@ -574,6 +703,441 @@ const ScaleTicketsPage = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Enhanced Analytics Row */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '20px',
+        marginBottom: '24px'
+      }}>
+        {/* OCR Accuracy Rate */}
+        <div style={{
+          background: theme.colors.backgroundCard,
+          borderRadius: '16px',
+          padding: '24px',
+          border: `1px solid ${theme.colors.border}`,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '100px',
+            height: '100px',
+            background: `${theme.colors.info}10`,
+            borderRadius: '0 16px 0 100px'
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                backgroundColor: `${theme.colors.info}20`,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'none'
+              }}>
+                <Eye size={26} color={theme.colors.textSecondary} />
+              </div>
+              <div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
+                  {analytics.ocrAccuracyRate}%
+                </p>
+                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: 0 }}>
+                  OCR Accuracy Rate
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Average Processing Time */}
+        <div style={{
+          background: theme.colors.backgroundCard,
+          borderRadius: '16px',
+          padding: '24px',
+          border: `1px solid ${theme.colors.border}`,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '100px',
+            height: '100px',
+            background: `${theme.colors.primary}10`,
+            borderRadius: '0 16px 0 100px'
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                backgroundColor: `${theme.colors.primary}20`,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'none'
+              }}>
+                <Clock size={26} color={theme.colors.textSecondary} />
+              </div>
+              <div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
+                  {analytics.averageProcessingTime}m
+                </p>
+                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: 0 }}>
+                  Avg Processing Time
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Average Confidence */}
+        <div style={{
+          background: theme.colors.backgroundCard,
+          borderRadius: '16px',
+          padding: '24px',
+          border: `1px solid ${theme.colors.border}`,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '100px',
+            height: '100px',
+            background: `${theme.colors.success}10`,
+            borderRadius: '0 16px 0 100px'
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                backgroundColor: `${theme.colors.success}20`,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'none'
+              }}>
+                <CheckCircle size={26} color={theme.colors.textSecondary} />
+              </div>
+              <div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
+                  {analytics.averageConfidence}%
+                </p>
+                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: 0 }}>
+                  Avg Confidence
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Commodity */}
+        <div style={{
+          background: theme.colors.backgroundCard,
+          borderRadius: '16px',
+          padding: '24px',
+          border: `1px solid ${theme.colors.border}`,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '100px',
+            height: '100px',
+            background: `${theme.colors.accent}10`,
+            borderRadius: '0 16px 0 100px'
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                backgroundColor: `${theme.colors.accent}20`,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: `0 4px 16px ${theme.colors.accent}30`
+              }}>
+                <FileText size={26} color={theme.colors.accent} />
+              </div>
+              <div>
+                <p style={{ fontSize: '20px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0', lineHeight: 1 }}>
+                  {analytics.topCommodities[0]?.name || 'N/A'}
+                </p>
+                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: 0 }}>
+                  Top Commodity
+                </p>
+                <p style={{ fontSize: '12px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                  {formatNumber(analytics.topCommodities[0]?.tons || 0, "0")} tons
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Advanced Search and Filter Section */}
+      <div style={{
+        background: theme.colors.backgroundCard,
+        borderRadius: '16px',
+        padding: '24px',
+        marginBottom: '24px',
+        border: `1px solid ${theme.colors.border}`,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          marginBottom: '20px'
+        }}>
+          {/* Search Bar */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: theme.colors.textPrimary,
+              marginBottom: '8px'
+            }}>
+              Search Tickets
+            </label>
+            <input
+              type="text"
+              placeholder="Search by ticket number, driver, location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: theme.colors.inputBg,
+                border: `2px solid ${theme.colors.inputBorder}`,
+                borderRadius: '10px',
+                fontSize: '14px',
+                color: theme.colors.textPrimary,
+                outline: 'none',
+                transition: 'border-color 0.2s ease'
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = theme.colors.primary}
+              onBlur={(e) => e.currentTarget.style.borderColor = theme.colors.inputBorder}
+            />
+          </div>
+
+          {/* Date Range Filter */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: theme.colors.textPrimary,
+              marginBottom: '8px'
+            }}>
+              Date Range
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: theme.colors.inputBg,
+                  border: `2px solid ${theme.colors.inputBorder}`,
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: theme.colors.inputBg,
+                  border: `2px solid ${theme.colors.inputBorder}`,
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Sort Options */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: theme.colors.textPrimary,
+              marginBottom: '8px'
+            }}>
+              Sort By
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: theme.colors.inputBg,
+                  border: `2px solid ${theme.colors.inputBorder}`,
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              >
+                <option value="date">Date</option>
+                <option value="weight">Weight</option>
+                <option value="status">Status</option>
+                <option value="confidence">Confidence</option>
+                <option value="driver">Driver</option>
+              </select>
+              <button
+                onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                style={{
+                  padding: '12px',
+                  background: theme.colors.backgroundHover,
+                  border: `2px solid ${theme.colors.inputBorder}`,
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
+              >
+                <ArrowUpDown size={16} color={theme.colors.textSecondary} />
+              </button>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          <div style={{ display: 'flex', alignItems: 'end' }}>
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setDateRange({
+                  start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                  end: new Date().toISOString().split('T')[0]
+                })
+                setSortBy('date')
+                setSortDirection('desc')
+                setFilterStatus('all')
+              }}
+              style={{
+                padding: '12px 20px',
+                background: 'transparent',
+                border: `2px solid ${theme.colors.border}`,
+                borderRadius: '10px',
+                color: theme.colors.textSecondary,
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = theme.colors.error
+                e.currentTarget.style.color = theme.colors.error
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = theme.colors.border
+                e.currentTarget.style.color = theme.colors.textSecondary
+              }}
+            >
+              <X size={16} />
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Filter Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          flexWrap: 'wrap',
+          marginBottom: '16px'
+        }}>
+          {[
+            { label: 'Today', action: () => {
+              const today = new Date().toISOString().split('T')[0]
+              setDateRange({ start: today, end: today })
+            }},
+            { label: 'This Week', action: () => {
+              const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+              const today = new Date().toISOString().split('T')[0]
+              setDateRange({ start: weekStart, end: today })
+            }},
+            { label: 'This Month', action: () => {
+              const monthStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+              const today = new Date().toISOString().split('T')[0]
+              setDateRange({ start: monthStart, end: today })
+            }},
+            { label: 'High Confidence', action: () => setFilterStatus('verified') },
+            { label: 'Heavy Loads (>30t)', action: () => setFilterStatus('all') },
+            { label: 'Light Loads (<15t)', action: () => setFilterStatus('all') }
+          ].map((filter, index) => (
+            <button
+              key={index}
+              onClick={filter.action}
+              style={{
+                padding: '8px 16px',
+                background: theme.colors.backgroundHover,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                color: theme.colors.textSecondary,
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (filterStatus !== filter.value) {
+                  e.currentTarget.style.background = '#343a40'
+                  e.currentTarget.style.color = 'white'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (filterStatus !== filter.value) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = theme.colors.textSecondary
+                }
+              }}
+            >
+              {filter.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -600,10 +1164,10 @@ const ScaleTicketsPage = () => {
             onClick={() => setFilterStatus(filter.value)}
             style={{
               padding: '10px 18px',
-              backgroundColor: filterStatus === filter.value ? theme.colors.primary : 'transparent',
-              color: filterStatus === filter.value ? 'white' : theme.colors.textSecondary,
+              backgroundColor: 'transparent',
+              color: filterStatus === filter.value ? theme.colors.textPrimary : theme.colors.textSecondary,
               borderRadius: '8px',
-              border: 'none',
+              border: filterStatus === filter.value ? `1px solid ${theme.colors.border}` : '1px solid transparent',
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
@@ -614,12 +1178,20 @@ const ScaleTicketsPage = () => {
             }}
             onMouseEnter={(e) => {
               if (filterStatus !== filter.value) {
-                e.currentTarget.style.backgroundColor = theme.colors.backgroundHover
+                e.currentTarget.style.backgroundColor = theme.colors.backgroundCardHover
+                e.currentTarget.style.color = theme.colors.textPrimary
+                e.currentTarget.style.borderColor = theme.colors.border
+              } else {
+                e.currentTarget.style.borderColor = theme.colors.primary
               }
             }}
             onMouseLeave={(e) => {
               if (filterStatus !== filter.value) {
                 e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = theme.colors.textSecondary
+                e.currentTarget.style.borderColor = 'transparent'
+              } else {
+                e.currentTarget.style.borderColor = theme.colors.border
               }
             }}
           >
@@ -648,18 +1220,180 @@ const ScaleTicketsPage = () => {
         border: `1px solid ${theme.colors.border}`,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
       }}>
-        <h2 style={{
-          fontSize: '22px',
-          fontWeight: '700',
-          color: theme.colors.textPrimary,
-          margin: '0 0 24px 0',
+        <div style={{
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '10px'
+          marginBottom: '24px'
         }}>
-          <FileText size={22} color={theme.colors.primary} />
-          Scale Tickets
-        </h2>
+          <h2 style={{
+            fontSize: '22px',
+            fontWeight: '700',
+            color: theme.colors.textPrimary,
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <FileText size={22} color={theme.colors.textSecondary} />
+            Scale Tickets ({filteredTickets.length})
+          </h2>
+          
+          {/* Bulk Actions */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            {selectedVehicles.length > 0 && (
+              <>
+                <span style={{
+                  fontSize: '14px',
+                  color: theme.colors.textSecondary,
+                  fontWeight: '600'
+                }}>
+                  {selectedVehicles.length} selected
+                </span>
+                <button
+                  onClick={() => {
+                    // Bulk verify selected tickets
+                    setTickets(prev => prev.map(ticket => 
+                      selectedVehicles.includes(ticket.id) 
+                        ? { ...ticket, status: 'verified' as const }
+                        : ticket
+                    ))
+                    setSelectedVehicles([])
+                  }}
+                  style={{
+                    padding: '10px 16px',
+                    background: '#343a40',
+                    color: 'white',
+                    border: '1px solid #495057',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <CheckCircle size={16} />
+                  Verify Selected
+                </button>
+                <button
+                  onClick={() => {
+                    // Bulk export selected tickets
+                    const selectedTickets = tickets.filter(t => selectedVehicles.includes(t.id))
+                    const csvContent = [
+                      'Ticket Number,Date,Driver,Location,Commodity,Gross Weight,Tare Weight,Net Weight,Status',
+                      ...selectedTickets.map(t => 
+                        `${t.ticketNumber},${t.date},${t.driver},${t.location},${t.commodity},${t.grossWeight},${t.tareWeight},${t.netWeight},${t.status}`
+                      )
+                    ].join('\n')
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv' })
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `scale-tickets-${new Date().toISOString().split('T')[0]}.csv`
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                  }}
+                  style={{
+                    padding: '10px 16px',
+                    background: '#343a40',
+                    color: 'white',
+                    border: '1px solid #495057',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <FileText size={16} />
+                  Export CSV
+                </button>
+                <button
+                  onClick={() => setSelectedVehicles([])}
+                  style={{
+                    padding: '10px 16px',
+                    background: 'transparent',
+                    color: theme.colors.error,
+                    border: `2px solid ${theme.colors.error}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#495057'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#343a40'
+                  }}
+                >
+                  <X size={16} />
+                  Clear
+                </button>
+              </>
+            )}
+            
+            {/* Select All / Deselect All */}
+            <button
+              onClick={() => {
+                if (selectedVehicles.length === filteredTickets.length) {
+                  setSelectedVehicles([])
+                } else {
+                  setSelectedVehicles(filteredTickets.map(t => t.id))
+                }
+              }}
+              style={{
+                padding: '10px 16px',
+                background: 'transparent',
+                color: theme.colors.textSecondary,
+                border: `2px solid ${theme.colors.border}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = theme.colors.primary
+                e.currentTarget.style.color = theme.colors.primary
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = theme.colors.border
+                e.currentTarget.style.color = theme.colors.textSecondary
+              }}
+            >
+              {selectedVehicles.length === filteredTickets.length ? (
+                <>
+                  <Square size={16} />
+                  Deselect All
+                </>
+              ) : (
+                <>
+                  <CheckSquare size={16} />
+                  Select All
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredTickets.length === 0 ? (
@@ -702,6 +1436,25 @@ const ScaleTicketsPage = () => {
                     onClick={() => ticket.status !== 'processing' && toggleExpand(ticket.id)}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+                      {/* Bulk Selection Checkbox */}
+                      <input
+                        type="checkbox"
+                        checked={selectedVehicles.includes(ticket.id)}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          if (selectedVehicles.includes(ticket.id)) {
+                            setSelectedVehicles(prev => prev.filter(id => id !== ticket.id))
+                          } else {
+                            setSelectedVehicles(prev => [...prev, ticket.id])
+                          }
+                        }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          cursor: 'pointer',
+                          accentColor: theme.colors.primary
+                        }}
+                      />
                       <div style={{
                         width: '56px',
                         height: '56px',
@@ -870,9 +1623,9 @@ const ScaleTicketsPage = () => {
                             onClick={() => verifyTicket(ticket.id)}
                             style={{
                               padding: '10px 20px',
-                              background: `linear-gradient(135deg, ${theme.colors.success} 0%, ${theme.colors.success}dd 100%)`,
-                              color: 'white',
-                              border: 'none',
+                              background: 'transparent',
+                              color: theme.colors.textSecondary,
+                              border: `1px solid ${theme.colors.border}`,
                               borderRadius: '8px',
                               fontSize: '14px',
                               fontWeight: '600',
@@ -880,11 +1633,20 @@ const ScaleTicketsPage = () => {
                               display: 'flex',
                               alignItems: 'center',
                               gap: '8px',
-                              transition: 'all 0.2s ease',
-                              boxShadow: `0 4px 12px ${theme.colors.success}40`
+                              transition: 'all 0.2s ease'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = theme.colors.backgroundCardHover
+                              e.currentTarget.style.color = theme.colors.textPrimary
+                              e.currentTarget.style.borderColor = theme.colors.primary
+                              e.currentTarget.style.transform = 'translateY(-1px)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent'
+                              e.currentTarget.style.color = theme.colors.textSecondary
+                              e.currentTarget.style.borderColor = theme.colors.border
+                              e.currentTarget.style.transform = 'translateY(0)'
+                            }}
                           >
                             <Check size={16} />
                             Verify & Accept
@@ -894,9 +1656,9 @@ const ScaleTicketsPage = () => {
                           onClick={() => deleteTicket(ticket.id)}
                           style={{
                             padding: '10px 20px',
-                            backgroundColor: `${theme.colors.error}20`,
-                            color: theme.colors.error,
-                            border: `1px solid ${theme.colors.error}`,
+                            backgroundColor: 'transparent',
+                            color: theme.colors.textSecondary,
+                            border: `1px solid ${theme.colors.border}`,
                             borderRadius: '8px',
                             fontSize: '14px',
                             fontWeight: '600',
@@ -906,8 +1668,18 @@ const ScaleTicketsPage = () => {
                             gap: '8px',
                             transition: 'all 0.2s ease'
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = theme.colors.backgroundCardHover
+                            e.currentTarget.style.color = theme.colors.textPrimary
+                            e.currentTarget.style.borderColor = theme.colors.primary
+                            e.currentTarget.style.transform = 'translateY(-1px)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = theme.colors.textSecondary
+                            e.currentTarget.style.borderColor = theme.colors.border
+                            e.currentTarget.style.transform = 'translateY(0)'
+                          }}
                         >
                           <Trash2 size={16} />
                           Delete
@@ -1043,6 +1815,259 @@ const ScaleTicketsPage = () => {
               </button>
             </div>
 
+            {/* Mobile Integration Section */}
+            <div style={{
+              background: theme.colors.background,
+              borderRadius: '12px',
+              padding: '20px',
+              border: `1px solid ${theme.colors.border}`,
+              marginBottom: '24px'
+            }}>
+              <h3 style={{
+                color: theme.colors.textPrimary,
+                fontSize: '18px',
+                fontWeight: '600',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <Camera size={20} color={theme.colors.textSecondary} />
+                Mobile App Integration
+              </h3>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '16px'
+              }}>
+                {/* Mobile Camera Capture */}
+                <div style={{
+                  background: theme.colors.backgroundCard,
+                  borderRadius: '10px',
+                  padding: '16px',
+                  border: `1px solid ${theme.colors.border}`
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      background: `${theme.colors.primary}20`,
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Camera size={20} color={theme.colors.textSecondary} />
+                    </div>
+                    <div>
+                      <p style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: theme.colors.textPrimary,
+                        margin: 0
+                      }}>
+                        Camera Capture
+                      </p>
+                      <p style={{
+                        fontSize: '12px',
+                        color: theme.colors.textSecondary,
+                        margin: 0
+                      }}>
+                        Direct photo from mobile app
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Simulate mobile camera capture
+                      alert('Mobile camera capture would be triggered here. In a real app, this would open the mobile camera interface.')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: theme.colors.primary,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = theme.colors.accent}
+                    onMouseLeave={(e) => e.currentTarget.style.background = theme.colors.primary}
+                  >
+                    📱 Open Mobile Camera
+                  </button>
+                </div>
+
+                {/* GPS Location Tagging */}
+                <div style={{
+                  background: theme.colors.backgroundCard,
+                  borderRadius: '10px',
+                  padding: '16px',
+                  border: `1px solid ${theme.colors.border}`
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      background: `${theme.colors.success}20`,
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <MapPin size={20} color={theme.colors.textSecondary} />
+                    </div>
+                    <div>
+                      <p style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: theme.colors.textPrimary,
+                        margin: 0
+                      }}>
+                        GPS Location
+                      </p>
+                      <p style={{
+                        fontSize: '12px',
+                        color: theme.colors.textSecondary,
+                        margin: 0
+                      }}>
+                        Auto-tag with location
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Simulate GPS location capture
+                      const mockLocation = {
+                        latitude: 32.7767 + (Math.random() - 0.5) * 0.1,
+                        longitude: -96.7970 + (Math.random() - 0.5) * 0.1,
+                        address: 'Dallas, TX'
+                      }
+                      alert(`GPS Location captured:\nLat: ${mockLocation.latitude.toFixed(4)}\nLng: ${mockLocation.longitude.toFixed(4)}\nAddress: ${mockLocation.address}`)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: theme.colors.success,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = theme.colors.warning}
+                    onMouseLeave={(e) => e.currentTarget.style.background = theme.colors.success}
+                  >
+                    📍 Capture Location
+                  </button>
+                </div>
+
+                {/* Driver Auto-Assignment */}
+                <div style={{
+                  background: theme.colors.backgroundCard,
+                  borderRadius: '10px',
+                  padding: '16px',
+                  border: `1px solid ${theme.colors.border}`
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      background: `${theme.colors.info}20`,
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <User size={20} color={theme.colors.textSecondary} />
+                    </div>
+                    <div>
+                      <p style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: theme.colors.textPrimary,
+                        margin: 0
+                      }}>
+                        Auto-Assignment
+                      </p>
+                      <p style={{
+                        fontSize: '12px',
+                        color: theme.colors.textSecondary,
+                        margin: 0
+                      }}>
+                        Assign based on GPS
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Simulate driver auto-assignment
+                      const mockDrivers = ['John Smith', 'Sarah Johnson', 'Mike Rodriguez', 'David Chen']
+                      const assignedDriver = mockDrivers[Math.floor(Math.random() * mockDrivers.length)]
+                      alert(`Driver auto-assigned based on GPS location:\n${assignedDriver}`)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: theme.colors.info,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = theme.colors.accent}
+                    onMouseLeave={(e) => e.currentTarget.style.background = theme.colors.info}
+                  >
+                    👤 Auto-Assign Driver
+                  </button>
+                </div>
+              </div>
+
+              <div style={{
+                marginTop: '16px',
+                padding: '12px',
+                background: `${theme.colors.primary}10`,
+                borderRadius: '8px',
+                border: `1px solid ${theme.colors.primary}30`
+              }}>
+                <p style={{
+                  fontSize: '13px',
+                  color: theme.colors.textSecondary,
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{ fontSize: '16px' }}>📱</span>
+                  <strong>Mobile App Ready:</strong> These features will be fully integrated when the mobile driver app is deployed. Drivers can capture scale tickets directly from their mobile device with automatic GPS tagging and driver assignment.
+                </p>
+              </div>
+            </div>
+
             <div style={{
               background: `${theme.colors.info}15`,
               border: `1px solid ${theme.colors.info}40`,
@@ -1051,7 +2076,7 @@ const ScaleTicketsPage = () => {
               display: 'flex',
               gap: '12px'
             }}>
-              <AlertCircle size={20} color={theme.colors.info} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <AlertCircle size={20} color={theme.colors.textSecondary} style={{ flexShrink: 0, marginTop: '2px' }} />
               <div>
                 <p style={{ color: theme.colors.textPrimary, fontSize: '14px', fontWeight: '600', margin: '0 0 6px 0' }}>
                   Automated Processing
@@ -1138,7 +2163,7 @@ const ScaleTicketsPage = () => {
                 gap: '12px',
                 alignItems: 'flex-start'
               }}>
-                <AlertTriangle size={24} color={theme.colors.error} style={{ flexShrink: 0 }} />
+                <AlertTriangle size={24} color={theme.colors.textSecondary} style={{ flexShrink: 0 }} />
                 <div>
                   <h4 style={{ color: theme.colors.error, fontSize: '16px', fontWeight: '700', margin: '0 0 8px 0' }}>
                     Weight Mismatch Detected

@@ -1,0 +1,28 @@
+{
+  "name": "Unit 2 – Duplicate audit reports",
+  "description": "Redundant audit documentation files",
+  "includeGlobs": [
+    "**/*AUDIT*.md",
+    "**/*audit*.md",
+    "**/*SUMMARY*.md",
+    "**/*summary*.md"
+  ],
+  "excludeGlobs": [
+    "audit/90_safety_matrix.md",
+    "audit/00_summary.md",
+    "audit/70_obsolete_candidates.md",
+    "backups/**",
+    "archive/**",
+    ".git/**",
+    "node_modules/**",
+    "web/node_modules/**",
+    "tools/**"
+  ],
+  "maxFiles": 15,
+  "dryRun": false,
+  "riskLevel": "zero",
+  "fileTypes": ["documentation"],
+  "expectedReferences": 0
+}
+
+

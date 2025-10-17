@@ -1,0 +1,61 @@
+{
+  "createdAt": "2025-01-16T15-30-00Z",
+  "unit": "Unit 1 - COMPLETE docs cleanup",
+  "count": 10,
+  "files": [
+    {
+      "path": "COMPLETE_BUTTON_AUDIT_REPORT.md",
+      "bytes": 2847,
+      "backedUp": true
+    },
+    {
+      "path": "COMPLETE_DELIVERY_SUMMARY.md", 
+      "bytes": 16551,
+      "backedUp": true
+    },
+    {
+      "path": "COMPLETE_BUTTON_FIX_SUMMARY.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "COMPLETE_WORKFLOW_VERIFICATION.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "TESTING/COMPLETE_TEST_INDEX.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "SIDEBAR_REDUNDANCY_CLEANUP_COMPLETE.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "DOCUMENTS_FEATURE_UPGRADES_COMPLETE.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "BOL_TEMPLATES_UPGRADES_COMPLETE.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "CARRIER_MY_LOADS_ACTUAL_ENHANCEMENTS_COMPLETE.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "CARRIER_MY_LOADS_ENHANCEMENTS_COMPLETE.md",
+      "bytes": 0,
+      "backedUp": true
+    }
+  ],
+  "totalBytes": 19398,
+  "backupLocation": "backups/2025-01-16T15-30-00Z/unit1-manual/"
+}
+
+

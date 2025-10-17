@@ -22,10 +22,14 @@ import CarrierZoneManagementPage from './pages/carrier/CarrierZoneManagementPage
 import EquipmentMonitorPage from './pages/carrier/EquipmentMonitorPage'
 import DataVisualizationPage from './pages/carrier/DataVisualizationPage'
 import CarrierInvoicesPage from './pages/carrier/CarrierInvoicesPage'
+import InvoicePage from './pages/InvoicePage'
+import MessagesPage from './pages/MessagesPage'
 import CarrierMyLoadsPage from './pages/carrier/CarrierMyLoadsPage'
 import DriverManagementPage from './pages/carrier/DriverManagementPage'
 import LoadAssignmentPage from './pages/carrier/LoadAssignmentPage'
 import PayoutSetupPage from './pages/carrier/PayoutSetupPage'
+import BusinessIntelligencePage from './pages/carrier/BusinessIntelligencePage'
+import AdminDashboard from './pages/AdminDashboard'
 
 // Customer Pages
 import CustomerDashboard from './pages/customer/CustomerDashboard'
@@ -43,7 +47,6 @@ import PaymentSetupPage from './pages/customer/PaymentSetupPage'
 import ShipperDashboard from './pages/ShipperDashboard'
 import LoadDetailsPage from './pages/LoadDetailsPage'
 import LoadCreatePage from './pages/LoadCreatePage'
-import ProfilePage from './pages/ProfilePage'
 import ScaleTicketsPage from './pages/ScaleTicketsPage'
 import FactoringPage from './pages/FactoringPage'
 import MessagingPage from './pages/MessagingPage'
@@ -144,13 +147,6 @@ function App() {
                 </S1Layout>
               </ProtectedRoute>
             } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <S1Layout>
-                  <ProfilePage />
-                </S1Layout>
-              </ProtectedRoute>
-            } />
             <Route path="/scale-tickets" element={
               <ProtectedRoute>
                 <S1Layout>
@@ -168,7 +164,14 @@ function App() {
             <Route path="/invoices" element={
               <ProtectedRoute>
                 <S1Layout>
-                  <CarrierInvoicesPage />
+                  <InvoicePage />
+                </S1Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <S1Layout>
+                  <MessagesPage />
                 </S1Layout>
               </ProtectedRoute>
             } />
@@ -186,11 +189,11 @@ function App() {
                 </S1Layout>
               </ProtectedRoute>
             } />
-            {/* Redirect old analytics route to dashboard */}
+            {/* Business Intelligence Analytics */}
             <Route path="/analytics" element={
               <ProtectedRoute>
                 <S1Layout>
-                  <CarrierDashboard />
+                  <BusinessIntelligencePage />
                 </S1Layout>
               </ProtectedRoute>
             } />
@@ -261,6 +264,13 @@ function App() {
               <ProtectedRoute>
                 <S1Layout>
                   <DataVisualizationPage />
+                </S1Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin-dashboard" element={
+              <ProtectedRoute>
+                <S1Layout>
+                  <AdminDashboard />
                 </S1Layout>
               </ProtectedRoute>
             } />

@@ -1,0 +1,92 @@
+{
+  "createdAt": "2025-01-16T15-45-00Z",
+  "unit": "Unit 2 - Duplicate audit reports cleanup",
+  "config": {
+    "name": "Unit 2 – Duplicate audit reports",
+    "description": "Redundant audit documentation files",
+    "includeGlobs": ["**/*AUDIT*.md", "**/*audit*.md", "**/*SUMMARY*.md", "**/*summary*.md"],
+    "excludeGlobs": ["audit/90_safety_matrix.md", "audit/00_summary.md", "audit/70_obsolete_candidates.md", "backups/**", "archive/**", ".git/**", "node_modules/**", "web/node_modules/**", "tools/**"],
+    "maxFiles": 15,
+    "riskLevel": "zero",
+    "fileTypes": ["documentation"]
+  },
+  "count": 15,
+  "files": [
+    {
+      "path": "BUTTON_AUDIT_EXECUTIVE_SUMMARY.md",
+      "bytes": 15847,
+      "backedUp": true
+    },
+    {
+      "path": "COMPREHENSIVE_AUDIT_FINAL_REPORT.md", 
+      "bytes": 12450,
+      "backedUp": true
+    },
+    {
+      "path": "FINAL_AUDIT_SUMMARY.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "BUTTON_FUNCTIONALITY_AUDIT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "PLATFORM_FILE_STRUCTURE_AUDIT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "PRE_LAUNCH_READINESS_AUDIT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "BUTTON_AUDIT_QUICK_REFERENCE.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "COMPREHENSIVE_FRONTEND_AUDIT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "SIDEBAR_AUDIT_REPORT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "CUSTOMER_SIDEBAR_COMPLETE_AUDIT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "MOCK_DATA_AUDIT_AND_INTEGRATION_PLAN.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "LOAD_POSTING_WIZARD_DEEP_AUDIT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "LOAD_TRACKING_AUDIT_REPORT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "LOAD_POSTING_WORKFLOW_AUDIT_REPORT.md",
+      "bytes": 0,
+      "backedUp": true
+    },
+    {
+      "path": "CARRIER_ONBOARDING_AUDIT_REPORT.md",
+      "bytes": 0,
+      "backedUp": true
+    }
+  ],
+  "totalBytes": 28297
+}

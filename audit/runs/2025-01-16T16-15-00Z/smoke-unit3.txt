@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-10-17T02:03:15.012Z",
+  "baseUrl": "http://localhost:3000",
+  "summary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "successRate": 100
+  },
+  "results": [
+    {
+      "name": "Server Boot Test",
+      "status": "PASSED",
+      "message": "Server is running and responding",
+      "timestamp": "2025-10-17T02:03:14.942Z",
+      "duration": 40
+    },
+    {
+      "name": "Health Endpoint Test",
+      "status": "PASSED",
+      "message": "Status 200 as expected",
+      "timestamp": "2025-10-17T02:03:14.984Z",
+      "duration": 3,
+      "statusCode": 200,
+      "responseTime": "unknown"
+    },
+    {
+      "name": "Root Endpoint Test",
+      "status": "PASSED",
+      "message": "Status 200 as expected",
+      "timestamp": "2025-10-17T02:03:14.987Z",
+      "duration": 9,
+      "statusCode": 200,
+      "responseTime": "unknown"
+    },
+    {
+      "name": "Metrics Endpoint Test",
+      "status": "PASSED",
+      "message": "Status 200 as expected",
+      "timestamp": "2025-10-17T02:03:14.996Z",
+      "duration": 3,
+      "statusCode": 200,
+      "responseTime": "unknown"
+    },
+    {
+      "name": "Customer My Loads Test",
+      "status": "PASSED",
+      "message": "Status 401 as expected",
+      "timestamp": "2025-10-17T02:03:14.999Z",
+      "duration": 6,
+      "statusCode": 401,
+      "responseTime": "unknown"
+    },
+    {
+      "name": "Marketplace Loads Test",
+      "status": "PASSED",
+      "message": "Status 401 as expected",
+      "timestamp": "2025-10-17T02:03:15.005Z",
+      "duration": 2,
+      "statusCode": 401,
+      "responseTime": "unknown"
+    },
+    {
+      "name": "Marketplace Bid Test",
+      "status": "PASSED",
+      "message": "Status 401 as expected",
+      "timestamp": "2025-10-17T02:03:15.007Z",
+      "duration": 4,
+      "statusCode": 401,
+      "responseTime": "unknown"
+    }
+  ]
+}

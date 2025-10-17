@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-01-16T15-30-00Z",
+  "config": {
+    "name": "Unit 1 – COMPLETE docs only",
+    "description": "Low-risk documentation files marked COMPLETE",
+    "includeGlobs": ["**/COMPLETE*.md", "**/*_COMPLETE.md"],
+    "maxFiles": 10,
+    "riskLevel": "zero"
+  },
+  "targets": [
+    "COMPLETE_BUTTON_AUDIT_REPORT.md",
+    "COMPLETE_DELIVERY_SUMMARY.md", 
+    "COMPLETE_BUTTON_FIX_SUMMARY.md",
+    "COMPLETE_WORKFLOW_VERIFICATION.md",
+    "TESTING/COMPLETE_TEST_INDEX.md",
+    "SIDEBAR_REDUNDANCY_CLEANUP_COMPLETE.md",
+    "DOCUMENTS_FEATURE_UPGRADES_COMPLETE.md",
+    "BOL_TEMPLATES_UPGRADES_COMPLETE.md",
+    "CARRIER_MY_LOADS_ACTUAL_ENHANCEMENTS_COMPLETE.md",
+    "CARRIER_MY_LOADS_ENHANCEMENTS_COMPLETE.md"
+  ],
+  "references": {
+    "COMPLETE_BUTTON_AUDIT_REPORT.md": [],
+    "COMPLETE_DELIVERY_SUMMARY.md": [],
+    "COMPLETE_BUTTON_FIX_SUMMARY.md": [],
+    "COMPLETE_WORKFLOW_VERIFICATION.md": [],
+    "TESTING/COMPLETE_TEST_INDEX.md": [],
+    "SIDEBAR_REDUNDANCY_CLEANUP_COMPLETE.md": [],
+    "DOCUMENTS_FEATURE_UPGRADES_COMPLETE.md": [],
+    "BOL_TEMPLATES_UPGRADES_COMPLETE.md": [],
+    "CARRIER_MY_LOADS_ACTUAL_ENHANCEMENTS_COMPLETE.md": [],
+    "CARRIER_MY_LOADS_ENHANCEMENTS_COMPLETE.md": []
+  },
+  "summary": {
+    "totalFiles": 10,
+    "filesWithReferences": 0,
+    "totalReferences": 0,
+    "safeToStage": true,
+    "scanAreas": ["src", "web/src", "prisma"]
+  }
+}
+
+

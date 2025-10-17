@@ -10,7 +10,10 @@
  */
 export const formatNumber = (value: number | undefined | null, fallback: string = '0'): string => {
   if (typeof value === 'number' && !isNaN(value)) {
-    return value.toLocaleString();
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   }
   return fallback;
 };
@@ -103,3 +106,115 @@ export const formatCompactCurrency = (
   }
   return fallback;
 };
+
+/**
+ * Formats a date into a human-readable string.
+ * Accepts Date objects or ISO date strings.
+ */
+export function formatDate(input: Date | string, locale: string = "en-US"): string {
+  try {
+    const date = typeof input === "string" ? new Date(input) : input;
+
+    if (isNaN(date.getTime())) {
+      return ""; // fallback for invalid dates
+    }
+
+    return new Intl.DateTimeFormat(locale, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Formats a time string (HH:mm) into a readable format.
+ * @param timeString - Time string in HH:mm format
+ * @param fallback - Fallback value if time is invalid (default: '')
+ * @returns Formatted time string
+ */
+export function formatTime(timeString: string | undefined | null, fallback: string = ''): string {
+  if (!timeString) return fallback;
+  
+  try {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    
+    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      return fallback;
+    }
+    
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).format(date);
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Formats a date and time into a human-readable string.
+ * Accepts Date objects or ISO date strings.
+ */
+export function formatDateTime(input: Date | string, locale: string = "en-US"): string {
+  try {
+    const date = typeof input === "string" ? new Date(input) : input;
+
+    if (isNaN(date.getTime())) {
+      return ""; // fallback for invalid dates
+    }
+
+    return new Intl.DateTimeFormat(locale, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    }).format(date);
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Formats a relative time (e.g., "2 hours ago", "in 3 days").
+ * @param input - Date object or ISO date string
+ * @param locale - Locale string (default: "en-US")
+ * @returns Relative time string
+ */
+export function formatRelativeTime(input: Date | string, locale: string = "en-US"): string {
+  try {
+    const date = typeof input === "string" ? new Date(input) : input;
+    const now = new Date();
+
+    if (isNaN(date.getTime())) {
+      return "";
+    }
+
+    const diffInSeconds = Math.floor((date.getTime() - now.getTime()) / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+    if (Math.abs(diffInDays) >= 1) {
+      return rtf.format(diffInDays, 'day');
+    } else if (Math.abs(diffInHours) >= 1) {
+      return rtf.format(diffInHours, 'hour');
+    } else if (Math.abs(diffInMinutes) >= 1) {
+      return rtf.format(diffInMinutes, 'minute');
+    } else {
+      return rtf.format(diffInSeconds, 'second');
+    }
+  } catch {
+    return "";
+  }
+}

@@ -329,73 +329,76 @@ const CustomerDashboard = () => {
         gap: '20px',
         marginBottom: '32px'
       }}>
-        <Card padding="20px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <Card padding="24px">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '56px',
+              height: '56px',
               background: `${theme.colors.primary}20`,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Package size={24} color={theme.colors.primary} />
+              <Package size={28} color={theme.colors.primary} />
             </div>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: theme.colors.textSecondary }}>ACTIVE LOADS</span>
-          </div>
-          <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0' }}>
+            <div>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {stats.activeLoads}
               </p>
-          <p style={{ fontSize: '12px', color: theme.colors.textTertiary }}>
-            {stats.postedLoads} posted • {stats.inTransitLoads} in transit
+              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                Active Loads
               </p>
+            </div>
+          </div>
         </Card>
 
-        <Card padding="20px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <Card padding="24px">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '56px',
+              height: '56px',
               background: `${theme.colors.success}20`,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <CheckCircle size={24} color={theme.colors.success} />
+              <CheckCircle size={28} color={theme.colors.success} />
             </div>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: theme.colors.textSecondary }}>COMPLETED</span>
-          </div>
-          <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0' }}>
+            <div>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {stats.completedThisMonth}
               </p>
-          <p style={{ fontSize: '12px', color: theme.colors.textTertiary }}>
-            This month • {stats.deliveredToday} today
-          </p>
+              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                Completed This Month
+              </p>
+            </div>
+          </div>
         </Card>
 
-        <Card padding="20px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <Card padding="24px">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '56px',
+              height: '56px',
               background: `${theme.colors.warning}20`,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <DollarSign size={24} color={theme.colors.warning} />
+              <DollarSign size={28} color={theme.colors.warning} />
             </div>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: theme.colors.textSecondary }}>MONTH SPEND</span>
+            <div>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                {formatCompactCurrency(stats?.totalSpend)}
+              </p>
+              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                Month Spend
+              </p>
+            </div>
           </div>
-          <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: '0 0 4px 0' }}>
-            {formatCompactCurrency(stats?.totalSpend)}
-          </p>
-          <p style={{ fontSize: '12px', color: theme.colors.textTertiary }}>
-            {formatCompactCurrency(stats?.spendToday)} today • {formatCompactCurrency(stats?.spendThisWeek)} this week
-          </p>
         </Card>
 
         <Card padding="20px">

@@ -95,11 +95,11 @@ const DriversPage = () => {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      active: theme.colors.success,
-      driving: theme.colors.info,
-      on_break: theme.colors.warning,
+      active: theme.colors.textSecondary,
+      driving: theme.colors.success, // Keep driving green as it's meaningful
+      on_break: theme.colors.textSecondary,
       off_duty: theme.colors.textSecondary,
-      inactive: theme.colors.error
+      inactive: theme.colors.textSecondary
     }
     return colors[status] || theme.colors.textSecondary
   }
@@ -124,21 +124,26 @@ const DriversPage = () => {
       onClick={() => alert('Add new driver')}
       style={{
         padding: '14px 28px',
-        background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
-        color: 'white',
+        background: theme.colors.backgroundCard,
+        color: theme.colors.textPrimary,
         borderRadius: '12px',
-        border: 'none',
+        border: `1px solid ${theme.colors.border}`,
         fontSize: '15px',
         fontWeight: '600',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        boxShadow: `0 4px 12px ${theme.colors.primary}40`,
         display: 'flex',
         alignItems: 'center',
         gap: '8px'
       }}
-      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = theme.colors.backgroundCardHover
+        e.currentTarget.style.transform = 'translateY(-2px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = theme.colors.backgroundCard
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
     >
       <Plus size={18} />
       Add Driver
@@ -164,13 +169,13 @@ const DriversPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.primary}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Users size={28} color={theme.colors.primary} />
+              <Users size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -188,13 +193,13 @@ const DriversPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.success}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <UserCheck size={28} color={theme.colors.success} />
+              <UserCheck size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -212,13 +217,13 @@ const DriversPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.info}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Clock size={28} color={theme.colors.info} />
+              <Clock size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -236,13 +241,13 @@ const DriversPage = () => {
             <div style={{
               width: '56px',
               height: '56px',
-              background: `${theme.colors.warning}20`,
+              background: theme.colors.backgroundTertiary,
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Star size={28} color={theme.colors.warning} />
+              <Star size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
               <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
@@ -284,7 +289,7 @@ const DriversPage = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             style={{
               padding: '12px 16px',
-              backgroundColor: theme.colors.backgroundCard,
+              backgroundColor: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard,
               color: theme.colors.textPrimary,
               border: `1px solid ${theme.colors.border}`,
               borderRadius: '10px',
@@ -294,18 +299,18 @@ const DriversPage = () => {
               minWidth: '180px'
             }}
           >
-            <option value="all" style={{ backgroundColor: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>All Status</option>
-            <option value="active" style={{ backgroundColor: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Active</option>
-            <option value="driving" style={{ backgroundColor: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Driving</option>
-            <option value="on_break" style={{ backgroundColor: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>On Break</option>
-            <option value="off_duty" style={{ backgroundColor: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Off Duty</option>
-            <option value="inactive" style={{ backgroundColor: theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Inactive</option>
+            <option value="all" style={{ backgroundColor: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>All Status</option>
+            <option value="active" style={{ backgroundColor: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Active</option>
+            <option value="driving" style={{ backgroundColor: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Driving</option>
+            <option value="on_break" style={{ backgroundColor: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>On Break</option>
+            <option value="off_duty" style={{ backgroundColor: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Off Duty</option>
+            <option value="inactive" style={{ backgroundColor: theme.name === 'dark' ? '#1e293b' : theme.colors.backgroundCard, color: theme.colors.textPrimary }}>Inactive</option>
           </select>
         </div>
       </Card>
 
       {/* Drivers List */}
-      <Card title="Drivers" icon={<Users size={20} color={theme.colors.primary} />}>
+      <Card title="Drivers" icon={<Users size={20} color={theme.colors.textSecondary} />}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredDrivers.map((driver) => (
             <div
@@ -325,21 +330,22 @@ const DriversPage = () => {
                   <div style={{
                     width: '56px',
                     height: '56px',
-                    background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
+                    background: theme.colors.backgroundTertiary,
                     borderRadius: '14px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'white',
+                    color: theme.colors.textSecondary,
                     fontSize: '24px',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    border: `1px solid ${theme.colors.border}`
                   }}>
                     {driver.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '600', color: theme.colors.textPrimary, margin: '0 0 6px 0' }}>
                       {driver.name}
-                      <span style={{ marginLeft: '12px', fontSize: '14px', color: theme.colors.warning }}>
+                      <span style={{ marginLeft: '12px', fontSize: '14px', color: theme.colors.textSecondary }}>
                         <Star size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
                         {driver.rating}
                       </span>
@@ -358,11 +364,12 @@ const DriversPage = () => {
                   {driver.currentLoad && (
                     <div style={{
                       padding: '6px 12px',
-                      background: `${theme.colors.info}20`,
-                      color: theme.colors.info,
+                      background: theme.colors.backgroundTertiary,
+                      color: theme.colors.textSecondary,
                       borderRadius: '8px',
                       fontSize: '13px',
-                      fontWeight: '600'
+                      fontWeight: '600',
+                      border: `1px solid ${theme.colors.border}`
                     }}>
                       {driver.currentLoad}
                     </div>
@@ -542,9 +549,9 @@ const DriversPage = () => {
               <button
                 style={{
                   padding: '12px 24px',
-                  background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
-                  color: 'white',
-                  border: 'none',
+                  background: theme.colors.backgroundCard,
+                  color: theme.colors.textPrimary,
+                  border: `1px solid ${theme.colors.border}`,
                   borderRadius: '10px',
                   fontSize: '15px',
                   fontWeight: '600',
@@ -552,8 +559,13 @@ const DriversPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  transition: 'all 0.2s ease',
-                  boxShadow: `0 4px 12px ${theme.colors.primary}40`
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCardHover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = theme.colors.backgroundCard
                 }}
               >
                 <Edit size={18} />

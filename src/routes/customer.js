@@ -763,5 +763,109 @@ router.post('/loads/:id/cancel', authenticateJWT, async (req, res) => {
   }
 });
 
+// ============================================================================
+// OPTIMIZED MY LOADS ENDPOINT (Added from optimized version)
+// ============================================================================
+
+/**
+ * GET /customer/my-loads
+ * Optimized customer loads endpoint with cursor pagination and field selection
+ * 
+ * Query params:
+ * - limit: Page size (default 20, max 100)
+ * - cursor: Pagination cursor
+ * - detail: true/false (include bids & carrier details)
+ * - status: Filter by status
+ */
+router.get('/my-loads', authenticateJWT, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || '20', 10), 100);
+    const cursor = req.query.cursor || null;
+    const detail = req.query.detail === 'true';
+    const statusFilter = req.query.status;
+
+    // Build where clause
+    const where = {
+      shipperId: req.user.id,
+      ...(statusFilter ? { status: statusFilter } : {})
+    };
+
+    // Single query with conditional includes
+    const loads = await prisma.load.findMany({
+      where,
+      select: {
+        id: true,
+        status: true,
+        commodity: true,
+        equipmentType: true,
+        haulType: true,
+        rate: true,
+        rateMode: true,
+        pickupLocation: true,
+        deliveryLocation: true,
+        pickupDate: true,
+        deliveryDate: true,
+        createdAt: true,
+        updatedAt: true,
+        // Include bids and carrier details only if detail=true
+        ...(detail && {
+          bids: {
+            select: {
+              id: true,
+              rate: true,
+              rateMode: true,
+              notes: true,
+              submittedAt: true,
+              carrier: {
+                select: {
+                  id: true,
+                  name: true,
+                  rating: true,
+                  equipmentTypes: true
+                }
+              }
+            },
+            orderBy: { submittedAt: 'desc' }
+          },
+          assignedCarrier: detail ? {
+            select: {
+              id: true,
+              name: true,
+              rating: true,
+              equipmentTypes: true
+            }
+          } : false
+        })
+      },
+      orderBy: { createdAt: 'desc' },
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      take: limit + 1 // Take one extra to check if there are more
+    });
+
+    // Check if there are more results
+    const hasMore = loads.length > limit;
+    if (hasMore) {
+      loads.pop(); // Remove the extra item
+    }
+
+    // Generate next cursor
+    const nextCursor = hasMore ? loads[loads.length - 1].id : null;
+
+    res.json({
+      loads,
+      pagination: {
+        hasMore,
+        nextCursor
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching customer loads:', error);
+    res.status(500).json({
+      error: 'Internal server error fetching loads',
+      code: 'LOAD_FETCH_ERROR'
+    });
+  }
+});
+
 module.exports = router;
 
