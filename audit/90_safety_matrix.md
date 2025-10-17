@@ -1,193 +1,165 @@
-# Safety Matrix - Critical Files Protection
+# Safety Matrix - Never Delete / Critical Files
 
-## 🚨 NEVER DELETE - Critical Runtime Files
+**Last Updated:** 2025-10-16T21:45:32Z  
+**Purpose:** Denylist of files that must NEVER be deleted without explicit override
 
-### **Entry Points**
-```
-src/index.js                    - Main server entry point
-web/src/main.tsx               - Vite/React entry point
-web/src/App.tsx                - React app root component
-package.json                   - Node.js dependencies
-web/package.json              - Frontend dependencies
-```
+---
 
-**Risk**: **CRITICAL** - Deletion breaks entire application
-**Evidence**: Referenced in deployment scripts, build processes
+## 🔴 CRITICAL - NEVER DELETE
 
-### **Authentication & Security**
-```
-src/middleware/auth.js         - JWT authentication
-src/middleware/rateLimit.js    - API rate limiting
-src/middleware/rateLimiter.js  - Rate limiting service
-web/src/contexts/AuthContext-fixed.tsx - Auth state management
-```
+### Entry Points
+- `src/index.js` - Main server entry point (now delegates to canonical)
+- `src/index.canonical.js` - Canonical consolidated server
+- `web/index.html` - Frontend entry point
+- `web/src/main.tsx` - React application entry
 
-**Risk**: **CRITICAL** - Deletion breaks security
-**Evidence**: Imported by all protected routes
+### Authentication & Security
+- `src/middleware/auth.js` - JWT authentication
+- `src/middleware/errorHandler.js` - Error handling
+- `src/middleware/rateLimiter.js` - Rate limiting
+- `src/utils/jwt.js` - Token management
 
-### **Database & Core Services**
-```
-src/db/prisma.js               - Database connection
-prisma/schema.prisma           - Database schema
-src/config/redis.js            - Redis configuration
-src/config/queue.js            - Queue configuration
-```
+### Database & Prisma
+- `prisma/schema.prisma` - Database schema
+- `src/db/prisma.js` - Prisma client instance
+- `prisma/seed.js` - Database seeding
+- `prisma/migrations/` - All migration files
 
-**Risk**: **CRITICAL** - Deletion breaks data layer
-**Evidence**: Imported by all data operations
+### Core Routes
+- `src/routes/auth.js` - Authentication routes
+- `src/routes/customer.js` - Customer routes
+- `src/routes/carrier.js` - Carrier routes
+- `src/routes/marketplace.js` - Marketplace routes
+- `src/routes/users.js` - User management
+- `src/routes/organizations.js` - Organization management
 
-### **Payment Integration**
-```
-src/adapters/stripeAdapter.js  - Stripe payment processing
-src/services/paymentService.js - Payment business logic
-src/routes/payments.js         - Payment API endpoints
-```
+### Core Services
+- `src/services/` - All service files (business logic)
+- `src/utils/` - All utility files (shared helpers)
 
-**Risk**: **CRITICAL** - Deletion breaks billing
-**Evidence**: Referenced in payment flows
+### Shared UI Components
+- `web/src/components/` - All React components
+- `web/src/pages/` - All page components
+- `web/src/hooks/` - All custom hooks
+- `web/src/contexts/` - All context providers
 
-## ⚠️ HIGH RISK - Core Business Logic
+### Configuration
+- `package.json` - Node dependencies
+- `package-lock.json` - Dependency lock file
+- `web/package.json` - Frontend dependencies
+- `tsconfig.json` - TypeScript configuration
+- `vite.config.ts` - Vite bundler configuration
+- `.env.example` - Environment template
+- `env.example` - Environment template (backend)
 
-### **Load Management**
-```
-src/routes/loads.js            - Load CRUD operations
-src/routes/dispatch.js         - Dispatch coordination
-src/services/equipmentMatcher.js - Load matching
-```
+---
 
-**Risk**: **HIGH** - Core business functionality
-**Evidence**: Imported by load management pages
+## 🟡 ACTIVE - REQUIRES REVIEW
 
-### **User Management**
-```
-src/routes/users.js            - User CRUD operations
-src/routes/organizations.js    - Organization management
-src/routes/carrier.js          - Carrier operations
-src/routes/customer.js         - Customer operations
-```
+### Testing & Automation
+- `TESTING/RUN_CRITICAL_TESTS.js` ⭐ **ADDED 2025-10-16** - Automated test runner (36 documentation references)
+- `test-matcher.js` - Equipment matcher tests
+- `test-smoke-unit3.js` - Unit 3 smoke tests
 
-**Risk**: **HIGH** - User management system
-**Evidence**: Imported by user interfaces
+### Tools & Scripts
+- `tools/staging-bringup.js` - Staging validation
+- `tools/backup-and-manifest.js` - Backup automation
+- `tools/ref-scan.js` - Reference scanning
+- `tools/refscan-unit3-cleanup.js` - Unit 3 reference scanner
+- `tools/stage-move-unit3.js` - Unit 3 archival tool
 
-### **Document Processing**
-```
-src/services/eSignatureService.js - Document signing
-src/routes/esignature.js       - E-signature endpoints
-src/services/documentService.js - Document management
-```
+---
 
-**Risk**: **HIGH** - Legal document processing
-**Evidence**: Referenced in document workflows
+## 🟢 SAFE TO REVIEW (Documentation)
 
-## 🔒 MEDIUM RISK - Feature Components
+### Status Documents (Already Archived in Units 1-2)
+- Various `*_COMPLETE.md` files → Archived in `archive/staged/2025-01-16T15-30-00Z/`
+- Duplicate audit reports → Archived in `archive/staged/2025-01-16T15-45-00Z/unit2/`
 
-### **Frontend Pages**
-```
-web/src/pages/carrier/CarrierDashboard.tsx
-web/src/pages/customer/CustomerDashboard.tsx
-web/src/pages/LoginPage.tsx
-web/src/pages/RegisterPage.tsx
-```
+### One-Time Fix Scripts (Archived in Phase 2)
+- `fix-import-paths-final.js` → Archived in `archive/staged/2025-10-16T21-45-32Z/phase2-scripts/`
+- `fix-pagination-all-routes.sh` → Archived in `archive/staged/2025-10-16T21-45-32Z/phase2-scripts/`
 
-**Risk**: **MEDIUM** - Core user interfaces
-**Evidence**: Referenced in routing configuration
+---
 
-### **Shared Components**
-```
-web/src/components/shared/PageContainer.tsx
-web/src/components/shared/ProtectedRoute.tsx
-web/src/components/S1LayoutConstruction.tsx
-web/src/components/S1Sidebar.tsx
-```
+## 🔧 Rollback Checklist
 
-**Risk**: **MEDIUM** - Shared UI components
-**Evidence**: Imported by multiple pages
+If a file was accidentally deleted:
 
-## ✅ LOW RISK - Safe to Modify
+1. **Check backups:**
+   ```powershell
+   cd C:\dev\dispatch\backups\<timestamp>\
+   # Review manifest.json
+   ```
 
-### **Styling & Themes**
-```
-web/src/themes/darkTheme.ts
-web/src/themes/lightTheme.ts
-web/src/styles/*.css
-```
+2. **Check archive:**
+   ```powershell
+   cd C:\dev\dispatch\archive\staged\<timestamp>\
+   # Review deletion_manifest.json
+   ```
 
-**Risk**: **LOW** - Visual styling only
-**Evidence**: Imported by theme context
+3. **Restore from archive:**
+   ```powershell
+   Move-Item archive\staged\<timestamp>\<file> <original-path>
+   ```
 
-### **Utility Functions**
-```
-web/src/utils/formatters.ts
-src/utils/time.js
-src/utils/pagination.js
-```
+4. **Restore from git:**
+   ```powershell
+   git log --all --full-history -- <file-path>
+   git checkout <commit-sha> -- <file-path>
+   ```
 
-**Risk**: **LOW** - Helper functions
-**Evidence**: Imported by multiple components
+5. **Verify:**
+   ```powershell
+   npm run build  # Test build
+   node src/index.canonical.js  # Test server start
+   ```
 
-## 🗂️ DOCUMENTATION - Safe to Archive
+---
 
-### **Status Reports**
-```
-*_COMPLETE.md files (52 files)
-*_AUDIT_REPORT.md files (8 files)
-*_SUMMARY.md files (10 files)
-```
+## 📊 Cleanup History
 
-**Risk**: **NONE** - Historical documentation
-**Evidence**: No imports, documentation only
+| Date | Phase | Units | Files Archived | Status |
+|------|-------|-------|----------------|--------|
+| 2025-01-16 | Unit 1 (Docs) | U1-01 to U1-52 | 52 complete docs | ✅ Done |
+| 2025-01-16 | Unit 2 (Duplicates) | U2-01 to U2-08 | 8 duplicate audits | ✅ Done |
+| 2025-10-17 | Unit 3 (Optimized) | U3-01 to U3-03 | 3 optimized files | ✅ Done |
+| 2025-10-16 | Phase 2 (Scripts) | P2-01, P2-02 | 2 fix scripts | ✅ Done |
 
-## 🔄 Rollback Checklist
+---
 
-### **Before Any Deletions:**
-1. ✅ Create full repository backup
-2. ✅ Document current working state
-3. ✅ Test all critical user flows
-4. ✅ Verify payment processing
-5. ✅ Check authentication flows
+## 🚫 Denylist Rules
 
-### **After Deletions:**
-1. ✅ Run full test suite
-2. ✅ Verify build processes
-3. ✅ Check deployment scripts
-4. ✅ Test critical user journeys
-5. ✅ Validate API endpoints
+1. **Never delete without scanning references first**
+2. **Never delete if ANY active code reference exists**
+3. **Never delete files in CRITICAL or ACTIVE sections above**
+4. **Always create backup + manifest before any deletion**
+5. **Always move to archive/ (never hard delete)**
+6. **Always commit with descriptive message per unit**
+7. **Always generate audit artifacts**
+8. **Always run post-delete validation**
 
-## 📊 Risk Assessment Matrix
+---
 
-| File Category | Count | Risk Level | Action |
-|---------------|-------|------------|---------|
-| Entry Points | 5 | CRITICAL | NEVER DELETE |
-| Auth/Security | 4 | CRITICAL | NEVER DELETE |
-| Database | 4 | CRITICAL | NEVER DELETE |
-| Payments | 3 | CRITICAL | NEVER DELETE |
-| Core Business | 8 | HIGH | INVESTIGATE FIRST |
-| User Management | 4 | HIGH | INVESTIGATE FIRST |
-| Documents | 3 | HIGH | INVESTIGATE FIRST |
-| Frontend Pages | 20+ | MEDIUM | SAFE TO REFACTOR |
-| Components | 30+ | MEDIUM | SAFE TO REFACTOR |
-| Utilities | 10+ | LOW | SAFE TO MODIFY |
-| Documentation | 80+ | NONE | SAFE TO ARCHIVE |
+## ⚠️ Override Protocol
 
-## 🎯 Safe Cleanup Priority
+If you believe a file on this denylist should be deleted:
 
-### **Phase 1: Zero Risk (Immediate)**
-- Archive all `*_COMPLETE.md` files
-- Remove duplicate audit reports
-- Clean up fix scripts
+1. Open a GitHub issue with:
+   - File path
+   - Reason for deletion
+   - Reference scan results
+   - Proposed replacement (if any)
 
-### **Phase 2: Low Risk (After Testing)**
-- Investigate optimized file duplicates
-- Standardize import patterns
-- Remove unused utility functions
+2. Get approval from team lead
 
-### **Phase 3: Medium Risk (Careful Planning)**
-- Refactor component structure
-- Optimize page organization
-- Consolidate similar services
+3. Create dedicated PR with:
+   - Full backup
+   - Rollback instructions
+   - Test coverage
+   - Migration guide (if needed)
 
-**Total Files Safe to Clean**: 60+ files
-**Estimated Space Savings**: 5-10 MB
-**Risk Level**: Very Low (documentation focus)
+---
 
+**Remember:** When in doubt, DON'T DELETE. Archive and wait for review.
 
