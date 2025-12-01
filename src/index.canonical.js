@@ -36,6 +36,7 @@ const verificationRoutes = require('./routes/verification.js');
 const paymentsRoutes = require('./routes/payments.js');
 const templatesRoutes = require('./routes/templates.js');
 const esignatureRoutes = require('./routes/esignature.js');
+const disputeRoutes = require('./routes/disputes.js');
 const debugRouter = require('./routes/debug.js');
 
 // Middleware imports
@@ -258,6 +259,7 @@ app.use('/api/verification', authenticateJWT, verificationRoutes);
 app.use('/api/payments', authenticateJWT, paymentsRoutes);
 app.use('/api/templates', authenticateJWT, templatesRoutes);
 app.use('/api/esignature', authenticateJWT, esignatureRoutes);
+app.use('/api/disputes', authenticateJWT, disputeRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

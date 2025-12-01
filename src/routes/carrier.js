@@ -853,11 +853,12 @@ router.get('/dashboard/stats', authenticateJWT, async (req, res) => {
 
 /**
  * POST /carrier/loads/:id/cancel - Carrier cancels accepted load
+ * Enhanced with comprehensive cancellation service
  */
 router.post('/loads/:id/cancel', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
-    const { reason } = req.body;
+    const { reason, notes } = req.body;
 
     if (!reason) {
       return res.status(400).json({
@@ -885,110 +886,87 @@ router.post('/loads/:id/cancel', authenticateJWT, async (req, res) => {
       });
     }
 
-    // Cannot cancel if already in transit or delivered
-    if (['IN_TRANSIT', 'DELIVERED', 'PENDING_APPROVAL', 'COMPLETED'].includes(load.status)) {
-      return res.status(400).json({
-        error: `Cannot cancel load in ${load.status} status. Contact emergency support.`,
-        code: 'CANNOT_CANCEL',
-        emergencyPhone: '(512) 555-HELP'
-      });
-    }
-
-    // Calculate time until pickup
-    const hoursUntilPickup = (new Date(load.pickupDate) - new Date()) / (1000 * 60 * 60);
-
-    // Determine penalty
-    let penalty = 0;
-    if (hoursUntilPickup < 24) {
-      penalty = 100; // $100 penalty for <24hr cancellation
-    }
-
-    // Track cancellation in carrier profile
-    const carrierProfile = await prisma.carrierProfile.findUnique({
-      where: { orgId: req.user.orgId }
-    });
-
-    const newCancellationCount = (carrierProfile?.cancellationCount || 0) + 1;
-    const totalLoads = carrierProfile?.loadsCount || 1;
-    const cancellationRate = newCancellationCount / totalLoads;
-
-    // Suspend carrier if >10% cancellation rate
-    let suspended = false;
-    if (cancellationRate > 0.10) {
-      suspended = true;
-      await prisma.organization.update({
-        where: { id: req.user.orgId },
-        data: { active: false }
-      });
-    }
-
-    // Update carrier profile
-    await prisma.carrierProfile.update({
-      where: { orgId: req.user.orgId },
-      data: {
-        cancellationCount: newCancellationCount
-      }
-    });
-
-    // Cancel load and release payment authorization
-    await prisma.load.update({
-      where: { id },
-      data: {
-        status: 'CANCELLED',
-        cancelledBy: req.user.id,
-        cancellationReason: reason,
-        cancellationType: 'CARRIER',
-        cancelledAt: new Date()
-      }
-    });
-
-    const paymentService = require('../services/paymentService');
-    await paymentService.cancelAuthorization(id);
-
-    // Repost load to marketplace
-    await prisma.load.update({
-      where: { id },
-      data: {
-        status: 'POSTED',
-        carrierId: null,
-        assignedAt: null,
-        acceptedAt: null,
-        releaseRequestedAt: null,
-        releaseRequestedBy: null
-      }
-    });
-
-    // Charge carrier penalty if applicable (would be deducted from future earnings)
-    // For now, just log it
-    if (penalty > 0) {
-      console.log(`Carrier ${req.user.orgId} incurred $${penalty} cancellation penalty`);
-    }
-
-    // Notify customer
-    const emailService = require('../services/emailService');
-    try {
-      await emailService.sendCarrierCancellationEmail(load.shipperId, id, reason);
-    } catch (error) {
-      console.error('Failed to send cancellation email:', error);
-    }
+    // Use comprehensive cancellation service
+    const loadCancellationService = require('../services/loadCancellationService');
+    const result = await loadCancellationService.cancelLoadByCarrier(
+      id,
+      req.user.id,
+      { reason, notes }
+    );
 
     res.json({
       success: true,
-      message: suspended 
-        ? 'Load cancelled. Your account has been suspended due to high cancellation rate (>10%).'
-        : 'Load cancelled and reposted to marketplace.',
-      penalty,
-      suspended,
-      cancellationRate: (cancellationRate * 100).toFixed(1) + '%',
-      warningThreshold: '10%'
+      message: 'Load cancelled and returned to marketplace',
+      penalty: result.penaltyInfo.fee,
+      penaltyReason: result.penaltyInfo.reason,
+      reputationImpact: result.reputationImpact,
+      hoursUntilPickup: result.penaltyInfo.hoursUntilPickup
     });
 
   } catch (error) {
     console.error('Carrier cancellation error:', error);
+
+    if (error.message === 'LOAD_NOT_FOUND') {
+      return res.status(404).json({ error: 'Load not found' });
+    }
+
+    if (error.message === 'NOT_ASSIGNED') {
+      return res.status(403).json({ error: 'You are not assigned to this load' });
+    }
+
+    if (error.message === 'CANNOT_CANCEL') {
+      return res.status(400).json({
+        error: 'Cannot cancel load in current status. Contact emergency support.',
+        emergencyPhone: '(512) 555-HELP'
+      });
+    }
+
+    if (error.message === 'CANNOT_CANCEL_IN_TRANSIT') {
+      return res.status(400).json({
+        error: 'Cannot cancel load that is in transit',
+        code: 'CANNOT_CANCEL_IN_TRANSIT'
+      });
+    }
+
     res.status(500).json({
       error: 'Internal server error cancelling load',
       code: 'CANCELLATION_ERROR'
     });
+  }
+});
+
+/**
+ * GET /carrier/loads/:id/cancellation-policy
+ * Get cancellation policy and current penalty for a load
+ */
+router.get('/loads/:id/cancellation-policy', authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const load = await prisma.load.findUnique({
+      where: { id }
+    });
+
+    if (!load) {
+      return res.status(404).json({ error: 'Load not found' });
+    }
+
+    // Verify access
+    if (load.carrierId !== req.user.orgId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const loadCancellationService = require('../services/loadCancellationService');
+    const policy = await loadCancellationService.getCancellationPolicy(id, 'CARRIER');
+
+    res.json({
+      success: true,
+      policy
+    });
+
+  } catch (error) {
+    console.error('Get cancellation policy error:', error);
+    res.status(500).json({ error: 'Failed to get cancellation policy' });
   }
 });
 

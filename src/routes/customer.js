@@ -638,11 +638,12 @@ router.get('/dashboard/stats', authenticateJWT, async (req, res) => {
 
 /**
  * POST /customer/loads/:id/cancel - Cancel a load
+ * Enhanced with comprehensive cancellation service
  */
 router.post('/loads/:id/cancel', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
-    const { reason } = req.body;
+    const { reason, notes } = req.body;
 
     if (!reason) {
       return res.status(400).json({
@@ -670,96 +671,76 @@ router.post('/loads/:id/cancel', authenticateJWT, async (req, res) => {
       });
     }
 
-    // Cannot cancel if in certain statuses
-    if (['IN_TRANSIT', 'DELIVERED', 'COMPLETED'].includes(load.status)) {
-      return res.status(400).json({
-        error: `Cannot cancel load in ${load.status} status. Contact emergency support.`,
-        code: 'CANNOT_CANCEL',
-        emergencyPhone: '(512) 555-HELP'
-      });
-    }
-
-    // Calculate cancellation fee based on status
-    let fee = 0;
-    let carrierCompensation = 0;
-
-    switch (load.status) {
-      case 'DRAFT':
-      case 'POSTED':
-        fee = 0; // Free to cancel before acceptance
-        break;
-
-      case 'ASSIGNED':
-      case 'ACCEPTED':
-      case 'RELEASE_REQUESTED':
-        fee = 50; // $50 admin fee
-        break;
-
-      case 'RELEASED':
-        fee = 200; // Full TONU charge
-        carrierCompensation = 150; // Carrier gets $150
-        break;
-    }
-
-    // Update load
-    await prisma.load.update({
-      where: { id },
-      data: {
-        status: 'CANCELLED',
-        cancelledBy: req.user.id,
-        cancellationReason: reason,
-        cancellationFee: fee,
-        cancellationType: 'CUSTOMER',
-        cancelledAt: new Date()
-      }
-    });
-
-    // Release payment authorization if exists
-    const paymentService = require('../services/paymentService');
-    await paymentService.cancelAuthorization(id);
-
-    // Charge cancellation fee if applicable
-    if (fee > 0) {
-      try {
-        await paymentService.chargeCancellationFee(load.shipperId, fee, id);
-      } catch (error) {
-        console.error('Failed to charge cancellation fee:', error);
-      }
-    }
-
-    // Compensate carrier if applicable
-    if (carrierCompensation > 0 && load.carrierId) {
-      try {
-        await paymentService.processCancellationPayout(load.carrierId, carrierCompensation, id);
-      } catch (error) {
-        console.error('Failed to process carrier compensation:', error);
-      }
-    }
-
-    // Notify carrier if load was assigned
-    if (load.carrierId) {
-      const emailService = require('../services/emailService');
-      try {
-        await emailService.sendLoadCancellationEmail(load.carrierId, id, reason);
-      } catch (error) {
-        console.error('Failed to send cancellation email:', error);
-      }
-    }
+    // Use comprehensive cancellation service
+    const loadCancellationService = require('../services/loadCancellationService');
+    const result = await loadCancellationService.cancelLoadByCustomer(
+      id,
+      req.user.id,
+      { reason, notes }
+    );
 
     res.json({
       success: true,
       message: 'Load cancelled successfully',
-      cancellationFee: fee,
-      carrierCompensation,
-      refundedAuthorization: fee > 0
+      cancellationFee: result.feeInfo.fee,
+      carrierCompensation: result.carrierCompensation,
+      feeReason: result.feeInfo.reason,
+      hoursUntilPickup: result.feeInfo.hoursUntilPickup
     });
 
   } catch (error) {
     console.error('Load cancellation error:', error);
+
+    if (error.message === 'LOAD_NOT_FOUND') {
+      return res.status(404).json({ error: 'Load not found' });
+    }
+
+    if (error.message === 'CANNOT_CANCEL') {
+      return res.status(400).json({
+        error: 'Cannot cancel load in current status. Contact emergency support.',
+        emergencyPhone: '(512) 555-HELP'
+      });
+    }
+
     res.status(500).json({
       error: 'Internal server error cancelling load',
       code: 'CANCELLATION_ERROR'
     });
+  }
+});
+
+/**
+ * GET /customer/loads/:id/cancellation-policy
+ * Get cancellation policy and current fee for a load
+ */
+router.get('/loads/:id/cancellation-policy', authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const load = await prisma.load.findUnique({
+      where: { id }
+    });
+
+    if (!load) {
+      return res.status(404).json({ error: 'Load not found' });
+    }
+
+    // Verify access
+    if (load.shipperId !== req.user.orgId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const loadCancellationService = require('../services/loadCancellationService');
+    const policy = await loadCancellationService.getCancellationPolicy(id, 'CUSTOMER');
+
+    res.json({
+      success: true,
+      policy
+    });
+
+  } catch (error) {
+    console.error('Get cancellation policy error:', error);
+    res.status(500).json({ error: 'Failed to get cancellation policy' });
   }
 });
 
