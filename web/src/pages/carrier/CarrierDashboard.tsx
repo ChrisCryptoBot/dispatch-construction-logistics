@@ -136,32 +136,33 @@ const CarrierDashboard = () => {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: theme.spacing.lg }}>
       {/* Header with Quick Actions */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '32px',
-        padding: '20px',
+        marginBottom: theme.spacing.xl,
+        padding: theme.spacing.lg,
         background: theme.colors.backgroundCard,
-        borderRadius: '16px',
+        borderRadius: theme.borderRadius.lg,
         border: `1px solid ${theme.colors.border}`
       }}>
         <div>
           <h1 style={{
-            fontSize: '32px',
-            fontWeight: '700',
+            fontSize: 'clamp(24px, 4vw, 32px)',
+            fontWeight: '600',
             color: theme.colors.textPrimary,
-            margin: '0 0 8px 0',
+            margin: `0 0 ${theme.spacing.sm} 0`,
             background: `linear-gradient(135deg, ${theme.colors.textPrimary} 0%, ${theme.colors.textSecondary} 100%)`,
             WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-0.02em'
           }}>
-            CARRIER OPERATIONS DASHBOARD
+            Carrier Operations Dashboard
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
               <Globe size={18} color={theme.colors.textSecondary} />
               <select
                 value={selectedTimezone}
@@ -169,9 +170,9 @@ const CarrierDashboard = () => {
                 style={{
                   background: theme.colors.background,
                   border: `1px solid ${theme.colors.border}`,
-                  borderRadius: '8px',
-                  padding: '6px 12px',
-                  fontSize: '14px',
+                  borderRadius: theme.borderRadius.sm,
+                  padding: `${theme.spacing.xs} ${theme.spacing.md}`,
+                  fontSize: 'clamp(13px, 2vw, 14px)',
                   color: theme.colors.textPrimary,
                   cursor: 'pointer',
                   outline: 'none',
@@ -212,13 +213,13 @@ const CarrierDashboard = () => {
               </select>
             </div>
             <div style={{
-              fontSize: '24px',
-              fontWeight: '700',
+              fontSize: 'clamp(20px, 3vw, 24px)',
+              fontWeight: '600',
               color: theme.colors.error,
               fontFamily: 'monospace',
-              padding: '12px 20px',
+              padding: `${theme.spacing.md} ${theme.spacing.lg}`,
               background: theme.colors.background,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               border: `1px solid ${theme.colors.border}`,
               minWidth: '180px',
               textAlign: 'center',
@@ -234,22 +235,22 @@ const CarrierDashboard = () => {
             </div>
           </div>
         </div>
-        
-        <div style={{ display: 'flex', gap: '12px' }}>
+
+        <div style={{ display: 'flex', gap: theme.spacing.md }}>
           <button
             onClick={handleRefresh}
             style={{
-              padding: '12px 20px',
+              padding: `${theme.spacing.md} ${theme.spacing.lg}`,
               background: 'transparent',
               border: `1px solid ${theme.colors.border}`,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               color: theme.colors.textSecondary,
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: 'clamp(13px, 2vw, 14px)',
+              fontWeight: '500',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: theme.spacing.sm,
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
@@ -274,17 +275,17 @@ const CarrierDashboard = () => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
-        marginBottom: '24px'
+        gap: theme.spacing.lg,
+        marginBottom: theme.spacing.xl
       }}>
         <Card padding="24px" hover onClick={() => navigate('/loads')}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md, justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
               <div style={{
                 width: '56px',
                 height: '56px',
                 background: theme.colors.backgroundTertiary,
-                borderRadius: '12px',
+                borderRadius: theme.borderRadius.md,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -292,10 +293,10 @@ const CarrierDashboard = () => {
                 <Activity size={28} color={theme.colors.textSecondary} />
               </div>
               <div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                   <AnimatedCounter value={stats?.activeLoads || 0} />
                 </p>
-                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                   Active Loads
                 </p>
               </div>
@@ -305,13 +306,13 @@ const CarrierDashboard = () => {
         </Card>
 
         <Card padding="24px" hover onClick={() => navigate('/loads')}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md, justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
               <div style={{
                 width: '56px',
                 height: '56px',
                 background: theme.colors.backgroundTertiary,
-                borderRadius: '12px',
+                borderRadius: theme.borderRadius.md,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -319,10 +320,10 @@ const CarrierDashboard = () => {
                 <Package size={28} color={theme.colors.textSecondary} />
               </div>
               <div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                   <AnimatedCounter value={stats?.availableLoads || 0} />
                 </p>
-                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                   Available
                 </p>
               </div>
@@ -332,12 +333,12 @@ const CarrierDashboard = () => {
         </Card>
 
         <Card padding="24px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div style={{
               width: '56px',
               height: '56px',
               background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -345,10 +346,10 @@ const CarrierDashboard = () => {
               <DollarSign size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
                 <AnimatedCounter value={stats?.revenue || 0} prefix="$" />
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                 Today's Revenue
               </p>
             </div>
@@ -356,12 +357,12 @@ const CarrierDashboard = () => {
         </Card>
 
         <Card padding="24px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div style={{
               width: '56px',
               height: '56px',
               background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -369,10 +370,10 @@ const CarrierDashboard = () => {
               <CheckCircle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
                 {formatPercentage(stats?.onTimeDelivery)}
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                 On-Time Rate
               </p>
             </div>
@@ -380,12 +381,12 @@ const CarrierDashboard = () => {
         </Card>
 
         <Card padding="24px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div style={{
               width: '56px',
               height: '56px',
               background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -393,10 +394,10 @@ const CarrierDashboard = () => {
               <Star size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 4.8★
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                 Customer Rating
               </p>
             </div>
@@ -404,12 +405,12 @@ const CarrierDashboard = () => {
         </Card>
 
         <Card padding="24px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div style={{
               width: '56px',
               height: '56px',
               background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -417,10 +418,10 @@ const CarrierDashboard = () => {
               <AlertTriangle size={28} color={theme.colors.textSecondary} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.warning, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.warning, margin: 0, lineHeight: 1 }}>
                 3
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                 Active Alerts
               </p>
             </div>
@@ -432,8 +433,8 @@ const CarrierDashboard = () => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '24px',
-        marginBottom: '24px'
+        gap: theme.spacing.xl,
+        marginBottom: theme.spacing.xl
       }}>
         {/* Schedule & Calendar */}
         <Card 
@@ -443,17 +444,17 @@ const CarrierDashboard = () => {
             <button
               onClick={() => navigate('/calendar')}
               style={{
-                padding: '8px 16px',
+                padding: `${theme.spacing.sm} ${theme.spacing.md}`,
                 background: 'transparent',
                 color: theme.colors.textSecondary,
                 border: `1px solid ${theme.colors.border}`,
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: '600',
+                borderRadius: theme.borderRadius.sm,
+                fontSize: 'clamp(12px, 1.8vw, 13px)',
+                fontWeight: '500',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: theme.spacing.xs,
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
@@ -470,33 +471,33 @@ const CarrierDashboard = () => {
             </button>
           }
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-              <div style={{ background: theme.colors.background, padding: '16px', borderRadius: '10px', border: `1px solid ${theme.colors.border}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: theme.spacing.md }}>
+              <div style={{ background: theme.colors.background, padding: theme.spacing.md, borderRadius: theme.borderRadius.sm, border: `1px solid ${theme.colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
                   <Truck size={16} color={theme.colors.textSecondary} />
-                  <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>Today's Loads</span>
+                  <span style={{ fontSize: 'clamp(13px, 2vw, 14px)', fontWeight: '500', color: theme.colors.textPrimary }}>Today's Loads</span>
                 </div>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0 }}>8</p>
-                <p style={{ fontSize: '12px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>Pickups & Deliveries</p>
+                <p style={{ fontSize: 'clamp(20px, 3vw, 24px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0 }}>8</p>
+                <p style={{ fontSize: 'clamp(11px, 1.6vw, 12px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>Pickups & Deliveries</p>
               </div>
-              <div style={{ background: theme.colors.background, padding: '16px', borderRadius: '10px', border: `1px solid ${theme.colors.border}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ background: theme.colors.background, padding: theme.spacing.md, borderRadius: theme.borderRadius.sm, border: `1px solid ${theme.colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
                   <Wrench size={16} color={theme.colors.textSecondary} />
-                  <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>Maintenance</span>
+                  <span style={{ fontSize: 'clamp(13px, 2vw, 14px)', fontWeight: '500', color: theme.colors.textPrimary }}>Maintenance</span>
                 </div>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0 }}>3</p>
-                <p style={{ fontSize: '12px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>Scheduled Today</p>
+                <p style={{ fontSize: 'clamp(20px, 3vw, 24px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0 }}>3</p>
+                <p style={{ fontSize: 'clamp(11px, 1.6vw, 12px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>Scheduled Today</p>
               </div>
             </div>
-            <div style={{ background: theme.colors.background, padding: '16px', borderRadius: '10px', border: `1px solid ${theme.colors.border}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ background: theme.colors.background, padding: theme.spacing.md, borderRadius: theme.borderRadius.sm, border: `1px solid ${theme.colors.border}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
                 <Clock size={16} color={theme.colors.textSecondary} />
-                <span style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>Upcoming Events</span>
+                <span style={{ fontSize: 'clamp(13px, 2vw, 14px)', fontWeight: '500', color: theme.colors.textPrimary }}>Upcoming Events</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: theme.colors.textPrimary }}>Load Pickup - Dallas</span>
+                  <span style={{ fontSize: 'clamp(12px, 1.8vw, 13px)', color: theme.colors.textPrimary }}>Load Pickup - Dallas</span>
                   <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>9:00 AM</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

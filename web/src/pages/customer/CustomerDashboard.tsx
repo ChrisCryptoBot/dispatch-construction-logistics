@@ -249,21 +249,22 @@ const CustomerDashboard = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: '32px',
+        marginBottom: theme.spacing.xl,
         flexWrap: 'wrap',
-        gap: '20px'
+        gap: theme.spacing.lg
       }}>
         <div>
           <h1 style={{
-            fontSize: '32px',
-            fontWeight: 'bold',
+            fontSize: 'clamp(24px, 4vw, 32px)',
+            fontWeight: '600',
             color: theme.colors.textPrimary,
-            margin: '0 0 8px 0'
+            margin: `0 0 ${theme.spacing.sm} 0`,
+            letterSpacing: '-0.02em'
           }}>
             Customer Command Center
           </h1>
           <p style={{
-            fontSize: '15px',
+            fontSize: 'clamp(14px, 2.5vw, 15px)',
             color: theme.colors.textSecondary,
             margin: 0
           }}>
@@ -273,26 +274,26 @@ const CustomerDashboard = () => {
 
         {/* Timezone Clock */}
         <div style={{
-          padding: '16px 20px',
+          padding: `${theme.spacing.md} ${theme.spacing.lg}`,
           background: theme.colors.backgroundCard,
           border: `1px solid ${theme.colors.border}`,
-          borderRadius: '12px',
+          borderRadius: theme.borderRadius.md,
           minWidth: '280px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md, marginBottom: theme.spacing.sm }}>
             <Globe size={18} color={theme.colors.primary} />
             <select
               value={selectedTimezone}
               onChange={(e) => setSelectedTimezone(e.target.value)}
               style={{
                 flex: 1,
-                padding: '6px 10px',
+                padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
                 background: theme.colors.backgroundSecondary,
                 color: theme.colors.textPrimary,
                 border: `1px solid ${theme.colors.border}`,
-                borderRadius: '6px',
-                fontSize: '12px',
-            fontWeight: '600',
+                borderRadius: theme.borderRadius.xs,
+                fontSize: 'clamp(11px, 1.6vw, 12px)',
+            fontWeight: '500',
             cursor: 'pointer',
                 outline: 'none'
               }}
@@ -305,17 +306,17 @@ const CustomerDashboard = () => {
             </select>
           </div>
           <div style={{
-            fontSize: '32px',
-            fontWeight: 'bold',
+            fontSize: 'clamp(26px, 4vw, 32px)',
+            fontWeight: '600',
             color: theme.colors.primary,
             letterSpacing: '0.5px'
           }}>
             {formatTimeForTimezone(currentTime, selectedTimezone)}
           </div>
           <div style={{
-            fontSize: '13px',
+            fontSize: 'clamp(12px, 1.8vw, 13px)',
             color: theme.colors.textSecondary,
-            marginTop: '4px'
+            marginTop: theme.spacing.xs
           }}>
             {formatDateForTimezone(currentTime, selectedTimezone)}
           </div>
@@ -326,16 +327,16 @@ const CustomerDashboard = () => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
-        marginBottom: '32px'
+        gap: theme.spacing.lg,
+        marginBottom: theme.spacing.xl
       }}>
         <Card padding="24px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div style={{
               width: '56px',
               height: '56px',
               background: `${theme.colors.primary}20`,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -343,10 +344,10 @@ const CustomerDashboard = () => {
               <Package size={28} color={theme.colors.primary} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {stats.activeLoads}
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                 Active Loads
               </p>
             </div>
@@ -354,12 +355,12 @@ const CustomerDashboard = () => {
         </Card>
 
         <Card padding="24px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div style={{
               width: '56px',
               height: '56px',
               background: `${theme.colors.success}20`,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -367,10 +368,10 @@ const CustomerDashboard = () => {
               <CheckCircle size={28} color={theme.colors.success} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {stats.completedThisMonth}
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: 'clamp(13px, 2vw, 14px)', color: theme.colors.textSecondary, margin: `${theme.spacing.xs} 0 0 0` }}>
                 Completed This Month
               </p>
             </div>
@@ -378,12 +379,12 @@ const CustomerDashboard = () => {
         </Card>
 
         <Card padding="24px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div style={{
               width: '56px',
               height: '56px',
               background: `${theme.colors.warning}20`,
-              borderRadius: '12px',
+              borderRadius: theme.borderRadius.md,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -391,7 +392,7 @@ const CustomerDashboard = () => {
               <DollarSign size={28} color={theme.colors.warning} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '600', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {formatCompactCurrency(stats?.totalSpend)}
               </p>
               <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
