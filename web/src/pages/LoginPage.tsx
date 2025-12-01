@@ -148,13 +148,13 @@ const LoginPage = () => {
                 lineHeight: 1.6
               }}>
                 <div style={{ marginBottom: '6px' }}>
-                  <strong style={{ color: theme.colors.textPrimary }}>🚛 Carrier:</strong> carrier / admin
+                  <strong style={{ color: theme.colors.textPrimary }}>Carrier:</strong> carrier / admin
                 </div>
                 <div style={{ marginBottom: '6px' }}>
-                  <strong style={{ color: theme.colors.textPrimary }}>📦 Customer:</strong> customer / admin
+                  <strong style={{ color: theme.colors.textPrimary }}>Customer:</strong> customer / admin
                 </div>
                 <div>
-                  <strong style={{ color: theme.colors.textPrimary }}>👤 Admin:</strong> admin / admin
+                  <strong style={{ color: theme.colors.textPrimary }}>Admin:</strong> admin / admin
                 </div>
               </div>
         </div>

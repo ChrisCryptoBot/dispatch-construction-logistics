@@ -55,7 +55,7 @@
 .login-background::before {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(197, 48, 48, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(159, 18, 57, 0.3) 0%, transparent 70%);
   top: -200px;
   right: -200px;
   animation-delay: 0s;
@@ -154,9 +154,9 @@
 
 .login-input-glass:focus {
   background: rgba(255, 255, 255, 0.1) !important;
-  border-color: #C53030 !important;
-  box-shadow: 
-    0 0 0 4px rgba(197, 48, 48, 0.15),
+  border-color: #9F1239 !important;
+  box-shadow:
+    0 0 0 4px rgba(159, 18, 57, 0.15),
     0 8px 16px rgba(0, 0, 0, 0.2) !important;
   transform: translateY(-2px) !important;
   outline: none !important;
@@ -164,14 +164,14 @@
 
 .light .login-input-glass:focus {
   background: #FFFFFF !important;
-  box-shadow: 
-    0 0 0 4px rgba(197, 48, 48, 0.1),
+  box-shadow:
+    0 0 0 4px rgba(159, 18, 57, 0.1),
     0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Enhanced Login Button */
 .login-button-glass {
-  background: linear-gradient(135deg, #C53030 0%, #B91C1C 100%) !important;
+  background: linear-gradient(135deg, #9F1239 0%, #881337 100%) !important;
   background-size: 200% 200% !important;
   border: none !important;
   border-radius: 12px !important;
@@ -181,8 +181,8 @@
   color: white !important;
   cursor: pointer !important;
   width: 100% !important;
-  box-shadow: 
-    0 4px 12px rgba(197, 48, 48, 0.4),
+  box-shadow:
+    0 4px 12px rgba(159, 18, 57, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   animation: gradient-shift 8s ease infinite !important;
@@ -192,8 +192,8 @@
 
 .login-button-glass:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 
-    0 8px 24px rgba(197, 48, 48, 0.5),
+  box-shadow:
+    0 8px 24px rgba(159, 18, 57, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
 }
 
@@ -277,7 +277,7 @@
 
 /* Forgot Password Link Enhancement */
 .login-link-glass {
-  color: #C53030 !important;
+  color: #9F1239 !important;
   text-decoration: none !important;
   font-weight: 600 !important;
   font-size: 14px !important;
@@ -293,7 +293,7 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: #C53030;
+  background: #9F1239;
   transition: width 0.3s ease;
 }
 
@@ -302,7 +302,7 @@
 }
 
 .login-link-glass:hover {
-  color: #B91C1C !important;
+  color: #881337 !important;
   transform: translateX(2px) !important;
 }
 
@@ -350,11 +350,11 @@
 @keyframes spin-glow {
   0% {
     transform: rotate(0deg);
-    filter: drop-shadow(0 0 8px rgba(197, 48, 48, 0.5));
+    filter: drop-shadow(0 0 8px rgba(159, 18, 57, 0.5));
   }
   100% {
     transform: rotate(360deg);
-    filter: drop-shadow(0 0 12px rgba(197, 48, 48, 0.7));
+    filter: drop-shadow(0 0 12px rgba(159, 18, 57, 0.7));
   }
 }
 
