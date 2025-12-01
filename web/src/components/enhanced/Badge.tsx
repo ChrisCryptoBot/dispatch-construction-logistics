@@ -29,29 +29,29 @@ const Badge: React.FC<BadgeProps> = ({
 
   const variants = {
     primary: {
-      background: 'linear-gradient(135deg, #C53030 0%, #9B2C2C 100%)',
+      background: 'linear-gradient(135deg, #9F1239 0%, #881337 100%)',
       color: 'white',
-      border: '1px solid rgba(197, 48, 48, 0.4)'
+      border: '1px solid rgba(159, 18, 57, 0.4)'
     },
     success: {
-      background: 'linear-gradient(135deg, #2F855A 0%, #10b981 100%)',
+      background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
       color: 'white',
-      border: '1px solid rgba(16, 185, 129, 0.4)'
+      border: '1px solid rgba(5, 150, 105, 0.4)'
     },
     warning: {
-      background: 'linear-gradient(135deg, #C05621 0%, #f59e0b 100%)',
+      background: 'linear-gradient(135deg, #D97706 0%, #f59e0b 100%)',
       color: 'white',
-      border: '1px solid rgba(245, 158, 11, 0.4)'
+      border: '1px solid rgba(217, 119, 6, 0.4)'
     },
     danger: {
-      background: 'linear-gradient(135deg, #C53030 0%, #ef4444 100%)',
+      background: 'linear-gradient(135deg, #DC2626 0%, #ef4444 100%)',
       color: 'white',
-      border: '1px solid rgba(239, 68, 68, 0.4)'
+      border: '1px solid rgba(220, 38, 38, 0.4)'
     },
     info: {
-      background: 'linear-gradient(135deg, #2C5282 0%, #3b82f6 100%)',
+      background: 'linear-gradient(135deg, #0284C7 0%, #3b82f6 100%)',
       color: 'white',
-      border: '1px solid rgba(59, 130, 246, 0.4)'
+      border: '1px solid rgba(2, 132, 199, 0.4)'
     },
     neutral: {
       background: 'rgba(255, 255, 255, 0.1)',

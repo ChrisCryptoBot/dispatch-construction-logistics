@@ -110,10 +110,10 @@
 .btn-primary-enhanced {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #C53030 0%, #9B2C2C 100%);
-  border: 1px solid rgba(197, 48, 48, 0.4);
-  box-shadow: 
-    0 4px 16px rgba(197, 48, 48, 0.3),
+  background: linear-gradient(135deg, #9F1239 0%, #881337 100%);
+  border: 1px solid rgba(159, 18, 57, 0.4);
+  box-shadow:
+    0 4px 16px rgba(159, 18, 57, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   transition: all var(--duration-fast) var(--spring-smooth);
@@ -141,16 +141,16 @@
 
 .btn-primary-enhanced:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 
-    0 8px 24px rgba(197, 48, 48, 0.4),
+  box-shadow:
+    0 8px 24px rgba(159, 18, 57, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary-enhanced:active {
   transform: translateY(0) scale(0.98);
-  box-shadow: 
-    0 2px 8px rgba(197, 48, 48, 0.3),
+  box-shadow:
+    0 2px 8px rgba(159, 18, 57, 0.3),
     inset 0 2px 4px rgba(0, 0, 0, 0.3);
   transition: all var(--duration-instant) var(--spring-snappy);
 }
@@ -190,10 +190,10 @@
 
 .input-enhanced:focus {
   background: rgba(22, 27, 38, 0.8);
-  border-color: rgba(197, 48, 48, 0.4);
+  border-color: rgba(159, 18, 57, 0.4);
   outline: none;
-  box-shadow: 
-    0 0 0 3px rgba(197, 48, 48, 0.15),
+  box-shadow:
+    0 0 0 3px rgba(159, 18, 57, 0.15),
     inset 0 2px 4px rgba(0, 0, 0, 0.2);
   transform: translateY(-1px);
 }
@@ -297,10 +297,10 @@
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(197, 48, 48, 0.2);
+    box-shadow: 0 0 20px rgba(159, 18, 57, 0.2);
   }
   50% {
-    box-shadow: 0 0 40px rgba(197, 48, 48, 0.4);
+    box-shadow: 0 0 40px rgba(159, 18, 57, 0.4);
   }
 }
 
@@ -322,8 +322,8 @@
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(197, 48, 48, 0.4) 0%,
-    rgba(155, 44, 44, 0.6) 100%
+    rgba(159, 18, 57, 0.4) 0%,
+    rgba(136, 19, 55, 0.6) 100%
   );
   mix-blend-mode: multiply;
   opacity: 0.7;
@@ -391,16 +391,16 @@
 }
 
 .focus-ring:focus {
-  box-shadow: 
-    0 0 0 3px rgba(197, 48, 48, 0.15),
-    0 0 0 6px rgba(197, 48, 48, 0.05);
+  box-shadow:
+    0 0 0 3px rgba(159, 18, 57, 0.15),
+    0 0 0 6px rgba(159, 18, 57, 0.05);
 }
 
 .focus-ring:focus::before {
   content: '';
   position: absolute;
   inset: -4px;
-  border: 2px solid rgba(197, 48, 48, 0.4);
+  border: 2px solid rgba(159, 18, 57, 0.4);
   border-radius: inherit;
   animation: focusRing 0.3s var(--spring-bounce);
 }
@@ -522,9 +522,9 @@
 }
 
 .shadow-glow-red {
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 40px rgba(197, 48, 48, 0.2);
+    0 0 40px rgba(159, 18, 57, 0.2);
 }
 
 .shadow-inner-glow {
