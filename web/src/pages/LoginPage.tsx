@@ -102,18 +102,20 @@ const LoginPage = () => {
             />
           </div>
           <h1 style={{
-            fontSize: '32px',
-            fontWeight: '700',
+            fontSize: 'clamp(24px, 5vw, 32px)',
+            fontWeight: '600',
             color: theme.colors.textPrimary,
-            margin: '0 0 8px 0',
-            letterSpacing: '-0.5px'
+            margin: `0 0 ${theme.spacing.sm} 0`,
+            letterSpacing: '-0.02em',
+            lineHeight: '1.2'
           }}>
             Welcome Back
           </h1>
           <p style={{
-            fontSize: '16px',
+            fontSize: 'clamp(14px, 2.5vw, 16px)',
             color: theme.colors.textSecondary,
-            margin: 0
+            margin: 0,
+            lineHeight: '1.5'
           }}>
             Sign in to your Superior One account
           </p>
@@ -125,36 +127,36 @@ const LoginPage = () => {
           <div style={{
             background: `${theme.colors.info}15`,
             border: `1px solid ${theme.colors.info}40`,
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '24px',
+            borderRadius: theme.borderRadius.md,
+            padding: theme.spacing.md,
+            marginBottom: theme.spacing.lg,
             display: 'flex',
             alignItems: 'flex-start',
-            gap: '12px'
+            gap: theme.spacing.md
           }}>
             <Truck size={20} style={{ color: theme.colors.info, flexShrink: 0, marginTop: '2px' }} />
             <div style={{ width: '100%' }}>
               <p style={{
-                fontSize: '14px',
+                fontSize: 'clamp(13px, 2vw, 14px)',
                 fontWeight: '600',
                 color: theme.colors.info,
-                margin: '0 0 8px 0'
+                margin: `0 0 ${theme.spacing.sm} 0`
               }}>
                 Development Mode - Test Accounts
               </p>
               <div style={{
-                fontSize: '13px',
+                fontSize: 'clamp(12px, 1.8vw, 13px)',
                 color: theme.colors.textSecondary,
                 lineHeight: 1.6
               }}>
-                <div style={{ marginBottom: '6px' }}>
-                  <strong style={{ color: theme.colors.textPrimary }}>🚛 Carrier:</strong> carrier / admin
+                <div style={{ marginBottom: theme.spacing.xs }}>
+                  <strong style={{ color: theme.colors.textPrimary }}>Carrier:</strong> carrier / admin
                 </div>
-                <div style={{ marginBottom: '6px' }}>
-                  <strong style={{ color: theme.colors.textPrimary }}>📦 Customer:</strong> customer / admin
+                <div style={{ marginBottom: theme.spacing.xs }}>
+                  <strong style={{ color: theme.colors.textPrimary }}>Customer:</strong> customer / admin
                 </div>
                 <div>
-                  <strong style={{ color: theme.colors.textPrimary }}>👤 Admin:</strong> admin / admin
+                  <strong style={{ color: theme.colors.textPrimary }}>Admin:</strong> admin / admin
                 </div>
               </div>
         </div>
@@ -173,13 +175,13 @@ const LoginPage = () => {
           {/* Login Form */}
           <form onSubmit={handleLogin}>
             {/* Email/Username Field */}
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: theme.spacing.lg }}>
               <label style={{
                 display: 'block',
-                fontSize: '14px',
-                fontWeight: '600',
+                fontSize: 'clamp(13px, 2vw, 14px)',
+                fontWeight: '500',
                 color: theme.colors.textPrimary,
-                marginBottom: '8px'
+                marginBottom: theme.spacing.sm
               }}>
                 Email or Username
               </label>
@@ -204,13 +206,13 @@ const LoginPage = () => {
             </div>
 
             {/* Password Field */}
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: theme.spacing.lg }}>
               <label style={{
                 display: 'block',
-                fontSize: '14px',
-                fontWeight: '600',
+                fontSize: 'clamp(13px, 2vw, 14px)',
+                fontWeight: '500',
                 color: theme.colors.textPrimary,
-                marginBottom: '8px'
+                marginBottom: theme.spacing.sm
               }}>
                 Password
               </label>
@@ -283,15 +285,15 @@ const LoginPage = () => {
 
           {/* Footer Links */}
           <div style={{
-            marginTop: '24px',
-            paddingTop: '24px',
+            marginTop: theme.spacing.lg,
+            paddingTop: theme.spacing.lg,
             borderTop: `1px solid ${theme.colors.border}`,
             textAlign: 'center'
           }}>
             <p style={{
-              fontSize: '14px',
+              fontSize: 'clamp(13px, 2vw, 14px)',
               color: theme.colors.textSecondary,
-              margin: '0 0 12px 0'
+              margin: `0 0 ${theme.spacing.md} 0`
             }}>
               Don't have an account?{' '}
               <button
@@ -300,10 +302,10 @@ const LoginPage = () => {
                   background: 'transparent',
                   border: 'none',
                   color: theme.colors.primary,
-                  fontWeight: '600',
+                  fontWeight: '500',
                   cursor: 'pointer',
                   textDecoration: 'underline',
-                  fontSize: '14px'
+                  fontSize: 'clamp(13px, 2vw, 14px)'
                 }}
               >
                 Sign up
@@ -315,7 +317,7 @@ const LoginPage = () => {
                 background: 'transparent',
                 border: 'none',
                 color: theme.colors.textTertiary,
-                fontSize: '13px',
+                fontSize: 'clamp(12px, 1.8vw, 13px)',
                 cursor: 'pointer',
                 textDecoration: 'underline'
               }}
@@ -328,10 +330,10 @@ const LoginPage = () => {
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          marginTop: '32px'
+          marginTop: theme.spacing.xl
         }}>
           <p style={{
-            fontSize: '13px',
+            fontSize: 'clamp(12px, 1.8vw, 13px)',
             color: theme.colors.textTertiary,
             margin: 0
           }}>
