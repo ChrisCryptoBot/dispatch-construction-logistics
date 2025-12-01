@@ -4,7 +4,7 @@ export const darkTheme: Theme = {
   name: 'dark',
   colors: {
     // Primary colors
-    primary: '#dc2626',
+    primary: '#9F1239',
     onPrimary: '#ffffff',
     secondary: '#fca5a5',
     onSecondary: '#000000',
@@ -18,9 +18,9 @@ export const darkTheme: Theme = {
     backgroundCardHover: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
     backgroundHover: 'linear-gradient(135deg, #475569 0%, #64748b 100%)',
     
-    // Sidebar - Dark with red accent
-    sidebarBg: 'linear-gradient(180deg, #dc2626 0%, #b91c1c 100%)',
-    sidebarBorder: '#991b1b',
+    // Sidebar - Dark with professional gradient
+    sidebarBg: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%)',
+    sidebarBorder: '#334155',
     sidebarItemActive: '#ffffff',
     sidebarItemHover: 'rgba(255, 255, 255, 0.1)',
     
@@ -35,16 +35,16 @@ export const darkTheme: Theme = {
     onBackground: '#f8fafc',
     onSurface: '#f8fafc',
     
-    // Accents - Superior One Red (lighter for dark mode)
-    primaryHover: '#b91c1c',
+    // Accents - Muted professional palette
+    primaryHover: '#881337',
     primaryLight: '#fee2e2',
     accent: '#fca5a5',
     
-    // Status - Softer, easier on the eyes
-    success: '#22c55e',
-    warning: '#f4d03f',
+    // Status - Professional muted tones
+    success: '#059669',
+    warning: '#D97706',
     error: '#f87171',
-    info: '#60a5fa',
+    info: '#0284C7',
     
     // Borders - Lighter for dark mode
     border: '#64748b',
@@ -54,7 +54,7 @@ export const darkTheme: Theme = {
     // Inputs - Dark mode inputs
     inputBg: '#374151',
     inputBorder: '#4b5563',
-    inputFocus: '#dc2626',
+    inputFocus: '#9F1239',
     
     // Surface
     surface: '#1e293b'
@@ -76,7 +76,7 @@ export const darkTheme: Theme = {
     subtle: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)',
     medium: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
     strong: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
-    accent: '0 0 0 3px rgba(220, 38, 38, 0.3)',
-    glow: '0 0 20px rgba(220, 38, 38, 0.5)'
+    accent: '0 0 0 3px rgba(159, 18, 57, 0.3)',
+    glow: '0 0 20px rgba(159, 18, 57, 0.5)'
   }
 }
