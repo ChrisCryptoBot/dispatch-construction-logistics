@@ -85,37 +85,31 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
         }}
       >
         {!isCollapsed && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
             height: '100%'
           }}>
             <div style={{
-              fontFamily: '"Rajdhani", "Exo 2", "Orbitron", sans-serif',
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: '600',
-              fontSize: '24px',
-              color: 'white',
-              letterSpacing: '3px',
-              lineHeight: '1',
-              transform: 'skewX(-18deg)',
-              transformOrigin: 'center center',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              fontSize: '18px',
+              color: theme.colors.textPrimary,
+              letterSpacing: '0.5px',
+              lineHeight: '1.2',
+              transition: 'all 0.2s ease',
               cursor: 'pointer',
               textAlign: 'center',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              opacity: 0.95
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'skewX(-18deg) translateX(6px)'
-              e.currentTarget.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)'
-              e.currentTarget.style.letterSpacing = '4px'
+              e.currentTarget.style.opacity = '1'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'skewX(-18deg)'
-              e.currentTarget.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)'
-              e.currentTarget.style.letterSpacing = '3px'
+              e.currentTarget.style.opacity = '0.95'
             }}
             >
               SUPERIOR ONE
@@ -124,35 +118,32 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
         )}
         {isCollapsed && (
           <div style={{
-            fontFamily: '"Rajdhani", "Exo 2", "Orbitron", sans-serif',
-            fontWeight: '600',
-            fontSize: '26px',
-            color: 'white',
-            letterSpacing: '2px',
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontWeight: '700',
+            fontSize: '20px',
+            color: theme.colors.textPrimary,
+            letterSpacing: '0.5px',
             lineHeight: '1',
             textAlign: 'center',
-            transform: 'skewX(-18deg)',
-            transformOrigin: 'center',
             whiteSpace: 'nowrap',
-            width: '60px',
-            height: '60px',
+            width: '48px',
+            height: '48px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'all 0.2s ease',
             cursor: 'pointer',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+            opacity: 0.95,
+            borderRadius: '8px'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'skewX(-18deg) translateX(3px)'
-            e.currentTarget.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)'
-            e.currentTarget.style.letterSpacing = '3px'
+            e.currentTarget.style.opacity = '1'
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'skewX(-18deg)'
-            e.currentTarget.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)'
-            e.currentTarget.style.letterSpacing = '2px'
+            e.currentTarget.style.opacity = '0.95'
+            e.currentTarget.style.background = 'transparent'
           }}
           >
             S1
