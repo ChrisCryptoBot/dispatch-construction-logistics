@@ -185,7 +185,7 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
                 gap: '12px',
                 marginBottom: '4px',
                 transition: 'all 0.2s ease',
-                color: active ? theme.colors.primary : '#000000',
+                color: active ? '#ffffff' : theme.colors.textPrimary,
                 fontSize: '15px',
                 fontWeight: active ? '600' : '500',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -196,9 +196,13 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
                 minWidth: '20px', 
                 display: 'flex', 
                 alignItems: 'center', 
-                justifyContent: 'center' 
+                justifyContent: 'center',
+                color: active ? '#ffffff' : theme.colors.textPrimary,
               }}>
-                {item.icon}
+                {React.cloneElement(item.icon as React.ReactElement, {
+                  color: active ? '#ffffff' : theme.colors.textPrimary,
+                  stroke: active ? '#ffffff' : theme.colors.textPrimary,
+                })}
               </div>
               {!isCollapsed && (
                 <>
@@ -251,7 +255,7 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
             style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: '#000000',
+              color: theme.colors.textPrimary,
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               margin: '0 0 12px 0',
@@ -275,7 +279,7 @@ const S1Sidebar: React.FC<S1SidebarProps> = ({ isCollapsed, onToggleCollapse }) 
                 marginBottom: '8px',
                 transition: 'all 0.2s',
                 fontSize: '14px',
-                color: '#000000',
+                color: theme.colors.textPrimary,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = theme.colors.backgroundHover

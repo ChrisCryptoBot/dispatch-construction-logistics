@@ -174,7 +174,7 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                   gap: '12px',
                   marginBottom: '4px',
                   transition: 'all 0.2s ease',
-                  color: active ? theme.colors.primary : '#000000',
+                  color: active ? '#ffffff' : theme.colors.textPrimary,
                   fontSize: '15px',
                   fontWeight: active ? '600' : '500',
                   justifyContent: 'flex-start',
@@ -184,9 +184,13 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                   minWidth: '20px', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  justifyContent: 'center' 
+                  justifyContent: 'center',
+                  color: active ? '#ffffff' : theme.colors.textPrimary,
                 }}>
-                  {item.icon}
+                  {React.cloneElement(item.icon as React.ReactElement, {
+                    color: active ? '#ffffff' : theme.colors.textPrimary,
+                    stroke: active ? '#ffffff' : theme.colors.textPrimary,
+                  })}
                 </div>
                 <span style={{ flex: 1, textAlign: 'left' }}>{item.name}</span>
                 {item.badge && (
@@ -372,10 +376,10 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                   {user?.name?.charAt(0).toUpperCase() || 'C'}
                 </div>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#000000' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textPrimary }}>
                     {user?.name || 'Customer'}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#374151' }}>
+                  <div style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
                     Customer
                   </div>
                 </div>
@@ -413,8 +417,14 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                       alignItems: 'center',
                       gap: '12px',
                       fontSize: '14px',
-                      color: '#000000',
+                      color: theme.colors.textPrimary,
                       textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = theme.colors.backgroundHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
                     }}
                   >
                     <User size={16} />
@@ -437,8 +447,14 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
                       alignItems: 'center',
                       gap: '12px',
                       fontSize: '14px',
-                      color: '#000000',
+                      color: theme.colors.textPrimary,
                       textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = theme.colors.backgroundHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
                     }}
                   >
                     <Settings size={16} />

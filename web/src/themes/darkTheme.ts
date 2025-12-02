@@ -21,7 +21,7 @@ export const darkTheme: Theme = {
     // Sidebar - Professional dark with subtle depth
     sidebarBg: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%)',
     sidebarBorder: 'rgba(255, 255, 255, 0.1)',
-    sidebarItemActive: '#ffffff',
+    sidebarItemActive: '#9F1239',
     sidebarItemHover: 'rgba(255, 255, 255, 0.1)',
 
     // Header - Dark with subtle gradient
