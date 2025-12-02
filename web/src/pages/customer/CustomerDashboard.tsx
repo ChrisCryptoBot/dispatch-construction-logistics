@@ -249,23 +249,31 @@ const CustomerDashboard = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: '32px',
+        marginBottom: '40px',
         flexWrap: 'wrap',
-        gap: '20px'
+        gap: '24px',
+        padding: '24px 32px',
+        background: theme.colors.backgroundCard,
+        borderRadius: '16px',
+        border: `1px solid ${theme.colors.border}`,
+        boxShadow: theme.shadow.subtle
       }}>
         <div>
           <h1 style={{
-            fontSize: '32px',
-            fontWeight: 'bold',
+            fontSize: '28px',
+            fontWeight: '600',
             color: theme.colors.textPrimary,
-            margin: '0 0 8px 0'
+            margin: '0 0 12px 0',
+            letterSpacing: '-0.02em'
           }}>
             Customer Command Center
           </h1>
           <p style={{
             fontSize: '15px',
+            fontWeight: '500',
             color: theme.colors.textSecondary,
-            margin: 0
+            margin: 0,
+            letterSpacing: '0.01em'
           }}>
             Logistics management and load tracking
           </p>
@@ -273,27 +281,28 @@ const CustomerDashboard = () => {
 
         {/* Timezone Clock */}
         <div style={{
-          padding: '16px 20px',
-          background: theme.colors.backgroundCard,
-          border: `1px solid ${theme.colors.border}`,
+          padding: '20px 24px',
+          background: `${theme.colors.primary}08`,
+          border: `1px solid ${theme.colors.primary}20`,
           borderRadius: '12px',
-          minWidth: '280px'
+          minWidth: '300px',
+          boxShadow: theme.shadow.subtle
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <Globe size={18} color={theme.colors.primary} />
             <select
               value={selectedTimezone}
               onChange={(e) => setSelectedTimezone(e.target.value)}
               style={{
                 flex: 1,
-                padding: '6px 10px',
-                background: theme.colors.backgroundSecondary,
+                padding: '8px 12px',
+                background: theme.colors.background,
                 color: theme.colors.textPrimary,
                 border: `1px solid ${theme.colors.border}`,
-                borderRadius: '6px',
-                fontSize: '12px',
-            fontWeight: '600',
-            cursor: 'pointer',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
                 outline: 'none'
               }}
             >
@@ -305,17 +314,19 @@ const CustomerDashboard = () => {
             </select>
           </div>
           <div style={{
-            fontSize: '32px',
-            fontWeight: 'bold',
+            fontSize: '28px',
+            fontWeight: '700',
             color: theme.colors.primary,
-            letterSpacing: '0.5px'
+            letterSpacing: '-0.01em',
+            fontFamily: '"SF Mono", Monaco, Inconsolata, "Roboto Mono", Consolas, monospace'
           }}>
             {formatTimeForTimezone(currentTime, selectedTimezone)}
           </div>
           <div style={{
             fontSize: '13px',
+            fontWeight: '500',
             color: theme.colors.textSecondary,
-            marginTop: '4px'
+            marginTop: '6px'
           }}>
             {formatDateForTimezone(currentTime, selectedTimezone)}
           </div>
@@ -325,83 +336,86 @@ const CustomerDashboard = () => {
       {/* Key Metrics Row */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '24px',
         marginBottom: '32px'
       }}>
-        <Card padding="24px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: `${theme.colors.primary}20`,
-              borderRadius: '12px',
+              width: '60px',
+              height: '60px',
+              background: `${theme.colors.primary}10`,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${theme.colors.primary}20`
             }}>
               <Package size={28} color={theme.colors.primary} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {stats.activeLoads}
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                 Active Loads
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="24px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: `${theme.colors.success}20`,
-              borderRadius: '12px',
+              width: '60px',
+              height: '60px',
+              background: `${theme.colors.success}10`,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${theme.colors.success}20`
             }}>
               <CheckCircle size={28} color={theme.colors.success} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {stats.completedThisMonth}
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                 Completed This Month
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="24px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: `${theme.colors.warning}20`,
-              borderRadius: '12px',
+              width: '60px',
+              height: '60px',
+              background: `${theme.colors.warning}10`,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${theme.colors.warning}20`
             }}>
               <DollarSign size={28} color={theme.colors.warning} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 {formatCompactCurrency(stats?.totalSpend)}
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                 Month Spend
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="20px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <div style={{
               width: '48px',
@@ -452,8 +466,8 @@ const CustomerDashboard = () => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: '24px',
-        marginBottom: '24px'
+        gap: '32px',
+        marginBottom: '32px'
       }}>
         
         {/* Schedule & Calendar */}
@@ -619,10 +633,10 @@ const CustomerDashboard = () => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: '24px',
-        marginBottom: '24px'
+        gap: '32px',
+        marginBottom: '32px'
       }}>
-        
+
         {/* Load Status Overview */}
         <Card 
           title="Load Status Overview" 
@@ -977,9 +991,9 @@ const CustomerDashboard = () => {
       </Card>
 
       {/* Quick Actions */}
-      <div style={{ marginTop: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+      <div style={{ marginTop: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
         <Card
-          padding="24px"
+          padding="28px"
           hover
           onClick={() => navigate('/draft-loads')}
         >
