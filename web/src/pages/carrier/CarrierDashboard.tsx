@@ -136,29 +136,28 @@ const CarrierDashboard = () => {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '32px 40px' }}>
       {/* Header with Quick Actions */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '32px',
-        padding: '20px',
+        marginBottom: '40px',
+        padding: '24px 32px',
         background: theme.colors.backgroundCard,
         borderRadius: '16px',
-        border: `1px solid ${theme.colors.border}`
+        border: `1px solid ${theme.colors.border}`,
+        boxShadow: theme.shadow.subtle
       }}>
         <div>
           <h1 style={{
-            fontSize: '32px',
-            fontWeight: '700',
+            fontSize: '28px',
+            fontWeight: '600',
             color: theme.colors.textPrimary,
-            margin: '0 0 8px 0',
-            background: `linear-gradient(135deg, ${theme.colors.textPrimary} 0%, ${theme.colors.textSecondary} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            margin: '0 0 12px 0',
+            letterSpacing: '-0.02em'
           }}>
-            CARRIER OPERATIONS DASHBOARD
+            Carrier Operations Dashboard
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -212,17 +211,17 @@ const CarrierDashboard = () => {
               </select>
             </div>
             <div style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: theme.colors.error,
-              fontFamily: 'monospace',
-              padding: '12px 20px',
-              background: theme.colors.background,
+              fontSize: '22px',
+              fontWeight: '600',
+              color: theme.colors.primary,
+              fontFamily: '"SF Mono", Monaco, Inconsolata, "Roboto Mono", Consolas, monospace',
+              padding: '14px 24px',
+              background: `${theme.colors.primary}08`,
               borderRadius: '12px',
-              border: `1px solid ${theme.colors.border}`,
-              minWidth: '180px',
+              border: `1px solid ${theme.colors.primary}20`,
+              minWidth: '200px',
               textAlign: 'center',
-              boxShadow: `0 2px 8px ${theme.colors.error}20`
+              boxShadow: theme.shadow.subtle
             }}>
               {currentTime.toLocaleTimeString('en-US', { 
                 timeZone: selectedTimezone,
@@ -273,154 +272,160 @@ const CarrierDashboard = () => {
       {/* Key Metrics - All 6 Cards in Horizontal Layout */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
-        marginBottom: '24px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '24px',
+        marginBottom: '32px'
       }}>
-        <Card padding="24px" hover onClick={() => navigate('/loads')}>
+        <Card padding="28px" hover onClick={() => navigate('/loads')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{
-                width: '56px',
-                height: '56px',
-                background: theme.colors.backgroundTertiary,
-                borderRadius: '12px',
+                width: '60px',
+                height: '60px',
+                background: `${theme.colors.primary}10`,
+                borderRadius: '14px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                border: `1px solid ${theme.colors.primary}20`
               }}>
-                <Activity size={28} color={theme.colors.textSecondary} />
+                <Activity size={28} color={theme.colors.primary} />
               </div>
               <div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                   <AnimatedCounter value={stats?.activeLoads || 0} />
                 </p>
-                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                   Active Loads
                 </p>
               </div>
             </div>
-            <ExternalLink size={18} color={theme.colors.textSecondary} style={{ opacity: 0.5 }} />
+            <ExternalLink size={18} color={theme.colors.textTertiary} style={{ opacity: 0.4 }} />
           </div>
         </Card>
 
-        <Card padding="24px" hover onClick={() => navigate('/loads')}>
+        <Card padding="28px" hover onClick={() => navigate('/loads')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{
-                width: '56px',
-                height: '56px',
-                background: theme.colors.backgroundTertiary,
-                borderRadius: '12px',
+                width: '60px',
+                height: '60px',
+                background: `${theme.colors.info}10`,
+                borderRadius: '14px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                border: `1px solid ${theme.colors.info}20`
               }}>
-                <Package size={28} color={theme.colors.textSecondary} />
+                <Package size={28} color={theme.colors.info} />
               </div>
               <div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                   <AnimatedCounter value={stats?.availableLoads || 0} />
                 </p>
-                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                   Available
                 </p>
               </div>
             </div>
-            <ExternalLink size={18} color={theme.colors.textSecondary} style={{ opacity: 0.5 }} />
+            <ExternalLink size={18} color={theme.colors.textTertiary} style={{ opacity: 0.4 }} />
           </div>
         </Card>
 
-        <Card padding="24px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              width: '60px',
+              height: '60px',
+              background: `${theme.colors.success}10`,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${theme.colors.success}20`
             }}>
-              <DollarSign size={28} color={theme.colors.textSecondary} />
+              <DollarSign size={28} color={theme.colors.success} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
                 <AnimatedCounter value={stats?.revenue || 0} prefix="$" />
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                 Today's Revenue
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="24px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              width: '60px',
+              height: '60px',
+              background: `${theme.colors.success}10`,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${theme.colors.success}20`
             }}>
-              <CheckCircle size={28} color={theme.colors.textSecondary} />
+              <CheckCircle size={28} color={theme.colors.success} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.success, margin: 0, lineHeight: 1 }}>
                 {formatPercentage(stats?.onTimeDelivery)}
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                 On-Time Rate
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="24px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              width: '60px',
+              height: '60px',
+              background: `${theme.colors.warning}10`,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${theme.colors.warning}20`
             }}>
-              <Star size={28} color={theme.colors.textSecondary} />
+              <Star size={28} color={theme.colors.warning} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                 4.8★
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                 Customer Rating
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="24px">
+        <Card padding="28px">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: theme.colors.backgroundTertiary,
-              borderRadius: '12px',
+              width: '60px',
+              height: '60px',
+              background: `${theme.colors.error}10`,
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${theme.colors.error}20`
             }}>
-              <AlertTriangle size={28} color={theme.colors.textSecondary} />
+              <AlertTriangle size={28} color={theme.colors.error} />
             </div>
             <div>
-              <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.warning, margin: 0, lineHeight: 1 }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.error, margin: 0, lineHeight: 1 }}>
                 3
               </p>
-              <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>
                 Active Alerts
               </p>
             </div>
@@ -432,8 +437,8 @@ const CarrierDashboard = () => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '24px',
-        marginBottom: '24px'
+        gap: '32px',
+        marginBottom: '32px'
       }}>
         {/* Schedule & Calendar */}
         <Card 
