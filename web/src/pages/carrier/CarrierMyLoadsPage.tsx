@@ -874,38 +874,39 @@ const CarrierMyLoadsPage = () => {
       headerAction={headerAction}
     >
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '32px' }}>
         {[
-          { label: 'Total Active', value: stats.total, icon: Package, color: theme.colors.textSecondary, isRevenue: false },
-          { label: 'Assigned', value: stats.assigned, icon: Clock, color: theme.colors.textSecondary, isRevenue: false },
-          { label: 'In Transit', value: stats.inTransit, icon: Truck, color: theme.colors.textSecondary, isRevenue: false },
-          { label: 'Completed', value: stats.completed, icon: Package, color: theme.colors.textSecondary, isRevenue: false },
+          { label: 'Total Active', value: stats.total, icon: Package, color: theme.colors.primary, isRevenue: false },
+          { label: 'Assigned', value: stats.assigned, icon: Clock, color: theme.colors.info, isRevenue: false },
+          { label: 'In Transit', value: stats.inTransit, icon: Truck, color: theme.colors.warning, isRevenue: false },
+          { label: 'Completed', value: stats.completed, icon: Package, color: theme.colors.success, isRevenue: false },
           { label: 'Total Revenue', value: stats.totalRevenue, icon: DollarSign, color: theme.colors.success, isRevenue: true }
         ].map(stat => (
-          <Card key={stat.label} padding="24px">
+          <Card key={stat.label} padding="28px">
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ 
-                width: '56px', 
-                height: '56px', 
-                borderRadius: '12px', 
-                backgroundColor: stat.isRevenue ? `${stat.color}20` : theme.colors.backgroundTertiary, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center' 
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '14px',
+                backgroundColor: `${stat.color}10`,
+                border: `1px solid ${stat.color}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
                 {React.createElement(stat.icon, { size: 28, color: stat.color })}
               </div>
               <div>
                 {stat.isRevenue ? (
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: stat.color, margin: 0, lineHeight: 1 }}>
+                  <p style={{ fontSize: '32px', fontWeight: '700', color: stat.color, margin: 0, lineHeight: 1 }}>
                     <AnimatedCounter value={stat.value} prefix="$" />
                   </p>
                 ) : (
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
+                  <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>
                     {stat.value}
                   </p>
                 )}
-                <p style={{ fontSize: '14px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>{stat.label}</p>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>{stat.label}</p>
               </div>
             </div>
           </Card>
@@ -914,9 +915,9 @@ const CarrierMyLoadsPage = () => {
 
 
       {/* Enhanced Search and Filters */}
-      <Card padding="24px" style={{ marginBottom: '24px' }}>
+      <Card padding="28px" style={{ marginBottom: '32px' }}>
         {/* Search Bar and Bulk Actions */}
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '24px' }}>
           <div style={{ flex: '1', minWidth: '300px' }}>
             <div style={{ position: 'relative' }}>
               <Search 
