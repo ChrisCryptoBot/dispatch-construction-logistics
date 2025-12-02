@@ -2,16 +2,16 @@
 // Mature, sophisticated color palette and refined styling
 
 export const colors = {
-  // Primary Brand Colors - Muted Burgundy (60% less saturated)
+  // Primary Brand Colors - Professional Muted Red
   primary: {
     50: '#fef2f2',
-    100: '#fee2e2', 
+    100: '#fee2e2',
     200: '#fecaca',
     300: '#fca5a5',
     400: '#f87171',
-    500: '#C53030', // Muted burgundy red (was #dc2626)
-    600: '#9B2C2C', // Darker burgundy
-    700: '#822727', // Even darker
+    500: '#9F1239', // Professional muted red
+    600: '#881337', // Darker muted red
+    700: '#701132', // Even darker
     800: '#7f1d1d',
     900: '#450a0a',
     950: '#2d0b0b'
@@ -42,10 +42,10 @@ export const colors = {
 
   // Status Colors - Desaturated, Professional
   status: {
-    success: '#2F855A',    // Muted green
-    warning: '#C05621',    // Muted orange
-    error: '#C53030',      // Muted red (same as accent)
-    info: '#2C5282'        // Muted blue
+    success: '#059669',    // Professional muted green
+    warning: '#D97706',    // Professional muted orange
+    error: '#9F1239',      // Professional muted red
+    info: '#0284C7'        // Professional muted blue
   },
 
   // Semantic Colors - Professional Enterprise Palette
@@ -66,26 +66,26 @@ export const colors = {
   },
 
   border: {
-    primary: 'rgba(197, 48, 48, 0.3)',     // Primary brand border
+    primary: 'rgba(159, 18, 57, 0.3)',     // Primary brand border
     secondary: 'rgba(255, 255, 255, 0.12)', // Secondary border
     subtle: 'rgba(255, 255, 255, 0.06)',   // Extremely subtle
     medium: 'rgba(255, 255, 255, 0.1)',    // Standard borders
     strong: 'rgba(255, 255, 255, 0.15)',   // Emphasized borders
-    accent: 'rgba(197, 48, 48, 0.2)',      // Subtle red borders
-    glow: 'rgba(197, 48, 48, 0.08)'        // Very subtle glow
+    accent: 'rgba(159, 18, 57, 0.2)',      // Subtle red borders
+    glow: 'rgba(159, 18, 57, 0.08)'        // Very subtle glow
   }
 }
 
 export const shadows = {
   // Professional shadow system - softer, more sophisticated
-  primary: '0 4px 12px rgba(197, 48, 48, 0.3)',  // Primary brand shadow
+  primary: '0 4px 12px rgba(159, 18, 57, 0.3)',  // Primary brand shadow
   secondary: '0 2px 8px rgba(0, 0, 0, 0.3)',     // Secondary shadow
   subtle: '0 2px 8px rgba(0, 0, 0, 0.4)',
   soft: '0 4px 16px rgba(0, 0, 0, 0.5)',
   medium: '0 8px 32px rgba(0, 0, 0, 0.6)',
   strong: '0 12px 40px rgba(0, 0, 0, 0.7)',
-  accent: '0 0 15px rgba(197, 48, 48, 0.2)',     // Accent shadow
-  glow: '0 0 15px rgba(197, 48, 48, 0.08)',      // Very subtle red glow
+  accent: '0 0 15px rgba(159, 18, 57, 0.2)',     // Accent shadow
+  glow: '0 0 15px rgba(159, 18, 57, 0.08)',      // Very subtle red glow
   card: '0 8px 32px rgba(0, 0, 0, 0.5)',
   modal: '0 25px 50px rgba(0, 0, 0, 0.7)'
 }
@@ -174,11 +174,11 @@ export const components = {
   
   button: {
     primary: {
-      background: `linear-gradient(135deg, #C53030 0%, #9B2C2C 100%)`,
+      background: `linear-gradient(135deg, #9F1239 0%, #881337 100%)`,
       color: colors.text.primary,
-      border: `1px solid rgba(197, 48, 48, 0.4)`,
+      border: `1px solid rgba(159, 18, 57, 0.4)`,
       borderRadius: borders.radius.lg,
-      boxShadow: `0 2px 8px rgba(197, 48, 48, 0.2)`,
+      boxShadow: `0 2px 8px rgba(159, 18, 57, 0.2)`,
       fontWeight: '500',
       fontSize: '13px',
       letterSpacing: '0.01em',
@@ -220,11 +220,11 @@ export const components = {
 
 // Professional gradients - subtle and sophisticated
 export const gradients = {
-  primary: `linear-gradient(135deg, #C53030 0%, #9B2C2C 100%)`,
+  primary: `linear-gradient(135deg, #9F1239 0%, #881337 100%)`,
   silver: `linear-gradient(135deg, #334155 0%, #1e293b 100%)`,
   subtle: `linear-gradient(135deg, #0F1419 0%, #161B26 100%)`,
   glass: `linear-gradient(135deg, rgba(22, 27, 38, 0.8) 0%, rgba(15, 20, 25, 0.95) 100%)`,
-  glow: `linear-gradient(135deg, rgba(197, 48, 48, 0.05) 0%, transparent 100%)`
+  glow: `linear-gradient(135deg, rgba(159, 18, 57, 0.05) 0%, transparent 100%)`
 }
 
 
