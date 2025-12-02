@@ -754,7 +754,7 @@ const MyLoadsPage = () => {
       }
     >
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '32px' }}>
         {[
           { label: 'Total Loads', value: stats.total, icon: Package, color: theme.colors.primary },
           { label: 'Posted', value: stats.posted, icon: Clock, color: theme.colors.info },
@@ -762,14 +762,23 @@ const MyLoadsPage = () => {
           { label: 'Completed', value: stats.completed, icon: CheckCircle, color: theme.colors.success },
           { label: 'Pending Bids', value: stats.pendingBids, icon: MessageSquare, color: theme.colors.info }
         ].map(stat => (
-          <Card key={stat.label} padding="20px">
+          <Card key={stat.label} padding="28px">
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: `${stat.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {React.createElement(stat.icon, { size: 24, color: stat.color })}
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '14px',
+                backgroundColor: `${stat.color}10`,
+                border: `1px solid ${stat.color}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {React.createElement(stat.icon, { size: 28, color: stat.color })}
               </div>
               <div>
-                <p style={{ fontSize: '28px', fontWeight: 'bold', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>{stat.value}</p>
-                <p style={{ fontSize: '13px', color: theme.colors.textSecondary, margin: '4px 0 0 0' }}>{stat.label}</p>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: theme.colors.textPrimary, margin: 0, lineHeight: 1 }}>{stat.value}</p>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary, margin: '6px 0 0 0', letterSpacing: '0.02em' }}>{stat.label}</p>
               </div>
             </div>
           </Card>
@@ -780,7 +789,7 @@ const MyLoadsPage = () => {
       <div style={{
         display: 'flex',
         gap: '4px',
-        marginBottom: '24px',
+        marginBottom: '32px',
         background: theme.colors.backgroundSecondary,
         padding: '4px',
         borderRadius: '12px',
@@ -842,8 +851,8 @@ const MyLoadsPage = () => {
       </div>
 
       {/* Search and Filters - Gold Standard */}
-      <Card padding="24px" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <Card padding="28px" style={{ marginBottom: '32px' }}>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Search Bar */}
           <div style={{ flex: '1', minWidth: '300px' }}>
             <div style={{ position: 'relative' }}>
