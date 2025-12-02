@@ -724,7 +724,7 @@ const CarrierDashboard = () => {
 
 
       {/* Financial Overview */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginTop: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px', marginTop: '32px' }}>
         <Card 
           title="Financial Overview" 
           icon={<DollarSign size={20} color={theme.colors.textSecondary} />}
@@ -759,32 +759,32 @@ const CarrierDashboard = () => {
             </button>
           }
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>Today's Revenue</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold', color: theme.colors.textPrimary }}>{formatCurrency(stats?.revenue)}</span>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: theme.colors.textSecondary, letterSpacing: '0.01em' }}>Today's Revenue</span>
+              <span style={{ fontSize: '20px', fontWeight: '700', color: theme.colors.textPrimary }}>{formatCurrency(stats?.revenue)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>This Week</span>
-              <span style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary }}>$28,450</span>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: theme.colors.textSecondary, letterSpacing: '0.01em' }}>This Week</span>
+              <span style={{ fontSize: '17px', fontWeight: '600', color: theme.colors.textPrimary }}>$28,450</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>This Month</span>
-              <span style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary }}>$127,800</span>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: theme.colors.textSecondary, letterSpacing: '0.01em' }}>This Month</span>
+              <span style={{ fontSize: '17px', fontWeight: '600', color: theme.colors.textPrimary }}>$127,800</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>Avg. Rate/Mile</span>
-              <span style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.textPrimary }}>$2.45</span>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: theme.colors.textSecondary, letterSpacing: '0.01em' }}>Avg. Rate/Mile</span>
+              <span style={{ fontSize: '17px', fontWeight: '600', color: theme.colors.textPrimary }}>$2.45</span>
             </div>
-            <div style={{ 
-              height: '2px', 
+            <div style={{
+              height: '1px',
               background: theme.colors.border,
               borderRadius: '1px',
-              margin: '8px 0'
+              margin: '12px 0'
             }}></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>Profit Margin</span>
-              <span style={{ fontSize: '16px', fontWeight: 'bold', color: theme.colors.success }}>23.4%</span>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: theme.colors.textSecondary, letterSpacing: '0.01em' }}>Profit Margin</span>
+              <span style={{ fontSize: '18px', fontWeight: '700', color: theme.colors.success }}>23.4%</span>
             </div>
           </div>
         </Card>
@@ -978,11 +978,11 @@ const CarrierDashboard = () => {
           </button>
         }
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
           {/* Overall Rating */}
           <div style={{
             background: theme.colors.background,
-            padding: '24px',
+            padding: '28px',
             borderRadius: '12px',
             border: `1px solid ${theme.colors.border}`,
             textAlign: 'center'
@@ -1219,14 +1219,14 @@ const CarrierDashboard = () => {
             padding: '16px 0 0 0',
             borderTop: `1px solid ${theme.colors.border}`
           }}>
-            <div style={{ display: 'flex', gap: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '12px', height: '12px', background: theme.colors.success, borderRadius: '2px' }}></div>
-                <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>On-Time Delivery</span>
+            <div style={{ display: 'flex', gap: '32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '12px', height: '12px', background: theme.colors.success, borderRadius: '3px' }}></div>
+                <span style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary }}>On-Time Delivery</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '12px', height: '12px', background: theme.colors.primary, borderRadius: '2px' }}></div>
-                <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>Total Loads</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '12px', height: '12px', background: theme.colors.primary, borderRadius: '3px' }}></div>
+                <span style={{ fontSize: '13px', fontWeight: '500', color: theme.colors.textSecondary }}>Total Loads</span>
               </div>
             </div>
             <div style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
